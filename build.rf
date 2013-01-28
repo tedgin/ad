@@ -1,0 +1,9 @@
+-fPIC -lib -cov -property -unittest -w -wi  -D 
+-od"bin" 
+-of"ad"
+-D -Dd"docs"
+
+-I"src"
+
+"src/ad/core.d"
+"src/ad/math.d"
