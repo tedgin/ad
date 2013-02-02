@@ -9,8 +9,8 @@ had to implement it.
 Features
 --------
 
-* supports all of D's arithmetic operators
-* supports the same set of functions as std.math
+* supports all of D's arithmetic operators (not tested)
+* supports the same set of functions as std.math (not implemented)
 * allows any type that is semantically a mathematical field and acts like a D floating point type as its underlying value type.
 * supports arbitrary order differentiation, must be fixed a compile time
 
