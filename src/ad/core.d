@@ -28,7 +28,7 @@ import std.string;
  * 
  * TODO document overloaded operators here
  * TODO add properties and @property
- * TODO implement toHash
+ * TODO add @safe
  */
 export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 
@@ -207,6 +207,11 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		assert (q < 3);
 		assert (q !<> 2);
 		assert (q >= 1);
+	}
+
+	export pure nothrow const hash_t toHash()
+	body {
+		return cast(hash_t)(_x);
 	}
 
 	export pure nothrow const PluralNum opUnary(string op)()
