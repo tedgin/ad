@@ -7,12 +7,6 @@
  */
 module ad.core;
 
-/* TODO document
- * TODO start using NaNs and infs
- * TODO start using refs for struct params
- * TODO figure out const positions
- */
-
 import std.math;
 import std.string;
 
@@ -20,13 +14,13 @@ import std.string;
 /**
  * This class implements a generalization of the dual number concept. 
  * 
- * This class provides the basic algebraic operations of this generalization.
+ * This class provides the basic algebraic operations of this generalization. It overloads all operators that make sense
+ * for fields.
  *
  * Params:
  *  Order = the number of derivatives represented 
  *  Field = the underlying type of real number
  * 
- * TODO document overloaded operators here
  * TODO add properties and @property
  * TODO add @safe
  */
@@ -53,7 +47,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 
 	private Field _x;
 	private DerivType!() _dx;
-
+	
 	/**
 	 * A constant zero represented as a plural number.
 	 */
@@ -452,6 +446,9 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 unittest {
 	// Force the unit tests
 	const PluralNum!() w;
+
+	// todo test init
+	assert (isnan(w._x));
 }
 
 
