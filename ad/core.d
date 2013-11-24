@@ -1,8 +1,6 @@
 /** 
  * This module implements automatic differentiation using forward accumulation and operator overloading.
  * 
- * TODO figure out how to describe this.
- *
  * It can only differentiate functions of the form f:R->R. This is a completely unoptimized version.
  */
 module ad.core;
@@ -20,8 +18,6 @@ import std.string;
  * Params:
  *  Order = the number of derivatives represented 
  *  Field = the underlying type of real number
- * 
- * TODO add @safe
  */
 export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 
@@ -88,6 +84,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * Returns:
 	 *  The plural number representation of the parameter or constant.
 	 */
+	@safe 
 	export static pure nothrow PluralNum param(in Field val)
 	body {
 		static if (is(int : DerivType!())) return PluralNum(val, 0);
@@ -112,6 +109,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * Returns:
 	 *  The plural number representation of the variable.
 	 */
+	@safe 
 	export static pure nothrow PluralNum var(in Field val)
 	body {
 		static if (is(int : DerivType!())) return PluralNum(val, 1);
@@ -133,16 +131,19 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		_dx = derivs;
 	}
 
-	@property export pure nothrow const PluralNum!(Order, typeof(Field.nan.re)) re() 
+	@safe @property 
+	export pure nothrow const PluralNum!(Order, typeof(Field.nan.re)) re() 
 	body {
 		return PluralNum!(Order, typeof(Field.nan.re))(_x.re, _dx.re);
 	}
 	
-	@property export pure nothrow const PluralNum!(Order, typeof(Field.nan.im)) im() 
+	@safe @property 
+	export pure nothrow const PluralNum!(Order, typeof(Field.nan.im)) im() 
 	body {
 		return PluralNum!(Order, typeof(Field.nan.im))(_x.im, _dx.im);
 	}
 	
+	@safe 
 	export pure nothrow const Field opCast(Field)() 
 	body {
 		return _x;
@@ -158,7 +159,8 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * Returns:
 	 *  The value represented by the plural number
 	 */
-	@property export pure nothrow const Field val()
+	@safe @property 
+	export pure nothrow const Field val()
 	body {
 		return _x;
 	}
@@ -175,7 +177,8 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * Returns:
 	 *  The derivative of the plural number.
 	 */
-	@property export pure nothrow const DerivType!(DerivOrder) d(ulong DerivOrder = 1)() 
+	@safe @property 
+	export pure nothrow const DerivType!(DerivOrder) d(ulong DerivOrder = 1)() 
 	if (1 <= DerivOrder && DerivOrder <= Order)
 	body {
 		static if (DerivOrder == 1) return _dx;
@@ -196,21 +199,25 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		assert (d3q == 0);
 	}
 	
+	@safe 
 	export pure nothrow const bool opEquals(in PluralNum that) 
 	body {
 		return this._x == that._x;
 	}
 	
+	@safe
 	export pure nothrow const bool opEquals(in Field val) 
 	body{
 		return _x == val;
 	}
 	
+	@safe
 	export pure nothrow const int opCmp(in PluralNum that) 
 	body {
 		return opCmp(that._x);
 	}
 
+	@safe 
 	export pure nothrow const int opCmp(in Field val) 
 	body {
 		if (_x < val) return -1;
@@ -224,11 +231,13 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		assert (q >= 1);
 	}
 
+	@trusted
 	export pure nothrow const hash_t toHash()
 	body {
 		return cast(hash_t)(_x);
 	}
 
+	@safe
 	export pure nothrow const PluralNum opUnary(string op)()
 	body {
 		     static if (op == "+") return PluralNum(+_x, +_dx);
@@ -253,6 +262,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * Returns:
 	 *  It returns the inverted plural number.
 	 */
+	@safe
 	export pure nothrow const PluralNum inv()
 	body {
 		const reducedX = reduce();
@@ -265,6 +275,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		assert (x * y == PluralNum!(3).one);
 	}
 
+	@safe
 	export pure nothrow const PluralNum opBinaryRight(string op)(in Field val)
 	body {
 		     static if (op == "+")  return param(val) + this;
@@ -275,7 +286,8 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		else static if (op == "^^") return param(val) ^^ this;
 		else static assert(false, "Operator " ~ op ~ " not implemented");
 	}
-	
+
+	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in Field val)
 	body {
 		     static if (op == "+")  return this + param(val);
@@ -287,6 +299,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		else static assert(false, "Operator " ~ op ~ " not implemented");
 	}
 
+	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "+")
 	body {
 		return PluralNum(this._x + that._x, this._dx + that._dx);
@@ -304,11 +317,13 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		assert (t._x == 4 && t._dx == 1);
 	}
 
+	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "-")
 	body {
 		return this + -that;
 	} 
-	
+
+	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "*") 
 	body {
 		return PluralNum(this._x * that._x, this._dx * that.reduce() + this.reduce() * that._dx);
@@ -320,11 +335,13 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		assert (e._x == 3 && e._dx == 11);
 	}
 
+	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "/") 
 	body {
 		return this * that.inv();
 	} 
-	
+
+	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "%") 
 	body {
 		const thisModThat = this._x % that._x;
@@ -371,6 +388,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		assert (isnan(a._x) && isnan(a._dx));
 	}
 
+	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "^^") 
 	body {
 		const f = this.reduce();
@@ -408,6 +426,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * returns:
 	 *  A new plural number that is the natural logarithm of this dual number.
 	 */
+	@safe
 	package pure nothrow const PluralNum log()
 	body {
 		const dlog = _x > 0 ? _dx / reduce() : nan.reduce();
@@ -435,6 +454,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * returns:
 	 *  The plural number of order one less.
 	 */
+	@safe
 	package pure nothrow const DerivType!() reduce()
 	body {
 		static if(Order == 1) return _x;
@@ -472,7 +492,6 @@ unittest {
 	assert (isnan(w._x));
 	assert (isnan(PluralNum!().init._x));
 }
-
 
 private string formatSuffix(in ulong derivOrder)
 body {
