@@ -21,7 +21,6 @@ import std.string;
  *  Order = the number of derivatives represented 
  *  Field = the underlying type of real number
  * 
- * TODO add properties and @property
  * TODO add @safe
  */
 export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
@@ -47,7 +46,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 
 	private Field _x;
 	private DerivType!() _dx;
-	
+
 	/**
 	 * A constant zero represented as a plural number.
 	 */
@@ -58,15 +57,27 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 */
 	export static immutable PluralNum one = param(1);
 	
-	/**
-	 * positive infinity
-	 */
-	export static immutable PluralNum infinity = PluralNum(Field.infinity, one.reduce());
-
-	/**
-	 * not a number
-	 */
 	export static immutable PluralNum nan = PluralNum(Field.nan, DerivType!().nan);
+
+	export static immutable PluralNum infinity = PluralNum(Field.infinity, one.reduce());
+	
+	export static immutable ulong dig = Field.dig;
+
+	export static immutable PluralNum epsilon = param(Field.epsilon);
+
+	export static immutable ulong mant_dig = Field.mant_dig;
+
+	export static immutable int max_10_exp = Field.max_10_exp;
+	
+	export static immutable int max_exp = Field.max_exp;
+
+	export static immutable int min_10_exp = Field.min_10_exp;
+
+	export static immutable int min_exp = Field.min_exp;
+
+	export static immutable PluralNum max = param(Field.max);
+
+	export static immutable PluralNum min_normal = param(Field.min_normal);
 
 	/**
 	 * This function constructs a plural number representing a constant with respect to the derivative.
@@ -122,6 +133,16 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		_dx = derivs;
 	}
 
+	@property export pure nothrow const PluralNum!(Order, typeof(Field.nan.re)) re() 
+	body {
+		return PluralNum!(Order, typeof(Field.nan.re))(_x.re, _dx.re);
+	}
+	
+	@property export pure nothrow const PluralNum!(Order, typeof(Field.nan.im)) im() 
+	body {
+		return PluralNum!(Order, typeof(Field.nan.im))(_x.im, _dx.im);
+	}
+	
 	export pure nothrow const Field opCast(Field)() 
 	body {
 		return _x;
@@ -137,7 +158,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * Returns:
 	 *  The value represented by the plural number
 	 */
-	export pure nothrow const Field val()
+	@property export pure nothrow const Field val()
 	body {
 		return _x;
 	}
@@ -154,7 +175,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	 * Returns:
 	 *  The derivative of the plural number.
 	 */
-	export pure nothrow const DerivType!(DerivOrder) d(ulong DerivOrder = 1)() 
+	@property export pure nothrow const DerivType!(DerivOrder) d(ulong DerivOrder = 1)() 
 	if (1 <= DerivOrder && DerivOrder <= Order)
 	body {
 		static if (DerivOrder == 1) return _dx;
@@ -449,6 +470,7 @@ unittest {
 
 	// todo test init
 	assert (isnan(w._x));
+	assert (isnan(PluralNum!().init._x));
 }
 
 
