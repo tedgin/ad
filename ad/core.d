@@ -7,6 +7,7 @@ module ad.core;
 
 import std.math;
 import std.string;
+import std.traits;
 
 
 /**
@@ -19,7 +20,7 @@ import std.string;
  *  Order = the number of derivatives represented 
  *  Field = the underlying type of real number
  */
-export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
+export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloatingPoint!Field && isScalarType!Field) {
 
 	/**
 	 * This is the type constructor of the derivatives of the plural number.
@@ -87,8 +88,8 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	@safe 
 	export static pure nothrow PluralNum param(in Field val)
 	body {
-		static if (is(int : DerivType!())) return PluralNum(val, 0);
-		else                               return PluralNum(val, DerivType!().zero);
+		static if (isScalarType!(DerivType!())) return PluralNum(val, 0);
+		else                                    return PluralNum(val, DerivType!().zero);
 	}
 	unittest {
 		const q = PluralNum!(1).param(1);
@@ -112,8 +113,8 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	@safe 
 	export static pure nothrow PluralNum var(in Field val)
 	body {
-		static if (is(int : DerivType!())) return PluralNum(val, 1);
-		else                               return PluralNum(val, DerivType!().one);
+		static if (isScalarType!(DerivType!())) return PluralNum(val, 1);
+		else                                    return PluralNum(val, DerivType!().one);
 	}
 	unittest {
 		const q = PluralNum!(1).var(2);
@@ -125,11 +126,36 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 		assert(w._dx == PluralNum!(1).one);
 	}
 
-	private pure nothrow this(in Field val, in DerivType!() derivs) 
+	/**
+	 * Constructs a plural number from if value and derivatives
+	 * 
+	 * Params:
+	 *   val = the value
+	 *   derivs = the derivatives
+	 */
+	package pure nothrow this(in Field val, in DerivType!() derivs) 
 	body {
 		_x = val;
 		_dx = derivs;
 	}
+
+	/**
+	 * Constructs a plural number from its value and the values of its derivatives
+	 * 
+	 * Params:
+	 *   derivVals = the an array of the derivative values where index is the order of the derivative
+	 */
+	package pure nothrow this(in Field[Order + 1] derivVals ...)
+	body {
+		_x = derivVals[0];
+		static if (Order > 1) _dx = DerivType!()(derivVals[1 .. Order + 1]);
+		else                  _dx = derivVals[1];
+	}
+	unittest {
+		assert (PluralNum!()([1.0, 2.0]) == PluralNum!()(1.0, 2.0));
+		assert (PluralNum!(2)(1.0L, 2.0L, 3.0L) == PluralNum!(2)(1.0, PluralNum!()(2.0, 3.0)));
+	}
+
 
 	@safe @property 
 	export pure nothrow const PluralNum!(Order, typeof(Field.nan.re)) re() 
@@ -473,8 +499,10 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	
 	private const string format(in ulong derivOrder)
 	body {
-		static if (is(int : DerivType!())) const tail = std.string.format("%f%s", _dx, formatSuffix(derivOrder + 1));
-		else                               const tail = _dx.format(derivOrder + 1);
+		static if (isScalarType!(DerivType!()))
+			const tail = std.string.format("%f%s", _dx, formatSuffix(derivOrder + 1));
+		else                               
+			const tail = _dx.format(derivOrder + 1);
 		return std.string.format("%f%s + %s", _x, formatSuffix(derivOrder), tail);
 	}
 	unittest {
@@ -485,13 +513,38 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1) {
 	}
 }
 unittest {
-	// Force the unit tests
+	// force the unit tests
 	const PluralNum!() w;
 
-	// todo test init
 	assert (isnan(w._x));
 	assert (isnan(PluralNum!().init._x));
 }
+
+
+/**
+ * Constructs a plural number from its value and the values of its derivatives. If there is only one value is the 
+ * sequence, that value is returned.
+ * 
+ * Params:
+ *   Len = the number of elements in the sequence (optional)
+ *   Field = the underlying type of the real number (optional)
+ *   derivVals = the an array of the derivative values where index is the order of the derivative
+ */
+@safe
+export pure nothrow Field derivSeq(ulong Len, Field)(in Field[Len] val ...) if (Len == 1)
+body {
+	return val[0];
+}
+@safe
+export pure nothrow PluralNum!(Len - 1, Field) derivSeq(ulong Len, Field)(in Field[Len] derivVals ...) if (Len > 1)
+body {
+	return PluralNum!(Len - 1, Field)(derivVals);
+}
+unittest {
+	assert (derivSeq(1.0) == 1.0);
+	assert (derivSeq(1.0L, 2.0L) == PluralNum!()(1.0, 2.0));
+}
+
 
 private string formatSuffix(in ulong derivOrder)
 body {
