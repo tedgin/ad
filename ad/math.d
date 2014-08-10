@@ -1,26 +1,111 @@
+/**
+ * This module extends the std.math library to supporting PluralNum objects.
+ */
 module ad.math;
 
 import std.math;
-import std.stdio;
+import std.traits;
 
 public import ad.core;
 
 
-export pure DerivSeqType abs(DerivSeqType)(const DerivSeqType u)
-in {
-	static if (DerivSeqType.Order > 0) {
-		assert (u.val() != 0);
-	}
-}
+/**
+ * This function determines whether its argument is a NaN.  It is analogous to std.math.isNaN().
+ *  
+ * Params:
+ *   T = The type of the argument. It must be a scalar type for a PluralNum.
+ *   x = the argument
+ */
+@safe
+export pure nothrow bool isNaN(T)(in T x) if (isScalarType!(T))
 body {
-	static if (DerivSeqType.Order == 0) {
-		return DerivSeqType(std.math.abs(u.val()));
-	} else {
-		return DerivSeqType(std.math.abs(u.val()), u.reduce().sgn());
-	}
+	return std.math.isNaN(x);
+}
+@safe
+export pure nothrow bool isNaN(ulong O, F)(in PluralNum!(O, F) x) 
+body {
+	return std.math.isNaN(x.val);
+}
+unittest {
+	assert (isNaN(PluralNum!().nan));
+	assert (isNaN(PluralNum!(1, float).nan));
 }
 
 
+/**
+ * This function computes the sign of the argument. It is analogous to std.math.sgn().
+ * 
+ * Params:
+ *   T = The type of the argument. It must be a scalar type for a PluralNum.
+ *   x = the argument
+ */
+@safe
+export pure nothrow T sgn(T)(in T x) if (isScalarType!(T))
+body { 
+	return std.math.sgn(x); 
+}
+@safe
+export pure nothrow PluralNum!(O, F) sgn(ulong O, F)(in PluralNum!(O, F) x)
+body {
+	alias PN = PluralNum!(O, F);
+	const val = sgn(x.val);
+	if (x == PN.zero) {
+		return PN(val, PN.DerivType!().nan);
+	} else {
+		return PN(val, 0 * x.d);
+	}
+}
+unittest {
+	assert(sgn(0) == 0);
+	assert(sgn(2) == 1);
+	assert(sgn(-3) == -1);
+
+	assert(isNaN(sgn(PluralNum!()())));
+
+	assert(0 == sgn(PluralNum!()(0, real.nan)));
+	assert(1 == sgn(derivSeq(1.0L, 0.0L, real.nan)));
+	assert(1 == sgn(PluralNum!()(real.infinity, 0)));
+	assert(-1 == sgn(PluralNum!()(-real.infinity, 0)));
+}
+
+/**
+ * TODO document
+ */
+@safe
+export pure nothrow T abs(T)(in T x) if (isScalarType!(T))
+body {
+	return std.math.abs(x);
+}
+@safe
+export pure nothrow PluralNum!(O, F) abs(ulong O, F)(in PluralNum!(O, F) x)
+body {
+	alias PN = PluralNum!(O, F);
+	const dx = x == PN.zero 
+		? PN.DerivType!().nan 
+		: x.d * sgn(x.reduce()); 
+	return PN(std.math.abs(x.val), dx);
+}
+unittest {
+	// TODO more testing
+	assert (abs(PluralNum!().var(-1)) == PluralNum!().var(1));
+}
+
+/* TODO document
+ */
+@safe 
+export pure nothrow T cos(T)(in T x) if (isScalarType!(T))
+body {
+	return std.math.cos(x);
+}
+@safe
+export pure nothrow PluralNum!(O, F) cos(ulong O, F)(in PluralNum!(O, F) x)
+body {
+	return DerivSeqType(
+		std.math.cos(x.val), 
+		-x.d * sin(x.reduce()));
+}
+
+/+
 export pure DerivSeqType sqrt(DerivSeqType)(const DerivSeqType u)
 in {
 	static if (DerivSeqType.Order == 0) {
@@ -83,20 +168,9 @@ body {
 			u.d() * cos(u.reduce()));
 	}
 }
++/
 
-
-export pure DerivSeqType cos(DerivSeqType)(const DerivSeqType u)
-body {
-	static if (DerivSeqType.Order == 0) {
-		return DerivSeqType(std.math.cos(u.val()));
-	} else {
-		return DerivSeqType(
-			std.math.cos(u.val()), 
-			-u.d() * sin(u.reduce()));
-	}
-}
-
-
+/+
 // TODO learn why remainder is not pure
 export DerivSeqType tan(DerivSeqType)(const DerivSeqType u)
 in {
@@ -166,3 +240,4 @@ unittest {
 	writeln("pow(cos(u), 2) = ", pow(cos(u), 2));
 	writeln("cos(u)*cos(u) = ", cos(u)*cos(u));
 }
++/
