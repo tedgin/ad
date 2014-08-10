@@ -37,8 +37,8 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		}
 	}
 	unittest {
-		assert (is(PluralNum!(2).DerivType!() == PluralNum!(1)));
-		assert (is(PluralNum!(2).DerivType!(2) == real));
+		assert(is(PluralNum!(2).DerivType!() == PluralNum!(1)));
+		assert(is(PluralNum!(2).DerivType!(2) == real));
 	}
 
 	private Field _x;
@@ -202,16 +202,16 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	unittest {
 		const q = PluralNum!(3)(3, PluralNum!(2)(2, PluralNum!()(1, 0)));
 		const dq = q.d!()();
-		assert (is(typeof(dq) == const(PluralNum!(2))));
-		assert (dq.val() == 2);
+		assert(is(typeof(dq) == const(PluralNum!(2))));
+		assert(dq.val() == 2);
 		
 		const d2q = q.d!(2)();
-		assert (is(typeof(d2q) == const(PluralNum!(1))));
-		assert (d2q.val() == 1);
+		assert(is(typeof(d2q) == const(PluralNum!(1))));
+		assert(d2q.val() == 1);
 
 		const d3q = q.d!(3)();
-		assert (is(typeof(d3q) == const(real)));
-		assert (d3q == 0);
+		assert(is(typeof(d3q) == const(real)));
+		assert(d3q == 0);
 	}
 	
 	@safe 
@@ -225,7 +225,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	body{
 		return _x == val;
 	}
-	
+
 	@safe
 	export pure nothrow const int opCmp(in PluralNum that) 
 	body {
@@ -241,9 +241,36 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	}
 	unittest {
 		const q = PluralNum!()(2, 1);
-		assert (q < 3);
-		assert (q !<> 2);
-		assert (q >= 1);
+		assert(q < 3);
+		assert(q !<> 2);
+		assert(q >= 1);
+	}
+
+	/**
+	 * Determines whether two plural numbers have the same value and along with each their derivatives.
+	 * 
+	 * Params:
+	 *   that = The plural number being compared.
+	 * 
+	 * Returns:
+	 *   It returns true of the provided plural number has the same value as this one and each of its derivatives have
+	 *   the same values the this one's derivative of the same order.  Otherwise, it returns false.
+	 */
+	@safe
+	package pure nothrow const bool same(in PluralNum that) 
+	body {
+		static if (Order == 1) return sameVal(this._x, that._x) && sameVal(this._dx, that._dx);
+		else                   return sameVal(this._x, that._x) && this._dx.same(that._dx);
+	}
+	unittest {
+		const x = PluralNum!(2)(1, 2, 3);
+		assert(x.same(x));
+		assert(!x.same(PluralNum!(2)(2, 2, 3)));
+		assert(!x.same(PluralNum!(2)(1, 1, 3)));
+		assert(!x.same(PluralNum!(2)(1, 2, 2)));
+
+		const n = PluralNum!()();
+		assert(n.same(n));
 	}
 
 	@trusted
@@ -262,12 +289,12 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	unittest {
 		const q = PluralNum!()(2, 1);
 		const w = +q;
-		assert (w._x == 2);
-		assert (w._dx == 1);
+		assert(w._x == 2);
+		assert(w._dx == 1);
 
 		const e = -q;
-		assert (e._x == -2);
-		assert (e._dx == -1);
+		assert(e._x == -2);
+		assert(e._dx == -1);
 	}
 
 	/**
@@ -287,7 +314,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		import std.stdio;
 		const x = PluralNum!(3)(1, PluralNum!(2)(2, PluralNum!(1)(3, 4)));
 		const y = x.inv();
-		assert (x * y == PluralNum!(3).one);
+		assert(x * y == PluralNum!(3).one);
 	}
 
 	@safe
@@ -323,13 +350,13 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		const q = PluralNum!()(2, 1);
 		const w = PluralNum!()(4, 3);
 		const e = q + w;
-		assert (e._x == 6 && e._dx == 4);
+		assert(e._x == 6 && e._dx == 4);
 
 		const r = q + 1.0;
-		assert (r._x == 3 && r._dx == 1);
+		assert(r._x == 3 && r._dx == 1);
 
 		const t = 2 + q;
-		assert (t._x == 4 && t._dx == 1);
+		assert(t._x == 4 && t._dx == 1);
 	}
 
 	@safe
@@ -347,7 +374,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		const q = PluralNum!()(1, 2);
 		const w = PluralNum!()(3, 5);
 		const e = q * w;
-		assert (e._x == 3 && e._dx == 11);
+		assert(e._x == 3 && e._dx == 11);
 	}
 
 	@safe
@@ -370,37 +397,37 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	} 
 	unittest {
 		const e = PluralNum!()(3, 1) % PluralNum!()(2, 4);
-		assert (e._x == 1 && e._dx == -3);
+		assert(e._x == 1 && e._dx == -3);
 
 		const q = PluralNum!()(-3, 1) % PluralNum!()(2, 4);
-		assert (q._x == -1 && q._dx == 5);
+		assert(q._x == -1 && q._dx == 5);
 
 		const r = PluralNum!()(3, 1) % PluralNum!()(-2, 4);
-		assert (r._x == 1 && r._dx ==  5);
+		assert(r._x == 1 && r._dx ==  5);
 
 		const t = PluralNum!()(-3, 1) % PluralNum!()(-2, 4);
-		assert (t._x == -1 && t._dx == -3);
+		assert(t._x == -1 && t._dx == -3);
 
 		const w = PluralNum!()(4, 1) % PluralNum!()(2, 4);
-		assert (w._x == 0 && w._dx == real.infinity);
+		assert(w._x == 0 && w._dx == real.infinity);
 
 		const y = PluralNum!()(0, 1) % PluralNum!()(2, 4);
-		assert (y._x == 0 && y._dx == 1);
+		assert(y._x == 0 && y._dx == 1);
 
 		const u = PluralNum!()(0, 1) % PluralNum!()(0, 4);
-		assert (isnan(u._x) && isnan(u._dx));
+		assert(isnan(u._x) && isnan(u._dx));
 
 		const i = PluralNum!()(real.infinity, 1) % PluralNum!()(2, 4);
-		assert (isnan(i._x) && isnan(i._dx));
+		assert(isnan(i._x) && isnan(i._dx));
 
 		const o = PluralNum!()(3, 1) % PluralNum!()(real.infinity, 1);
-		assert (o._x == 3 && o._dx == 1);
+		assert(o._x == 3 && o._dx == 1);
 
 		const p = PluralNum!()(real.nan, real.nan) % PluralNum!()(2, 4);
-		assert (isnan(p._x) && isnan(p._dx));
+		assert(isnan(p._x) && isnan(p._dx));
 
 		const a = PluralNum!()(3, 1) % PluralNum!()(real.nan, real.nan);
-		assert (isnan(a._x) && isnan(a._dx));
+		assert(isnan(a._x) && isnan(a._dx));
 	}
 
 	@safe
@@ -430,7 +457,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	}
 	unittest {
 		const q = PluralNum!(2)(1, PluralNum!(1)(2, 3));
-		assert (q.toString() == "1.000000 + 2.000000d + 3.000000d2");
+		assert(q.toString() == "1.000000 + 2.000000d + 3.000000d2");
 	}
 	/**
 	 * Computes the natural logarithm of the plural number. The logarithm is a method attached to this struct because it
@@ -505,8 +532,8 @@ unittest {
 	// force the unit tests
 	const PluralNum!() w;
 
-	assert (isnan(w._x));
-	assert (isnan(PluralNum!().init._x));
+	assert(isnan(w._x));
+	assert(isnan(PluralNum!().init._x));
 }
 
 
@@ -530,8 +557,8 @@ body {
 	return PluralNum!(Len - 1, Field)(derivVals);
 }
 unittest {
-	assert (derivSeq(1.0) == 1.0);
-	assert (derivSeq(1.0L, 2.0L) == PluralNum!()(1.0, 2.0));
+	assert(derivSeq(1.0) == 1.0);
+	assert(derivSeq(1.0L, 2.0L) == PluralNum!()(1.0, 2.0));
 }
 
 
@@ -544,8 +571,24 @@ body {
 	}
 }
 unittest {
-	assert ("" == formatSuffix(0));
-	assert ("d" == formatSuffix(1));
-	assert ("d2" == formatSuffix(2));
-	assert ("d10" == formatSuffix(10));
+	assert("" == formatSuffix(0));
+	assert("d" == formatSuffix(1));
+	assert("d2" == formatSuffix(2));
+	assert("d10" == formatSuffix(10));
+}
+
+
+@safe
+private pure nothrow bool sameVal(Field)(in Field lhs, in Field rhs)
+body {
+	return isNaN(lhs) && isNaN(rhs) || lhs == rhs;
+}
+unittest {
+	assert(sameVal(1, 1));
+	assert(!sameVal(2, 3));
+	assert(sameVal(real.nan, real.nan));
+	assert(!sameVal(real.nan, 5.0L));
+	assert(sameVal(real.infinity, real.infinity));
+	assert(sameVal(-real.infinity, -real.infinity));
+	assert(!sameVal(real.infinity, 2.9L));
 }
