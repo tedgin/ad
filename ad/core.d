@@ -139,23 +139,12 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		_dx = derivs;
 	}
 
-	/**
-	 * Constructs a plural number from its value and the values of its derivatives
-	 * 
-	 * Params:
-	 *   derivVals = the an array of the derivative values where index is the order of the derivative
-	 */
-	package pure nothrow this(in Field[Order + 1] derivVals ...)
+	private pure nothrow this(in Field[Order + 1] derivVals ...)
 	body {
 		_x = derivVals[0];
 		static if (Order > 1) _dx = DerivType!()(derivVals[1 .. Order + 1]);
 		else                  _dx = derivVals[1];
 	}
-	unittest {
-		assert (PluralNum!()([1.0, 2.0]) == PluralNum!()(1.0, 2.0));
-		assert (PluralNum!(2)(1.0L, 2.0L, 3.0L) == PluralNum!(2)(1.0, PluralNum!()(2.0, 3.0)));
-	}
-
 
 	@safe @property 
 	export pure nothrow const PluralNum!(Order, typeof(Field.nan.re)) re() 
