@@ -85,10 +85,10 @@ body {
 export pure nothrow PluralNum!(O, F) abs(ulong O, F)(in PluralNum!(O, F) x)
 body {
 	alias PN = PluralNum!(O, F);
-	const dx = x == PN.zero 
+	const dx = x == 0 
 		? PN.DerivType!().nan 
 		: x.d * sgn(x.reduce()); 
-	return PN(std.math.abs(x.val), dx);
+	return PN(abs(x.val), dx);
 }
 unittest {
 	assert(abs(1) == 1);
@@ -97,9 +97,11 @@ unittest {
 
 	assert(isNaN(abs(PluralNum!()())));
 
-	// TODO fix this test to use same
-	assert(abs(PluralNum!().var(-1)) == PluralNum!().var(1));
-	// TODO more testing
+	assert(abs(PluralNum!().zero).same(derivSeq(0.0L, real.nan)));
+	assert(abs(derivSeq(2.0L, 2.0L)).same(derivSeq(2.0L, 2.0L)));
+	assert(abs(PluralNum!().var(-1)).same(derivSeq(1.0L, -1.0L)));
+	assert(abs(PluralNum!().infinity).same(PluralNum!().infinity));
+	assert(abs(-PluralNum!().infinity).same(PluralNum!().infinity));
 }
 
 
@@ -116,9 +118,9 @@ body {
 @safe
 export pure nothrow PluralNum!(O, F) cos(ulong O, F)(in PluralNum!(O, F) x)
 body {
-	return DerivSeqType(
-		std.math.cos(x.val), 
-		-x.d * sin(x.reduce()));
+	return PluralNum!(O, F)(
+		cos(x.val), 
+		-sin(x.reduce()) * x.d);
 }
 // TODO test
 
@@ -219,43 +221,5 @@ body {
 			std.math.acos(u.val()), 
 			-u.d() / sqrt(1 - pow(u.reduce(), 2)));
 	}
-}
-
-unittest {
-	const real c = 5;
-	const auto p = DerivSeq!(1).param(1);
-	const auto u = DerivSeq!(2).var(2);
-	const auto v = DerivSeq!(2).var(3);
-
-	writeln("c = ", c);
-	writeln("p = ", p);
-	writeln("u = ", u);
-	writeln("v = ", v);
-	writeln("u.x() = ", u.val());
-	writeln("u.dx() = ", u.d!()());
-	writeln("u.dx(2) = ", u.d!(2)());
-	writeln("+u = ", +u);
-	writeln("-u = ", -u);
-	writeln("u.inv() = ", u.inv());
-	writeln("u + v = ", u + v);
-	writeln("u + c = ", u + c);
-	writeln("u - v = ", u - v);
-	writeln("u - c = ", u - c);
-	writeln("c - u = ", c - u);
-	writeln("u * u = ", u * u);
-	writeln("u * c = ", u * c);
-	writeln("u / v = ", u / v);
-	writeln("u / c = ", u / c);
-	writeln("c / u = ", c / u);
-	writeln("sin(u) = ", sin(u));
-	writeln("cos(u) = ", cos(u));
-	writeln("tan(u) = ", tan(u));
-	writeln("exp(u) = ", exp(u));
-	writeln("log(u) = ", log(u));
-	writeln("pow(u, c) = ", pow(u, c));
-	writeln("abs(u) = ", abs(u));
-	writeln("cos(2u) = ", cos(2*u));
-	writeln("pow(cos(u), 2) = ", pow(cos(u), 2));
-	writeln("cos(u)*cos(u) = ", cos(u)*cos(u));
 }
 +/
