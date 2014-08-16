@@ -2,6 +2,8 @@
  * This module implements automatic differentiation using forward accumulation and operator overloading.
  * 
  * It can only differentiate functions of the form f:R->R. This is a completely unoptimized version.
+ * 
+ * The traditional definition of differentiation is used, not the generalized notition from distribution theory.
  */
 module ad.core;
 

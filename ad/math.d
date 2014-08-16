@@ -27,13 +27,15 @@ body {
 	return std.math.isNaN(x.val);
 }
 unittest {
-	assert (isNaN(PluralNum!().nan));
-	assert (isNaN(PluralNum!(1, float).nan));
+	assert(isNaN(PluralNum!().nan));
+	assert(isNaN(PluralNum!(1, float).nan));
 }
 
 
 /**
  * This function computes the sign of the argument. It is analogous to std.math.sgn().
+ * 
+ * The derivate of sgn(x) evaluated at 0 is undefined or NaN.  Otherwise it is 0*x'.
  * 
  * Params:
  *   T = The type of the argument. It must be a scalar type for a PluralNum.
@@ -48,28 +50,31 @@ body {
 export pure nothrow PluralNum!(O, F) sgn(ulong O, F)(in PluralNum!(O, F) x)
 body {
 	alias PN = PluralNum!(O, F);
-	const val = sgn(x.val);
-	if (x == PN.zero) {
-		return PN(val, PN.DerivType!().nan);
-	} else {
-		return PN(val, 0 * x.d);
-	}
+	if (x == 0) return PN(0, PN.DerivType!().nan);
+	return PN(sgn(x.val), 0 * x.d);
 }
 unittest {
 	assert(sgn(0) == 0);
 	assert(sgn(2) == 1);
 	assert(sgn(-3) == -1);
 
-	assert(isNaN(sgn(PluralNum!()())));
+	assert(sgn(PluralNum!()()).same(PluralNum!()(real.nan, real.nan)));
 
-	assert(0 == sgn(PluralNum!()(0, real.nan)));
-	assert(1 == sgn(derivSeq(1.0L, 0.0L, real.nan)));
-	assert(1 == sgn(PluralNum!()(real.infinity, 0)));
-	assert(-1 == sgn(PluralNum!()(-real.infinity, 0)));
+	assert(sgn(PluralNum!()(0, real.nan)).same(PluralNum!()(0, real.nan)));
+	assert(sgn(derivSeq(1.0L, 2.0L, real.nan)).same(derivSeq(1.0L, 0.0L, real.nan)));
+	assert(sgn(PluralNum!()(real.infinity, 0)).same(PluralNum!().one));
+	assert(sgn(PluralNum!()(-real.infinity, 0)).same(-PluralNum!().one));
 }
 
+
 /**
- * TODO document
+ * This function computes the absolute value of the argument. It is analogous to std.math.abs().
+ * 
+ * The derivative of the abs(x) is x*x'/abs(x).
+ * 
+ * Params:
+ *   T = The type of the argument. It must be a scalar type for a PluralNum.
+ *   x = the argument
  */
 @safe
 export pure nothrow T abs(T)(in T x) if (isScalarType!(T))
@@ -86,11 +91,22 @@ body {
 	return PN(std.math.abs(x.val), dx);
 }
 unittest {
+	assert(abs(1) == 1);
+	assert(abs(0) == 0);
+	assert(abs(-1) == 1);
+
+	assert(isNaN(abs(PluralNum!()())));
+
+	// TODO fix this test to use same
+	assert(abs(PluralNum!().var(-1)) == PluralNum!().var(1));
 	// TODO more testing
-	assert (abs(PluralNum!().var(-1)) == PluralNum!().var(1));
 }
 
-/* TODO document
+
+/** 
+ * TODO document
+ * 
+ * The derivative of cos(x) is -sin(x).
  */
 @safe 
 export pure nothrow T cos(T)(in T x) if (isScalarType!(T))
@@ -104,6 +120,8 @@ body {
 		std.math.cos(x.val), 
 		-x.d * sin(x.reduce()));
 }
+// TODO test
+
 
 /+
 export pure DerivSeqType sqrt(DerivSeqType)(const DerivSeqType u)
