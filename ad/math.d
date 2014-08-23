@@ -13,7 +13,7 @@ public import ad.core;
  * This function determines whether its argument is a NaN.  It is analogous to std.math.isNaN().
  *  
  * Params:
- *   T = The type of the argument. It must be a scalar type for a PluralNum.
+ *   T = The type of the argument. It must be a scalar type or a PluralNum.
  *   x = the argument
  */
 @safe
@@ -38,7 +38,7 @@ unittest {
  * The derivate of sgn(x) evaluated at 0 is undefined or NaN.  Otherwise it is 0*x'.
  * 
  * Params:
- *   T = The type of the argument. It must be a scalar type for a PluralNum.
+ *   T = The type of the argument. It must be a scalar type or a PluralNum.
  *   x = the argument
  */
 @safe
@@ -73,7 +73,7 @@ unittest {
  * The derivative of the abs(x) is x*x'/abs(x).
  * 
  * Params:
- *   T = The type of the argument. It must be a scalar type for a PluralNum.
+ *   T = The type of the argument. It must be a scalar type or a PluralNum.
  *   x = the argument
  */
 @safe
@@ -100,18 +100,21 @@ unittest {
 	assert(abs(PluralNum!().zero).same(derivSeq(0.0L, real.nan)));
 	assert(abs(derivSeq(2.0L, 2.0L)).same(derivSeq(2.0L, 2.0L)));
 	assert(abs(PluralNum!().var(-1)).same(derivSeq(1.0L, -1.0L)));
+
 	assert(abs(PluralNum!().infinity).same(PluralNum!().infinity));
 	assert(abs(-PluralNum!().infinity).same(PluralNum!().infinity));
 }
 
 
 /** 
- * TODO document
+ * This function computes the cosine of the argument. It is analogous to std.math.cos().
  * 
- * The derivative of cos(x) is -sin(x).
+ * Params:
+ *   T = The type of the argument. It must be a scalar type or a PluralNum
+ *   x = the argument
  */
 @safe 
-export pure nothrow T cos(T)(in T x) if (isScalarType!(T))
+export pure nothrow real cos(T)(in T x) if (isScalarType!(T))
 body {
 	return std.math.cos(x);
 }
@@ -122,7 +125,17 @@ body {
 		cos(x.val), 
 		-sin(x.reduce()) * x.d);
 }
-// TODO test
+unittest {
+	assert(cos(0) == 1);
+
+	assert(isNaN(cos(PluralNum!()())));
+
+	assert(cos(PluralNum!().zero).same(derivSeq(1.0L, 0.0L)));
+	assert(cos(PluralNum!().var(PI_2)).same(derivSeq(cos(PI_2), -1.0L)));
+
+	assert(cos(PluralNum!().infinity).same(PluralNum!().nan));
+	assert(cos(-PluralNum!().infinity).same(PluralNum!().nan));
+}
 
 
 /+
