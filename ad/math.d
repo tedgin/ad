@@ -10,6 +10,77 @@ public import ad.core;
 
 
 /**
+ * This function computes the absolute value of the argument. It is analogous to std.math.abs().
+ * 
+ * The derivative of the abs(x) is x*x'/abs(x).
+ * 
+ * Params:
+ *   T = The type of the argument. It must be a scalar type or a PluralNum.
+ *   x = the argument
+ */
+@safe
+export pure nothrow T abs(T)(in T x) if (isScalarType!(T))
+body {
+	return std.math.abs(x);
+}
+@safe
+export pure nothrow PluralNum!(O, F) abs(ulong O, F)(in PluralNum!(O, F) x)
+body {
+	alias PN = PluralNum!(O, F);
+	const dx = x == 0 
+		? PN.DerivType!().nan 
+			: x.d * sgn(x.reduce()); 
+	return PN(abs(x.val), dx);
+}
+unittest {
+	assert(abs(1) == 1);
+	assert(abs(0) == 0);
+	assert(abs(-1) == 1);
+	
+	assert(abs(PluralNum!()()).same(PluralNum!()(real.nan, real.nan)));
+	
+	assert(abs(PluralNum!().zero).same(derivSeq(0.0L, real.nan)));
+	assert(abs(derivSeq(2.0L, 2.0L)).same(derivSeq(2.0L, 2.0L)));
+	assert(abs(PluralNum!().var(-1)).same(derivSeq(1.0L, -1.0L)));
+	
+	assert(abs(PluralNum!().infinity).same(PluralNum!().infinity));
+	assert(abs(-PluralNum!().infinity).same(PluralNum!().infinity));
+}
+
+
+/** 
+ * This function computes the cosine of the argument. It is analogous to std.math.cos().
+ * 
+ * Params:
+ *   T = The type of the argument. It must be a scalar type or a PluralNum
+ *   x = the argument
+ */
+@safe 
+export pure nothrow real cos(T)(in T x) if (isScalarType!(T))
+body {
+	return std.math.cos(x);
+}
+@safe
+export pure nothrow PluralNum!(O, F) cos(ulong O, F)(in PluralNum!(O, F) x)
+body {
+	return PluralNum!(O, F)(
+		cos(x.val), 
+		-sin(x.reduce()) * x.d);
+}
+unittest {
+	assert(cos(0) == 1);
+	
+	assert(cos(PluralNum!()()).same(PluralNum!()(real.nan, real.nan)));
+	
+	assert(cos(PluralNum!().zero).same(derivSeq(1.0L, 0.0L)));
+	assert(cos(PluralNum!().var(PI_2)).same(derivSeq(cos(PI_2), -1.0L)));
+	
+	assert(cos(PluralNum!().infinity).same(PluralNum!().nan));
+	assert(cos(-PluralNum!().infinity).same(PluralNum!().nan));
+}
+
+
+/**
  * This function determines whether its argument is a NaN.  It is analogous to std.math.isNaN().
  *  
  * Params:
@@ -64,77 +135,6 @@ unittest {
 	assert(sgn(derivSeq(1.0L, 2.0L, real.nan)).same(derivSeq(1.0L, 0.0L, real.nan)));
 	assert(sgn(PluralNum!()(real.infinity, 0)).same(PluralNum!().one));
 	assert(sgn(PluralNum!()(-real.infinity, 0)).same(-PluralNum!().one));
-}
-
-
-/**
- * This function computes the absolute value of the argument. It is analogous to std.math.abs().
- * 
- * The derivative of the abs(x) is x*x'/abs(x).
- * 
- * Params:
- *   T = The type of the argument. It must be a scalar type or a PluralNum.
- *   x = the argument
- */
-@safe
-export pure nothrow T abs(T)(in T x) if (isScalarType!(T))
-body {
-	return std.math.abs(x);
-}
-@safe
-export pure nothrow PluralNum!(O, F) abs(ulong O, F)(in PluralNum!(O, F) x)
-body {
-	alias PN = PluralNum!(O, F);
-	const dx = x == 0 
-		? PN.DerivType!().nan 
-		: x.d * sgn(x.reduce()); 
-	return PN(abs(x.val), dx);
-}
-unittest {
-	assert(abs(1) == 1);
-	assert(abs(0) == 0);
-	assert(abs(-1) == 1);
-
-	assert(isNaN(abs(PluralNum!()())));
-
-	assert(abs(PluralNum!().zero).same(derivSeq(0.0L, real.nan)));
-	assert(abs(derivSeq(2.0L, 2.0L)).same(derivSeq(2.0L, 2.0L)));
-	assert(abs(PluralNum!().var(-1)).same(derivSeq(1.0L, -1.0L)));
-
-	assert(abs(PluralNum!().infinity).same(PluralNum!().infinity));
-	assert(abs(-PluralNum!().infinity).same(PluralNum!().infinity));
-}
-
-
-/** 
- * This function computes the cosine of the argument. It is analogous to std.math.cos().
- * 
- * Params:
- *   T = The type of the argument. It must be a scalar type or a PluralNum
- *   x = the argument
- */
-@safe 
-export pure nothrow real cos(T)(in T x) if (isScalarType!(T))
-body {
-	return std.math.cos(x);
-}
-@safe
-export pure nothrow PluralNum!(O, F) cos(ulong O, F)(in PluralNum!(O, F) x)
-body {
-	return PluralNum!(O, F)(
-		cos(x.val), 
-		-sin(x.reduce()) * x.d);
-}
-unittest {
-	assert(cos(0) == 1);
-
-	assert(isNaN(cos(PluralNum!()())));
-
-	assert(cos(PluralNum!().zero).same(derivSeq(1.0L, 0.0L)));
-	assert(cos(PluralNum!().var(PI_2)).same(derivSeq(cos(PI_2), -1.0L)));
-
-	assert(cos(PluralNum!().infinity).same(PluralNum!().nan));
-	assert(cos(-PluralNum!().infinity).same(PluralNum!().nan));
 }
 
 
