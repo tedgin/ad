@@ -6,6 +6,8 @@ module ad.math;
 import std.math;
 import std.traits;
 
+import std.stdio;
+
 public import ad.core;
 
 
@@ -29,7 +31,7 @@ body {
 	alias PN = PluralNum!(O, F);
 	const dx = x == 0 
 		? PN.DerivType!().nan 
-			: x.d * sgn(x.reduce()); 
+		: x.d * sgn(x.reduce()); 
 	return PN(abs(x.val), dx);
 }
 unittest {
@@ -138,26 +140,44 @@ unittest {
 }
 
 
-/+
-export pure DerivSeqType sqrt(DerivSeqType)(const DerivSeqType u)
-in {
-	static if (DerivSeqType.Order == 0) {
-		assert (u.val() >= 0);
-	} else {
-		assert (u.val() > 0);
-	}
-}
+/**
+ * This function computes the square root of its argument. It is analogous to std.math.sqrt().
+ * 
+ * Params:
+ *   T = the type of the argument. It must be implicitly convertable to a real or be a PluralNum.
+ *   x = the argument
+ */
+@safe
+export pure nothrow T sqrt(T)(in T x) if (isFloatingPoint!(T)) 
 body {
-	static if (DerivSeqType.Order == 0) {
-		return DerivSeqType(std.math.sqrt(u.val()));
-	} else {
-		return DerivSeqType( 
-			std.math.sqrt(u.val()), 
-			u.d() / (2 * sqrt(u.reduce())));
-	}		
+	return std.math.sqrt(x);
+}
+@safe
+export pure nothrow PluralNum!(O, F) sqrt(ulong O, F)(in PluralNum!(O, F) x)
+body {
+	alias PN = PluralNum!(O, F);
+	if (x == 0) return PN(0, PN.DerivType!().nan);
+	return PN( 
+		sqrt(x.val), 
+		x.d / (2 * sqrt(x.reduce())));		
+}
+unittest {
+	assert(sqrt(0.0f) == 0);
+	assert(sqrt(1.0) == 1);
+	assert(sqrt(4.0L) == 2);
+
+	assert(sqrt(PluralNum!().var(1)).same(derivSeq(1.0L, 0.5L)));
+
+	assert(sqrt(PluralNum!().var(0)).same(derivSeq(0.0L, real.nan)));
+	assert(sqrt(PluralNum!().var(-1)).same(PluralNum!().nan));
+
+	assert(sqrt(PluralNum!().infinity).same(derivSeq(real.infinity, 0.0L)));
+
+	assert(sqrt(PluralNum!().nan).same(PluralNum!().nan));
 }
 
 
+/+
 export pure DerivSeqType pow(ValType, DerivSeqType)(const DerivSeqType u, const ValType k)
 	/* TODO Depending on the values of _x and k, a complex or nan may arise.  Either way, this 
 	 * should fail an assertion.
