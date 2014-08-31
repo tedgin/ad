@@ -21,24 +21,20 @@ public import ad.core;
  *   x = the argument
  */
 @safe
-export pure nothrow T abs(T)(in T x) if (isScalarType!(T))
+export pure nothrow abs(in real x)
 body {
 	return std.math.abs(x);
 }
 @safe
-export pure nothrow PluralNum!(O, F) abs(ulong O, F)(in PluralNum!(O, F) x)
+export pure nothrow PluralNum!O abs(ulong O)(in PluralNum!O x)
 body {
-	alias PN = PluralNum!(O, F);
+	alias PN = PluralNum!O;
 	const dx = x == 0 
 		? PN.DerivType!().nan 
 		: x.d * sgn(x.reduce()); 
 	return PN(abs(x.val), dx);
 }
 unittest {
-	assert(abs(1) == 1);
-	assert(abs(0) == 0);
-	assert(abs(-1) == 1);
-	
 	assert(abs(PluralNum!()()).same(PluralNum!()(real.nan, real.nan)));
 	
 	assert(abs(PluralNum!().zero).same(derivSeq(0.0L, real.nan)));
@@ -58,20 +54,18 @@ unittest {
  *   x = the argument
  */
 @safe 
-export pure nothrow real cos(T)(in T x) if (isScalarType!(T))
+export pure nothrow real cos(in real x)
 body {
 	return std.math.cos(x);
 }
 @safe
-export pure nothrow PluralNum!(O, F) cos(ulong O, F)(in PluralNum!(O, F) x)
+export pure nothrow PluralNum!O cos(ulong O)(in PluralNum!O x)
 body {
-	return PluralNum!(O, F)(
+	return PluralNum!O(
 		cos(x.val), 
 		-sin(x.reduce()) * x.d);
 }
 unittest {
-	assert(cos(0) == 1);
-	
 	assert(cos(PluralNum!()()).same(PluralNum!()(real.nan, real.nan)));
 	
 	assert(cos(PluralNum!().zero).same(derivSeq(1.0L, 0.0L)));
@@ -90,18 +84,17 @@ unittest {
  *   x = the argument
  */
 @safe
-export pure nothrow bool isNaN(T)(in T x) if (isScalarType!(T))
+export pure nothrow bool isNaN(in real x)
 body {
 	return std.math.isNaN(x);
 }
 @safe
-export pure nothrow bool isNaN(ulong O, F)(in PluralNum!(O, F) x) 
+export pure nothrow bool isNaN(ulong O)(in PluralNum!O x) 
 body {
 	return std.math.isNaN(x.val);
 }
 unittest {
 	assert(isNaN(PluralNum!().nan));
-	assert(isNaN(PluralNum!(1, float).nan));
 }
 
 
@@ -115,22 +108,18 @@ unittest {
  *   x = the argument
  */
 @safe
-export pure nothrow T sgn(T)(in T x) if (isScalarType!(T))
+export pure nothrow real sgn(in real x)
 body { 
 	return std.math.sgn(x); 
 }
 @safe
-export pure nothrow PluralNum!(O, F) sgn(ulong O, F)(in PluralNum!(O, F) x)
+export pure nothrow PluralNum!O sgn(ulong O)(in PluralNum!O x)
 body {
-	alias PN = PluralNum!(O, F);
+	alias PN = PluralNum!O;
 	if (x == 0) return PN(0, PN.DerivType!().nan);
 	return PN(sgn(x.val), 0 * x.d);
 }
 unittest {
-	assert(sgn(0) == 0);
-	assert(sgn(2) == 1);
-	assert(sgn(-3) == -1);
-
 	assert(sgn(PluralNum!()()).same(PluralNum!()(real.nan, real.nan)));
 
 	assert(sgn(PluralNum!()(0, real.nan)).same(PluralNum!()(0, real.nan)));
@@ -148,24 +137,20 @@ unittest {
  *   x = the argument
  */
 @safe
-export pure nothrow T sqrt(T)(in T x) if (isFloatingPoint!(T)) 
+export pure nothrow real sqrt(in real x) 
 body {
 	return std.math.sqrt(x);
 }
 @safe
-export pure nothrow PluralNum!(O, F) sqrt(ulong O, F)(in PluralNum!(O, F) x)
+export pure nothrow PluralNum!O sqrt(ulong O)(in PluralNum!O x)
 body {
-	alias PN = PluralNum!(O, F);
+	alias PN = PluralNum!O;
 	if (x == 0) return PN(0, PN.DerivType!().nan);
 	return PN( 
 		sqrt(x.val), 
 		x.d / (2 * sqrt(x.reduce())));		
 }
 unittest {
-	assert(sqrt(0.0f) == 0);
-	assert(sqrt(1.0) == 1);
-	assert(sqrt(4.0L) == 2);
-
 	assert(sqrt(PluralNum!().var(1)).same(derivSeq(1.0L, 0.5L)));
 
 	assert(sqrt(PluralNum!().var(0)).same(derivSeq(0.0L, real.nan)));
@@ -177,7 +162,26 @@ unittest {
 }
 
 
-/+
+@safe
+export pure nothrow real pow(in real x, real y)
+body {
+	return std.math.pow(x, y);
+}
+@safe
+export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in real y)
+body {
+	// TODO implement
+}
+@safe
+export pure nothrow PluralNum!O pow(ulong O)(in real x, in PluralNum!O y)
+body {
+	// TODO implement
+}
+@safe
+export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in PluralNum!O y)
+body {
+	// TODO implement
+} /+
 export pure DerivSeqType pow(ValType, DerivSeqType)(const DerivSeqType u, const ValType k)
 	/* TODO Depending on the values of _x and k, a complex or nan may arise.  Either way, this 
 	 * should fail an assertion.
@@ -191,8 +195,9 @@ body {
 			k * pow(u.reduce(), k - 1) * u.d());
 	}
 }
++/
 
-
+/+
 export pure DerivSeqType exp(DerivSeqType)(const DerivSeqType u)
 body {
 	static if (DerivSeqType.Order == 0) {

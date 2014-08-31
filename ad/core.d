@@ -12,6 +12,7 @@ import std.string;
 import std.traits;
 
 
+// TODO generate fail message for Order == 0
 /**
  * This class implements a generalization of the dual number concept. 
  * 
@@ -20,10 +21,11 @@ import std.traits;
  *
  * Params:
  *  Order = the number of derivatives represented 
- *  Field = the underlying type of real number
  */
-export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloatingPoint!Field && isScalarType!Field) {
+export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 
+
+	// TODO handle DerivType!0
 	/**
 	 * This is the type constructor of the derivatives of the plural number.
 	 * 
@@ -33,50 +35,52 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	 */
 	export template DerivType(ulong DerivOrder = 1) if (DerivOrder >= 1) {
 		static if (DerivOrder == Order) {
-			export alias Field DerivType;
+			export alias real DerivType;
 		} else static if (1 <= DerivOrder && DerivOrder < Order) {
-			export alias PluralNum!(Order - DerivOrder, Field) DerivType;
+			export alias PluralNum!(Order - DerivOrder) DerivType;
 		}
 	}
 	unittest {
-		assert(is(PluralNum!(2).DerivType!() == PluralNum!(1)));
-		assert(is(PluralNum!(2).DerivType!(2) == real));
+		assert(is(PluralNum!2.DerivType!() == PluralNum!()));
 	}
 
-	private Field _x;
+
+	private real _x;
 	private DerivType!() _dx;
+
 
 	/**
 	 * A constant zero represented as a plural number.
 	 */
-	export static immutable PluralNum zero = param(0);
-	
+	export static immutable PluralNum zero = mkZero!PluralNum();
+
 	/**
 	 * A constant one represented as a plural number.
 	 */
-	export static immutable PluralNum one = param(1);
+	export static immutable PluralNum one = mkOne!PluralNum();
 	
-	export static immutable PluralNum nan = PluralNum(Field.nan, DerivType!().nan);
+	export static immutable PluralNum nan = PluralNum(real.nan, DerivType!().nan);
 
-	export static immutable PluralNum infinity = PluralNum(Field.infinity, one.reduce());
+	export static immutable PluralNum infinity = PluralNum(real.infinity, mkOne!(DerivType!())());
 	
-	export static immutable ulong dig = Field.dig;
+	export static immutable ulong dig = real.dig;
 
-	export static immutable PluralNum epsilon = param(Field.epsilon);
+	export static immutable PluralNum epsilon = param(real.epsilon);
 
-	export static immutable ulong mant_dig = Field.mant_dig;
+	export static immutable ulong mant_dig = real.mant_dig;
 
-	export static immutable int max_10_exp = Field.max_10_exp;
+	export static immutable int max_10_exp = real.max_10_exp;
 	
-	export static immutable int max_exp = Field.max_exp;
+	export static immutable int max_exp = real.max_exp;
 
-	export static immutable int min_10_exp = Field.min_10_exp;
+	export static immutable int min_10_exp = real.min_10_exp;
 
-	export static immutable int min_exp = Field.min_exp;
+	export static immutable int min_exp = real.min_exp;
 
-	export static immutable PluralNum max = param(Field.max);
+	export static immutable PluralNum max = param(real.max);
 
-	export static immutable PluralNum min_normal = param(Field.min_normal);
+	export static immutable PluralNum min_normal = param(real.min_normal);
+
 
 	/**
 	 * This function constructs a plural number representing a constant with respect to the derivative.
@@ -88,20 +92,20 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	 *  The plural number representation of the parameter or constant.
 	 */
 	@safe 
-	export static pure nothrow PluralNum param(in Field val)
+	export static pure nothrow PluralNum param(in real val)
 	body {
-		static if (isScalarType!(DerivType!())) return PluralNum(val, 0);
-		else                                    return PluralNum(val, DerivType!().zero);
+		return PluralNum(val, mkZero!(DerivType!())());
 	}
 	unittest {
-		const q = PluralNum!(1).param(1);
+		const q = PluralNum!().param(1);
 		assert(q._x is 1.0);
 		assert(q._dx is 0.0);
 
-		const w = PluralNum!(2).param(1);
+		const w = PluralNum!2.param(1);
 		assert(w._x is 1.0);
-		assert(w._dx == PluralNum!(1).zero);
+		assert(w._dx.same(PluralNum!().zero));
 	}
+
 
 	/**
 	 * This functions constructs a plural number representing the variable of differentiation.
@@ -113,20 +117,20 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	 *  The plural number representation of the variable.
 	 */
 	@safe 
-	export static pure nothrow PluralNum var(in Field val)
+	export static pure nothrow PluralNum var(in real val)
 	body {
-		static if (isScalarType!(DerivType!())) return PluralNum(val, 1);
-		else                                    return PluralNum(val, DerivType!().one);
+		return PluralNum(val, mkOne!(DerivType!())());
 	}
 	unittest {
-		const q = PluralNum!(1).var(2);
+		const q = PluralNum!().var(2);
 		assert(q._x is 2.0);
 		assert(q._dx is 1.0);
 		
-		const w = PluralNum!(2).var(2);
+		const w = PluralNum!2.var(2);
 		assert(w._x is 2.0);
-		assert(w._dx == PluralNum!(1).one);
+		assert(w._dx.same(PluralNum!().one));
 	}
+
 
 	/**
 	 * Constructs a plural number from if value and derivatives
@@ -135,41 +139,43 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	 *   val = the value
 	 *   derivs = the derivatives
 	 */
-	package pure nothrow this(in Field val, in DerivType!() derivs) 
+	package pure nothrow this(in real val, in DerivType!() derivs) 
 	body {
 		_x = val;
 		_dx = derivs;
 	}
 
-	private pure nothrow this(in Field[Order + 1] derivVals ...)
+
+	private pure nothrow this(in real[Order + 1] derivVals ...)
 	body {
 		_x = derivVals[0];
 		static if (Order > 1) _dx = DerivType!()(derivVals[1 .. Order + 1]);
 		else                  _dx = derivVals[1];
 	}
 
+
 	@safe @property 
-	export pure nothrow const PluralNum!(Order, typeof(Field.nan.re)) re() 
+	export pure nothrow const PluralNum re() 
 	body {
-		return PluralNum!(Order, typeof(Field.nan.re))(_x.re, _dx.re);
+		return this;
 	}
-	
+
+
 	@safe @property 
-	export pure nothrow const PluralNum!(Order, typeof(Field.nan.im)) im() 
+	export pure nothrow const PluralNum im() 
 	body {
-		return PluralNum!(Order, typeof(Field.nan.im))(_x.im, _dx.im);
+		return zero;
 	}
-	
+
+
+	// TODO figure out what a real can be cast to and produce an error otherwise
 	@safe 
-	export pure nothrow const Field opCast(Field)() 
+	export pure nothrow const real opCast(Field)() 
 	body {
-		return _x;
+		return cast(Field)(_x);
 	}
-	unittest {
-		const q = PluralNum!()(2, 1);
-		assert(cast(real)(q) is 2.0);
-	}
-	
+
+
 	/**
 	 * Returns the value represented by the plural number.
 	 * 
@@ -177,11 +183,13 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	 *  The value represented by the plural number
 	 */
 	@safe @property 
-	export pure nothrow const Field val()
+	export pure nothrow const real val()
 	body {
 		return _x;
 	}
 
+
+	// TODO handle O order and order type high cases
 	/**
 	 * Returns the derivative of order DerivOrder of the plural number. DerivOrder must be at least one but no more than 
 	 * Order. If DerivOrder == Order, the derivative will be a value of the type of the underlying field. Otherwise the 
@@ -195,47 +203,47 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	 *  The derivative of the plural number.
 	 */
 	@safe @property 
-	export pure nothrow const DerivType!(DerivOrder) d(ulong DerivOrder = 1)() 
+	export pure nothrow const DerivType!DerivOrder d(ulong DerivOrder = 1)() 
 	if (1 <= DerivOrder && DerivOrder <= Order)
 	body {
 		static if (DerivOrder == 1) return _dx;
 		else                        return _dx.d!(DerivOrder - 1)();
 	}
 	unittest {
-		const q = PluralNum!(3)(3, PluralNum!(2)(2, PluralNum!()(1, 0)));
-		const dq = q.d!()();
-		assert(is(typeof(dq) == const(PluralNum!(2))));
-		assert(dq.val() == 2);
+		const q = PluralNum!3(3, PluralNum!2(2, PluralNum!()(1, 0)));
+		const dq = q.d;
+		assert(is(typeof(dq) == const(PluralNum!2)));
+		assert(dq.val == 2);
 		
-		const d2q = q.d!(2)();
-		assert(is(typeof(d2q) == const(PluralNum!(1))));
-		assert(d2q.val() == 1);
+		const d2q = q.d!2;
+		assert(is(typeof(d2q) == const(PluralNum!())));
+		assert(d2q.val == 1);
 
-		const d3q = q.d!(3)();
+		const d3q = q.d!3;
 		assert(is(typeof(d3q) == const(real)));
 		assert(d3q == 0);
 	}
-	
+
+
 	@safe 
 	export pure nothrow const bool opEquals(in PluralNum that) 
 	body {
 		return this._x == that._x;
 	}
-	
 	@safe
-	export pure nothrow const bool opEquals(in Field val) 
+	export pure nothrow const bool opEquals(in real val) 
 	body{
 		return _x == val;
 	}
+
 
 	@safe
 	export pure nothrow const int opCmp(in PluralNum that) 
 	body {
 		return opCmp(that._x);
 	}
-
 	@safe 
-	export pure nothrow const int opCmp(in Field val) 
+	export pure nothrow const int opCmp(in real val) 
 	body {
 		if (_x < val) return -1;
 		if (_x > val) return 1;
@@ -247,6 +255,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		assert(q !<> 2);
 		assert(q >= 1);
 	}
+
 
 	/**
 	 * Determines whether two plural numbers have the same value and along with each their derivatives.
@@ -275,11 +284,14 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		assert(n.same(n));
 	}
 
+
+	// TODO determine a good hash function for real numbers
 	@trusted
 	export pure nothrow const hash_t toHash()
 	body {
 		return cast(hash_t)(_x);
 	}
+
 
 	@safe
 	export pure nothrow const PluralNum opUnary(string op)()
@@ -299,6 +311,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		assert(e._dx == -1);
 	}
 
+
 	/**
 	 * Computes the inverse of the plural number. That is, given a plural number x, it computes the plural number y 
 	 * where x * y is identically 1.
@@ -314,13 +327,14 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 	}
 	unittest {
 		import std.stdio;
-		const x = PluralNum!(3)(1, PluralNum!(2)(2, PluralNum!(1)(3, 4)));
+		const x = PluralNum!3(1, PluralNum!2(2, PluralNum!()(3, 4)));
 		const y = x.inv();
-		assert(x * y == PluralNum!(3).one);
+		assert((x * y).same(PluralNum!3.one));
 	}
 
+
 	@safe
-	export pure nothrow const PluralNum opBinaryRight(string op)(in Field val)
+	export pure nothrow const PluralNum opBinaryRight(string op)(in real val)
 	body {
 		     static if (op == "+")  return param(val) + this;
 		else static if (op == "-")  return param(val) - this;
@@ -331,8 +345,9 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		else static assert(false, "Operator " ~ op ~ " not implemented");
 	}
 
+
 	@safe
-	export pure nothrow const PluralNum opBinary(string op)(in Field val)
+	export pure nothrow const PluralNum opBinary(string op)(in real val)
 	body {
 		     static if (op == "+")  return this + param(val);
 		else static if (op == "-")  return this - param(val);
@@ -342,6 +357,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		else static if (op == "^^") return this ^^ param(val);
 		else static assert(false, "Operator " ~ op ~ " not implemented");
 	}
+
 
 	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "+")
@@ -361,11 +377,13 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		assert(t._x == 4 && t._dx == 1);
 	}
 
+
 	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "-")
 	body {
 		return this + -that;
 	} 
+
 
 	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "*") 
@@ -379,11 +397,13 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		assert(e._x == 3 && e._dx == 11);
 	}
 
+
 	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "/") 
 	body {
 		return this * that.inv();
 	} 
+
 
 	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "%") 
@@ -432,6 +452,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		assert(isnan(a._x) && isnan(a._dx));
 	}
 
+
 	@safe
 	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) if (op == "^^") 
 	body {
@@ -452,15 +473,19 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		const e = PluralNum!()(-1,1) ^^ PluralNum!()(3, 4);
 		assert(e._x == -1 && isnan(e._dx));
 	}
-	
+	// TODO handle unknown op value
+
+
 	const string toString()
 	body {
 		return format(0);
 	}
 	unittest {
-		const q = PluralNum!(2)(1, PluralNum!(1)(2, 3));
+		const q = PluralNum!2(1, PluralNum!()(2, 3));
 		assert(q.toString() == "1.000000 + 2.000000d + 3.000000d2");
 	}
+
+
 	/**
 	 * Computes the natural logarithm of the plural number. The logarithm is a method attached to this struct because it
 	 * is required to compute the derivative of the ^^ operator.
@@ -477,19 +502,20 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		return PluralNum(std.math.log(_x), dlog);
 	}
 	unittest {
-		const p = PluralNum!(2).var(1).log();
+		const p = PluralNum!2.var(1).log();
 		assert(p._x == 0);
 		assert(p._dx._x == 1);
 		assert(p._dx._dx == -1);
 
-		const z = PluralNum!(1).var(0).log();
+		const z = PluralNum!().var(0).log();
 		assert(z._x == -real.infinity);
 		assert(isNaN(z._dx));
 
-		const n = PluralNum!(1).var(-1).log();
+		const n = PluralNum!().var(-1).log();
 		assert(isNaN(n._x));
 		assert(isNaN(n._dx));
 	}
+
 
 	/**
 	 * Reduces the order of the plural number by one. If the plural number is first order, the value returned will be a
@@ -505,7 +531,7 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		else                  return DerivType!()(_x, _dx.reduce());
 	}
 	unittest {
-		const p2 = PluralNum!(2)(2, PluralNum!(1)(3, 4));
+		const p2 = PluralNum!2(2, PluralNum!()(3, 4));
 		const p1 = p2.reduce();
 		assert(p2._x == p1._x);
 		assert(p2._dx._x == p1._dx);
@@ -514,19 +540,20 @@ export struct PluralNum(ulong Order = 1, Field = real) if (Order >= 1 && isFloat
 		assert(is(typeof(p0) == const(real)));
 		assert(p2._x == p0);
 	}
-	
+
+
 	private const string format(in ulong derivOrder)
 	body {
-		static if (isScalarType!(DerivType!()))
+		static if (is(DerivType!() == real))
 			const tail = std.string.format("%f%s", _dx, formatSuffix(derivOrder + 1));
 		else                               
 			const tail = _dx.format(derivOrder + 1);
 		return std.string.format("%f%s + %s", _x, formatSuffix(derivOrder), tail);
 	}
 	unittest {
-		assert(PluralNum!(1)(2.0, 3.0).format(1) == "2.000000d + 3.000000d2");
+		assert(PluralNum!()(2.0, 3.0).format(1) == "2.000000d + 3.000000d2");
 
-		const q = PluralNum!(2)(2.0, PluralNum!(1)(3.0, 4.0));
+		const q = PluralNum!2(2.0, PluralNum!()(3.0, 4.0));
 		assert(q.format(1) == "2.000000d + 3.000000d2 + 4.000000d3");
 	}
 }
@@ -539,28 +566,52 @@ unittest {
 }
 
 
+@safe
+private pure nothrow real mkZero(P)() if (is(P == real))
+body {
+	return 0;
+}
+@safe
+private pure nothrow P mkZero(P)() if (!is(P == real))
+body {
+	return P(0, mkZero!(P.DerivType!())());
+}
+
+
+@safe
+private pure nothrow real mkOne(P)() if (is(P == real)) 
+body {
+	return 1;
+}
+@safe
+private pure nothrow P mkOne(P)() if (!is(P == real))
+body {
+	return P(1, mkZero!(P.DerivType!())());
+}
+	         
+
+// TODO handle Len == 0
 /**
  * Constructs a plural number from its value and the values of its derivatives. If there is only one value is the 
  * sequence, that value is returned.
  * 
  * Params:
  *   Len = the number of elements in the sequence (optional)
- *   Field = the underlying type of the real number (optional)
  *   derivVals = the an array of the derivative values where index is the order of the derivative
  */
 @safe
-export pure nothrow Field derivSeq(ulong Len, Field)(in Field[Len] val ...) if (Len == 1)
+export pure nothrow real derivSeq(ulong Len)(in real[Len] val ...) if (Len == 1)
 body {
 	return val[0];
 }
 @safe
-export pure nothrow PluralNum!(Len - 1, Field) derivSeq(ulong Len, Field)(in Field[Len] derivVals ...) if (Len > 1)
+export pure nothrow PluralNum!(Len - 1) derivSeq(ulong Len)(in real[Len] derivVals ...) if (Len > 1)
 body {
-	return PluralNum!(Len - 1, Field)(derivVals);
+	return PluralNum!(Len - 1)(derivVals);
 }
 unittest {
 	assert(derivSeq(1.0) == 1.0);
-	assert(derivSeq(1.0L, 2.0L) == PluralNum!()(1.0, 2.0));
+	assert(derivSeq(1.0L, 2.0L).same(PluralNum!()(1.0, 2.0)));
 }
 
 
@@ -581,7 +632,7 @@ unittest {
 
 
 @safe
-private pure nothrow bool sameVal(Field)(in Field lhs, in Field rhs)
+private pure nothrow bool sameVal(in real lhs, in real rhs)
 body {
 	return isNaN(lhs) && isNaN(rhs) || lhs == rhs;
 }
