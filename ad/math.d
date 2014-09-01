@@ -162,6 +162,7 @@ unittest {
 }
 
 
+// TODO document
 @safe
 export pure nothrow real pow(in real x, real y)
 body {
@@ -170,32 +171,23 @@ body {
 @safe
 export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in real y)
 body {
-	// TODO implement
+	return pow(x, PluralNum!O.val(y));
 }
 @safe
 export pure nothrow PluralNum!O pow(ulong O)(in real x, in PluralNum!O y)
 body {
-	// TODO implement
+	return pow(PluralNum!O.val(x), y);
 }
 @safe
 export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in PluralNum!O y)
-body {
-	// TODO implement
-} /+
-export pure DerivSeqType pow(ValType, DerivSeqType)(const DerivSeqType u, const ValType k)
-	/* TODO Depending on the values of _x and k, a complex or nan may arise.  Either way, this 
-	 * should fail an assertion.
+	/* TODO Depending on the values of x and y, a complex or nan may arise. Determine if special actions need to be 
+	 * taken.
 	 */
 body {
-	static if (DerivSeqType.Order == 0) {
-		return DerivSeqType(std.math.pow(u.val(), k));
-	} else {
-		return DerivSeqType(
-			std.math.pow(u.val(), k), 
-			k * pow(u.reduce(), k - 1) * u.d());
-	}
+	// TODO implement
 }
-+/
+// TODO test
+
 
 /+
 export pure DerivSeqType exp(DerivSeqType)(const DerivSeqType u)

@@ -12,7 +12,6 @@ import std.string;
 import std.traits;
 
 
-// TODO generate fail message for Order == 0
 /**
  * This class implements a generalization of the dual number concept. 
  * 
@@ -22,10 +21,10 @@ import std.traits;
  * Params:
  *  Order = the number of derivatives represented 
  */
-export struct PluralNum(ulong Order = 1) if (Order >= 1) {
+export struct PluralNum(ulong Order = 1) {
+	static assert(Order >= 1, "order must be at least 1.");
 
 
-	// TODO handle DerivType!0
 	/**
 	 * This is the type constructor of the derivatives of the plural number.
 	 * 
@@ -33,20 +32,14 @@ export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 	 *  DerivOrder = the order of the derivative. This must be at least 1 and no more than Order, the order of the 
 	 *    plural number.
 	 */
-	export template DerivType(ulong DerivOrder = 1) if (DerivOrder >= 1) {
-		static if (DerivOrder == Order) {
-			export alias real DerivType;
-		} else static if (1 <= DerivOrder && DerivOrder < Order) {
-			export alias PluralNum!(Order - DerivOrder) DerivType;
-		}
+	export template DerivType(ulong DerivOrder = 1) {
+		     static if (DerivOrder == Order)                   export alias real DerivType;
+		else static if (0 <= DerivOrder && DerivOrder < Order) export alias PluralNum!(Order - DerivOrder) DerivType;
+		else static assert(false, "The order of the derivative cannot be more than the order of the plural number"); 
 	}
 	unittest {
 		assert(is(PluralNum!2.DerivType!() == PluralNum!()));
 	}
-
-
-	private real _x;
-	private DerivType!() _dx;
 
 
 	/**
@@ -132,6 +125,10 @@ export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 	}
 
 
+	private real _x;
+	private DerivType!() _dx;
+	
+
 	/**
 	 * Constructs a plural number from if value and derivatives
 	 * 
@@ -168,11 +165,11 @@ export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 	}
 
 
-	// TODO figure out what a real can be cast to and produce an error otherwise
 	@safe 
-	export pure nothrow const real opCast(Field)() 
+	export pure nothrow const T opCast(T)()
 	body {
-		return cast(Field)(_x);
+		static assert(isBasicType!T || isPointer!T, "a PluralNum can only be cast to a basic type or a pointer");
+		return cast(T)_x;
 	}
 
 
@@ -189,7 +186,6 @@ export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 	}
 
 
-	// TODO handle O order and order type high cases
 	/**
 	 * Returns the derivative of order DerivOrder of the plural number. DerivOrder must be at least one but no more than 
 	 * Order. If DerivOrder == Order, the derivative will be a value of the type of the underlying field. Otherwise the 
@@ -203,18 +199,26 @@ export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 	 *  The derivative of the plural number.
 	 */
 	@safe @property 
-	export pure nothrow const DerivType!DerivOrder d(ulong DerivOrder = 1)() 
-	if (1 <= DerivOrder && DerivOrder <= Order)
+	export pure nothrow const DerivType!DerivOrder d(ulong DerivOrder = 1)() if (0 < DerivOrder && DerivOrder <= Order)
 	body {
 		static if (DerivOrder == 1) return _dx;
-		else                        return _dx.d!(DerivOrder - 1)();
+		else                        return _dx.d!(DerivOrder - 1);
+	}
+	@safe @property
+	export pure nothrow const DerivType!DerivOrder d(ulong DerivOrder)() if (DerivOrder == 0)
+	body {
+		return this;
+	}
+	export DerivType!DerivOrder d(ulong DerivOrder)() if (DerivOrder > Order)
+	body {
+		static assert(false, "the order of the derivative cannot be larger than the order of the plural number");
 	}
 	unittest {
 		const q = PluralNum!3(3, PluralNum!2(2, PluralNum!()(1, 0)));
 		const dq = q.d;
 		assert(is(typeof(dq) == const(PluralNum!2)));
 		assert(dq.val == 2);
-		
+
 		const d2q = q.d!2;
 		assert(is(typeof(d2q) == const(PluralNum!())));
 		assert(d2q.val == 1);
@@ -222,6 +226,8 @@ export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 		const d3q = q.d!3;
 		assert(is(typeof(d3q) == const(real)));
 		assert(d3q == 0);
+
+		assert (q.same(q.d!0));
 	}
 
 
@@ -285,11 +291,27 @@ export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 	}
 
 
-	// TODO determine a good hash function for real numbers
 	@trusted
 	export pure nothrow const hash_t toHash()
 	body {
-		return cast(hash_t)(_x);
+		auto buf = cast(const(ubyte) *)&_x;
+
+		hash_t res = 0;
+		for(auto i = 0; i < real.sizeof; i += hash_t.sizeof) {
+			for (auto j = 0; j < hash_t.sizeof; j++) {
+				if (i + j < real.sizeof) { 
+					res += cast(hash_t)buf[i + j] << 8 * j;
+				}
+			}
+		}
+		return res;
+	}
+	unittest {
+		auto q = PluralNum!()(0.1L, 0.2L);
+		auto w = PluralNum!()(0.1L, 0.0L);
+		assert(q.toHash() == w.toHash());
+
+		assert(min_normal.toHash() != (2 * min_normal).toHash());
 	}
 
 
@@ -473,7 +495,13 @@ export struct PluralNum(ulong Order = 1) if (Order >= 1) {
 		const e = PluralNum!()(-1,1) ^^ PluralNum!()(3, 4);
 		assert(e._x == -1 && isnan(e._dx));
 	}
-	// TODO handle unknown op value
+
+
+	export pure nothrow const PluralNum opBinary(string op)(in PluralNum that) 
+	if (op != "+" && op != "-" && op != "*" && op != "/" && op != "%" && op != "^^")
+	body {
+		static assert(false, "Operator " ~ op ~ " not implemented");
+	}
 
 
 	const string toString()
@@ -609,7 +637,12 @@ export pure nothrow PluralNum!(Len - 1) derivSeq(ulong Len)(in real[Len] derivVa
 body {
 	return PluralNum!(Len - 1)(derivVals);
 }
+export void derivSeq(ulong Len)(in real[Len] derivVals ...) if (Len == 0)
+body {
+	static assert(false, "there must be a least one element in the sequence");
+}
 unittest {
+	derivSeq();
 	assert(derivSeq(1.0) == 1.0);
 	assert(derivSeq(1.0L, 2.0L).same(PluralNum!()(1.0, 2.0)));
 }
