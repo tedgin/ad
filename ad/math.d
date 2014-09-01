@@ -17,7 +17,6 @@ public import ad.core;
  * The derivative of the abs(x) is x*x'/abs(x).
  * 
  * Params:
- *   T = The type of the argument. It must be a scalar type or a PluralNum.
  *   x = the argument
  */
 @safe
@@ -50,7 +49,6 @@ unittest {
  * This function computes the cosine of the argument. It is analogous to std.math.cos().
  * 
  * Params:
- *   T = The type of the argument. It must be a scalar type or a PluralNum
  *   x = the argument
  */
 @safe 
@@ -80,7 +78,6 @@ unittest {
  * This function determines whether its argument is a NaN.  It is analogous to std.math.isNaN().
  *  
  * Params:
- *   T = The type of the argument. It must be a scalar type or a PluralNum.
  *   x = the argument
  */
 @safe
@@ -104,7 +101,6 @@ unittest {
  * The derivate of sgn(x) evaluated at 0 is undefined or NaN.  Otherwise it is 0*x'.
  * 
  * Params:
- *   T = The type of the argument. It must be a scalar type or a PluralNum.
  *   x = the argument
  */
 @safe
@@ -133,7 +129,6 @@ unittest {
  * This function computes the square root of its argument. It is analogous to std.math.sqrt().
  * 
  * Params:
- *   T = the type of the argument. It must be implicitly convertable to a real or be a PluralNum.
  *   x = the argument
  */
 @safe
@@ -162,7 +157,13 @@ unittest {
 }
 
 
-// TODO document
+/**
+ * This function computes the raises a given number to a given power. It is analogous to std.math.pow().
+ * 
+ * Params:
+ *   x = the base
+ *   y = the exponent
+ */
 @safe
 export pure nothrow real pow(in real x, real y)
 body {
@@ -171,22 +172,18 @@ body {
 @safe
 export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in real y)
 body {
-	return pow(x, PluralNum!O.val(y));
+	return x ^^ y;
 }
 @safe
 export pure nothrow PluralNum!O pow(ulong O)(in real x, in PluralNum!O y)
 body {
-	return pow(PluralNum!O.val(x), y);
+	return x ^^ y;
 }
 @safe
 export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in PluralNum!O y)
-	/* TODO Depending on the values of x and y, a complex or nan may arise. Determine if special actions need to be 
-	 * taken.
-	 */
 body {
-	// TODO implement
+	return x ^^ y;
 }
-// TODO test
 
 
 /+

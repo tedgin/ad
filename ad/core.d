@@ -618,7 +618,6 @@ body {
 }
 	         
 
-// TODO handle Len == 0
 /**
  * Constructs a plural number from its value and the values of its derivatives. If there is only one value is the 
  * sequence, that value is returned.
@@ -642,7 +641,6 @@ body {
 	static assert(false, "there must be a least one element in the sequence");
 }
 unittest {
-	derivSeq();
 	assert(derivSeq(1.0) == 1.0);
 	assert(derivSeq(1.0L, 2.0L).same(PluralNum!()(1.0, 2.0)));
 }
