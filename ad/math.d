@@ -75,6 +75,34 @@ unittest {
 
 
 /**
+ * This function raises e to a given power. It is analogous to std.math.exp().
+ * 
+ * Params:
+ *   x = the power e is raised to.
+ */
+@safe
+export pure nothrow real exp(in real x)
+body {
+	return std.math.exp(x);
+}
+@safe
+export pure nothrow PluralNum!O exp(ulong O)(in PluralNum!O x)
+body {
+	return PluralNum!O( 
+	    exp(x.val), 
+	    x.d * exp(x.reduce()));
+}
+unittest {
+	assert(exp(PluralNum!().nan).same(PluralNum!().nan));
+	
+	assert(exp(PluralNum!().var(0)).same(PluralNum!().var(1)));
+	
+	assert(exp(PluralNum!().infinity).same(derivSeq(real.infinity, real.infinity)));
+	assert(exp(-PluralNum!().infinity).same(PluralNum!().zero));
+}
+
+
+/**
  * This function determines whether its argument is a NaN.  It is analogous to std.math.isNaN().
  *  
  * Params:
@@ -92,6 +120,24 @@ body {
 }
 unittest {
 	assert(isNaN(PluralNum!().nan));
+}
+
+
+/**
+ * This function computes the natural logarithm of its argument. It is analogous to std.math.log().
+ * 
+ * Params:
+ *   x = the argument
+ */
+@safe
+export pure nothrow real log(in real x)
+body {
+	return std.math.log(x);
+}
+@safe
+export pure nothrow PluralNum!O log(ulong O)(in PluralNum!O x)
+body {
+	return x.log();
 }
 
 
@@ -186,41 +232,7 @@ unittest {
 }
 
 
-/**
- * This function raises e to a given power. It is analogous to std.math.exp().
- * 
- * Params:
- *   x = the power e is raised to.
- */
-@safe
-export pure nothrow real exp(in real x)
-body {
-	return std.math.exp(x);
-}
-@safe
-export pure nothrow PluralNum!O exp(ulong O)(in PluralNum!O x)
-body {
-	return PluralNum!O( 
-		exp(x.val), 
-		x.d * exp(x.reduce()));
-}
-unittest {
-	assert(exp(PluralNum!().nan).same(PluralNum!().nan));
-
-	assert(exp(PluralNum!().var(0)).same(PluralNum!().var(1)));
-
-	assert(exp(PluralNum!().infinity).same(derivSeq(real.infinity, real.infinity)));
-	assert(exp(-PluralNum!().infinity).same(PluralNum!().zero));
-}
-
-
 /+
-export pure DerivSeqType log(DerivSeqType)(const DerivSeqType u)
-body {
-	return u.log();
-}
-
-
 export pure DerivSeqType sin(DerivSeqType)(const DerivSeqType u)
 body {
 	static if (DerivSeqType.Order == 0) {
