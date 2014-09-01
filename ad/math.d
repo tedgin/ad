@@ -96,6 +96,35 @@ unittest {
 
 
 /**
+ * This function computes the raises a given number to a given power. It is analogous to std.math.pow().
+ * 
+ * Params:
+ *   x = the base
+ *   y = the exponent
+ */
+@safe
+export pure nothrow real pow(in real x, real y)
+body {
+	return std.math.pow(x, y);
+}
+@safe
+export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in real y)
+body {
+	return x ^^ y;
+}
+@safe
+export pure nothrow PluralNum!O pow(ulong O)(in real x, in PluralNum!O y)
+body {
+	return x ^^ y;
+}
+@safe
+export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in PluralNum!O y)
+body {
+	return x ^^ y;
+}
+
+
+/**
  * This function computes the sign of the argument. It is analogous to std.math.sgn().
  * 
  * The derivate of sgn(x) evaluated at 0 is undefined or NaN.  Otherwise it is 0*x'.
@@ -158,47 +187,34 @@ unittest {
 
 
 /**
- * This function computes the raises a given number to a given power. It is analogous to std.math.pow().
+ * This function raises e to a given power. It is analogous to std.math.exp().
  * 
  * Params:
- *   x = the base
- *   y = the exponent
+ *   x = the power e is raised to.
  */
 @safe
-export pure nothrow real pow(in real x, real y)
+export pure nothrow real exp(in real x)
 body {
-	return std.math.pow(x, y);
+	return std.math.exp(x);
 }
 @safe
-export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in real y)
+export pure nothrow PluralNum!O exp(ulong O)(in PluralNum!O x)
 body {
-	return x ^^ y;
+	return PluralNum!O( 
+		exp(x.val), 
+		x.d * exp(x.reduce()));
 }
-@safe
-export pure nothrow PluralNum!O pow(ulong O)(in real x, in PluralNum!O y)
-body {
-	return x ^^ y;
-}
-@safe
-export pure nothrow PluralNum!O pow(ulong O)(in PluralNum!O x, in PluralNum!O y)
-body {
-	return x ^^ y;
+unittest {
+	assert(exp(PluralNum!().nan).same(PluralNum!().nan));
+
+	assert(exp(PluralNum!().var(0)).same(PluralNum!().var(1)));
+
+	assert(exp(PluralNum!().infinity).same(derivSeq(real.infinity, real.infinity)));
+	assert(exp(-PluralNum!().infinity).same(PluralNum!().zero));
 }
 
 
 /+
-export pure DerivSeqType exp(DerivSeqType)(const DerivSeqType u)
-body {
-	static if (DerivSeqType.Order == 0) {
-		return DerivSeqType(std.math.exp(u.val()));
-	} else {
-		return DerivSeqType( 
-			std.math.exp(u.val()), 
-			u.d() * exp(u.reduce()));
-	}
-}
-
-
 export pure DerivSeqType log(DerivSeqType)(const DerivSeqType u)
 body {
 	return u.log();
