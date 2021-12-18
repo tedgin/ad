@@ -36,9 +36,13 @@ export struct PluralNum(ulong Order = 1) {
     *    more than Order, the order of the plural number.
 	 */
 	export template DerivType(ulong DerivOrder = 1) {
-		     static if (DerivOrder == Order)                   export alias real DerivType;
-		else static if (0 <= DerivOrder && DerivOrder < Order) export alias PluralNum!(Order - DerivOrder) DerivType;
-		else static assert(false, "The order of the derivative cannot be more than the order of the plural number"); 
+		static if (DerivOrder == Order) export alias real DerivType;
+		else static if (0 <= DerivOrder && DerivOrder < Order) 
+			export alias PluralNum!(Order - DerivOrder) DerivType;
+		else 
+			static assert(
+				false, 
+				"The order of the derivative cannot be more than the order of the plural number" ); 
 	}
 	unittest {
 		assert(is(PluralNum!2.DerivType!() == PluralNum!()));
@@ -173,7 +177,10 @@ export struct PluralNum(ulong Order = 1) {
 	@safe 
 	export pure nothrow const T opCast(T)()
 	body {
-		static assert(isBasicType!T || isPointer!T, "a PluralNum can only be cast to a basic type or a pointer");
+		static assert(
+			isBasicType!T || isPointer!T, 
+			"a PluralNum can only be cast to a basic type or a pointer" );
+
 		return cast(T)_x;
 	}
 
@@ -206,7 +213,8 @@ export struct PluralNum(ulong Order = 1) {
 	 *  The derivative of the plural number.
 	 */
 	@safe @property 
-	export pure nothrow const DerivType!DerivOrder d(ulong DerivOrder = 1)() if (0 < DerivOrder && DerivOrder <= Order)
+	export pure nothrow const DerivType!DerivOrder d(ulong DerivOrder = 1)() 
+		if (0 < DerivOrder && DerivOrder <= Order)
 	body {
 		static if (DerivOrder == 1) return _dx;
 		else                        return _dx.d!(DerivOrder - 1);
@@ -218,7 +226,9 @@ export struct PluralNum(ulong Order = 1) {
 	}
 	export DerivType!DerivOrder d(ulong DerivOrder)() if (DerivOrder > Order)
 	body {
-		static assert(false, "the order of the derivative cannot be larger than the order of the plural number");
+		static assert(
+			false, 
+			"the order of the derivative cannot be larger than the order of the plural number" );
 	}
 	unittest {
 		const q = PluralNum!3(3, PluralNum!2(2, PluralNum!()(1, 0)));
