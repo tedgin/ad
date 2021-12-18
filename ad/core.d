@@ -1,10 +1,14 @@
 /** 
- * This module implements automatic differentiation using forward accumulation and operator overloading.
+ * This module implements automatic differentiation using forward accumulation 
+ * and operator overloading.
  * 
- * It can only differentiate functions of the form f:R->R. This is a completely unoptimized version.
+ * It can only differentiate functions of the form f:R->R. This is a completely 
+ * unoptimized version.
  * 
- * The traditional definition of differentiation is used, not the generalized notition from distribution theory.
+ * The traditional definition of differentiation is used, not the generalized 
+ * notition from distribution theory.
  */
+
 module ad.core;
 
 import std.math;
@@ -15,8 +19,8 @@ import std.traits;
 /**
  * This class implements a generalization of the dual number concept. 
  * 
- * This class provides the basic algebraic operations of this generalization. It overloads all operators that make sense
- * for fields.
+ * This class provides the basic algebraic operations of this generalization. 
+ * It overloads all operators that make sense for fields.
  *
  * Params:
  *  Order = the number of derivatives represented 
@@ -24,13 +28,12 @@ import std.traits;
 export struct PluralNum(ulong Order = 1) {
 	static assert(Order >= 1, "order must be at least 1.");
 
-
 	/**
 	 * This is the type constructor of the derivatives of the plural number.
 	 * 
 	 * Params:
-	 *  DerivOrder = the order of the derivative. This must be at least 1 and no more than Order, the order of the 
-	 *    plural number.
+	 *  DerivOrder = the order of the derivative. This must be at least 1 and no
+    *    more than Order, the order of the plural number.
 	 */
 	export template DerivType(ulong DerivOrder = 1) {
 		     static if (DerivOrder == Order)                   export alias real DerivType;
@@ -76,7 +79,8 @@ export struct PluralNum(ulong Order = 1) {
 
 
 	/**
-	 * This function constructs a plural number representing a constant with respect to the derivative.
+	 * This function constructs a plural number representing a constant with 
+    * respect to the derivative.
 	 *
 	 * Params:
 	 *  val = The value of the parameter or constant.
@@ -101,7 +105,8 @@ export struct PluralNum(ulong Order = 1) {
 
 
 	/**
-	 * This functions constructs a plural number representing the variable of differentiation.
+	 * This functions constructs a plural number representing the variable of 
+    * differentiation.
 	 *
 	 * Params:
 	 *  val = The value of the variable.
@@ -187,10 +192,12 @@ export struct PluralNum(ulong Order = 1) {
 
 
 	/**
-	 * Returns the derivative of order DerivOrder of the plural number. DerivOrder must be at least one but no more than 
-	 * Order. If DerivOrder == Order, the derivative will be a value of the type of the underlying field. Otherwise the 
-	 * derivative will be a plural number but with order Order - DeriveOrder. If no value is provided for DerivOrder, a 
-	 * value of 1 is assume.  
+	 * Returns the derivative of order DerivOrder of the plural number. 
+    * DerivOrder must be at least one but no more than Order. If DerivOrder == 
+    * Order, the derivative will be a value of the type of the underlying field. 
+    * Otherwise the derivative will be a plural number but with order Order - 
+    * DeriveOrder. If no value is provided for DerivOrder, a value of 1 is 
+    * assume.  
 	 * 
 	 * Params:
 	 *  DerivOrder = The order of the derivate to compute.
@@ -264,14 +271,16 @@ export struct PluralNum(ulong Order = 1) {
 
 
 	/**
-	 * Determines whether two plural numbers have the same value and along with each their derivatives.
+	 * Determines whether two plural numbers have the same value and along with 
+    * each their derivatives.
 	 * 
 	 * Params:
 	 *   that = The plural number being compared.
 	 * 
 	 * Returns:
-	 *   It returns true of the provided plural number has the same value as this one and each of its derivatives have
-	 *   the same values the this one's derivative of the same order.  Otherwise, it returns false.
+	 *   It returns true of the provided plural number has the same value as this
+    *   one and each of its derivatives have the same values the this one's 
+    *   derivative of the same order. Otherwise, it returns false.
 	 */
 	@safe
 	package pure nothrow const bool same(in PluralNum that) 
@@ -335,8 +344,8 @@ export struct PluralNum(ulong Order = 1) {
 
 
 	/**
-	 * Computes the inverse of the plural number. That is, given a plural number x, it computes the plural number y 
-	 * where x * y is identically 1.
+	 * Computes the inverse of the plural number. That is, given a plural number 
+    * x, it computes the plural number y where x * y is identically 1.
 	 * 
 	 * Returns:
 	 *  It returns the inverted plural number.
@@ -515,7 +524,8 @@ export struct PluralNum(ulong Order = 1) {
 
 
 	/**
-	 * Computes the natural logarithm of the plural number. The logarithm is a method attached to this struct because it
+	 * Computes the natural logarithm of the plural number. The logarithm is a 
+    * method attached to this struct because it
 	 * is required to compute the derivative of the ^^ operator.
 	 * 
 	 * The derivative of the logarithm is undefined when operand is non-positive.
@@ -546,8 +556,9 @@ export struct PluralNum(ulong Order = 1) {
 
 
 	/**
-	 * Reduces the order of the plural number by one. If the plural number is first order, the value returned will be a
-	 * field. This truncates the highest order derivative.
+	 * Reduces the order of the plural number by one. If the plural number is 
+    * first order, the value returned will be a field. This truncates the 
+    * highest order derivative.
 	 * 
 	 * returns:
 	 *  The plural number of order one less.
@@ -619,12 +630,13 @@ body {
 	         
 
 /**
- * Constructs a plural number from its value and the values of its derivatives. If there is only one value is the 
- * sequence, that value is returned.
+ * Constructs a plural number from its value and the values of its derivatives. 
+ * If there is only one value is the sequence, that value is returned.
  * 
  * Params:
  *   Len = the number of elements in the sequence (optional)
- *   derivVals = the an array of the derivative values where index is the order of the derivative
+ *   derivVals = the an array of the derivative values where index is the order 
+ *     of the derivative
  */
 @safe
 export pure nothrow real derivSeq(ulong Len)(in real[Len] val ...) if (Len == 1)

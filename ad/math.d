@@ -12,7 +12,8 @@ public import ad.core;
 
 
 /**
- * This function computes the absolute value of the argument. It is analogous to std.math.abs().
+ * This function computes the absolute value of the argument. It is analogous to
+ * std.math.abs().
  * 
  * The derivative of the abs(x) is x*x'/abs(x).
  * 
@@ -46,7 +47,8 @@ unittest {
 
 
 /** 
- * This function computes the cosine of the argument. It is analogous to std.math.cos().
+ * This function computes the cosine of the argument. It is analogous to 
+ * std.math.cos().
  * 
  * Params:
  *   x = the argument
@@ -103,7 +105,8 @@ unittest {
 
 
 /**
- * This function determines whether its argument is a NaN.  It is analogous to std.math.isNaN().
+ * This function determines whether its argument is a NaN.  It is analogous to 
+ * std.math.isNaN().
  *  
  * Params:
  *   x = the argument
@@ -124,7 +127,8 @@ unittest {
 
 
 /**
- * This function computes the natural logarithm of its argument. It is analogous to std.math.log().
+ * This function computes the natural logarithm of its argument. It is analogous
+ * to std.math.log().
  * 
  * Params:
  *   x = the argument
@@ -142,7 +146,8 @@ body {
 
 
 /**
- * This function computes the raises a given number to a given power. It is analogous to std.math.pow().
+ * This function computes the raises a given number to a given power. It is 
+ * analogous to std.math.pow().
  * 
  * Params:
  *   x = the base
@@ -171,9 +176,11 @@ body {
 
 
 /**
- * This function computes the sign of the argument. It is analogous to std.math.sgn().
+ * This function computes the sign of the argument. It is analogous to 
+ * std.math.sgn().
  * 
- * The derivate of sgn(x) evaluated at 0 is undefined or NaN.  Otherwise it is 0*x'.
+ * The derivate of sgn(x) evaluated at 0 is undefined or NaN.  Otherwise it is 0
+ * * x'.
  * 
  * Params:
  *   x = the argument
@@ -201,7 +208,8 @@ unittest {
 
 
 /**
- * This function computes the square root of its argument. It is analogous to std.math.sqrt().
+ * This function computes the square root of its argument. It is analogous to 
+ * std.math.sqrt().
  * 
  * Params:
  *   x = the argument
