@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Tony Edgin"
+	],
+	"copyright": "Copyright © 2021, Tony Edgin",
+	"description": "automatic differentiation library",
+	"license": "BSD-2-Clause",
+	"name": "ad"
+}

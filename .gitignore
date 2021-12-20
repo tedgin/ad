@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/ad
+ad.so
+ad.dylib
+ad.dll
+ad.a
+ad.lib
+ad-test-*
+*.exe
+*.o
+*.obj
+*.lst
