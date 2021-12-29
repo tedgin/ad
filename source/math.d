@@ -24,10 +24,10 @@ nothrow pure @safe real abs(in real x)
 /// ditto
 nothrow pure @safe GenDualNum!Order abs(ulong Order)(in GenDualNum!Order x)
 {
-    alias PN = GenDualNum!Order;
+    alias GDN = GenDualNum!Order;
 
-    const dx = x == 0 ? PN.DerivType!1.nan : x.d * sgn(x.reduce()); 
-    return PN(abs(x.val), dx);
+    const dx = x == 0 ? GDN.DerivType!1.nan : x.d * sgn(x.reduce()); 
+    return GDN(abs(x.val), dx);
 }
 
 unittest 
@@ -195,27 +195,27 @@ nothrow pure @safe real sgn(in real x)
 /// ditto
 nothrow pure @safe GenDualNum!Order sgn(ulong Order)(in GenDualNum!Order x)
 {
-    alias PN = GenDualNum!Order;
+    alias GDN = GenDualNum!Order;
 
     if (isNaN(x))
-        return PN.nan;
+        return GDN.nan;
     else if (x == 0)
-        return PN(0, PN.DerivType!1.nan);
+        return GDN(0, GDN.DerivType!1.nan);
     else
-        return PN(std.math.sgn(x.val), PN.DerivType!1.zero);
+        return GDN(std.math.sgn(x.val), GDN.DerivType!1.zero);
 }
 
 /// ditto
 nothrow pure @safe GenDualNum!Order sgn(ulong Order : 1)(in GenDualNum!Order x)
 {
-    alias PN = GenDualNum!Order;
+    alias GDN = GenDualNum!Order;
 
     if (isNaN(x))
-        return PN.nan;
+        return GDN.nan;
     else if (x == 0)
-        return PN(0, real.nan);
+        return GDN(0, real.nan);
     else
-        return PN(std.math.sgn(x.val), 0);
+        return GDN(std.math.sgn(x.val), 0);
 }
 
 unittest 
@@ -252,12 +252,12 @@ nothrow pure @safe real sqrt(in real x)
 /// ditto
 nothrow pure @safe GenDualNum!Order sqrt(ulong Order)(in GenDualNum!Order x)
 {
-    alias PN = GenDualNum!Order;
+    alias GDN = GenDualNum!Order;
 
     if (x == 0) 
-        return PN(0, PN.DerivType!1.nan);
+        return GDN(0, GDN.DerivType!1.nan);
     else
-        return PN(sqrt(x.val), x.d / (2 * sqrt(x.reduce())));        
+        return GDN(sqrt(x.val), x.d / (2 * sqrt(x.reduce())));        
 }
 
 unittest 

@@ -627,7 +627,7 @@ unittest
 }
 
 package template same(L, R)
-        if (isImplicitlyConvertible!(L, real) && isImplicitlyConvertible!(R, real))
+if (isImplicitlyConvertible!(L, real) && isImplicitlyConvertible!(R, real))
 {
     bool same(in L lhs, in R rhs)
     {
@@ -646,15 +646,15 @@ unittest
     assert(!same(real.infinity, 2.9L));
 }
 
-package template same(T, ulong PNOrder)
-        if (isImplicitlyConvertible!(T, real) && PNOrder > 0)
+package template same(T, ulong GDNOrder)
+if (isImplicitlyConvertible!(T, real) && GDNOrder > 0)
 {
-    bool same(in T lhs, in GenDualNum!PNOrder rhs)
+    bool same(in T, in GenDualNum!GDNOrder)
     {
         return false;
     }
 
-    bool same(in GenDualNum!PNOrder lhs, in T rhs)
+    bool same(in GenDualNum!GDNOrder, in T)
     {
         return false;
     }
