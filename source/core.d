@@ -1,12 +1,8 @@
 /** 
 This module implements automatic differentiation using forward accumulation and
-operator overloading.
- 
-It can only differentiate functions of the form f:R->R. This is a completely 
-unoptimized version.
-
-The traditional definition of differentiation is used, not the generalized 
-notion from distribution theory.
+operator overloading. It can only differentiate functions of the form *f:R->R*. 
+This is a completely unoptimized version. The traditional definition of 
+differentiation is used, not the generalized notion from distribution theory.
 */
 module ad.core;
 
@@ -15,42 +11,46 @@ import std.math : isNaN, log;
 import std.traits : isImplicitlyConvertible;
 
 /**
-This class implements a generalization of the dual number concept. 
- 
-This class provides the basic algebraic operations of this generalization. It
-overloads all operators that make sense for fields.
+This data structure implements a generalization of the dual number concept. It 
+provides the basic algebraic operations of this generalization using operator 
+overloading.
 
 Params:
-    Order = the number of derivatives represented
-
-NB: A goal of GenDualNum is to work as seemlessly as possible with real, 
-    relying on implicit conversions as much as makes sense.
+    Degree = the number of derivatives represented
 */
-struct GenDualNum(ulong Order = 1)
+struct GenDualNum(ulong Degree = 1)
 {
     /**
     This is the type constructor of the derivatives.
     
     Params:
-        DerivOrder = the order of the derivative. This must be at least 1 
-            and no more than Order, the order of the generalized dual 
-            number.
+        Order = the order of the derivative. This must be at least one but no 
+            more  than Degree, the degree of the generalized dual number.
     */
-    template DerivType(ulong DerivOrder = 1)
+    template DerivType(ulong Order = 1)
     {
         static assert(
-            DerivOrder <= Order, 
-            "The order of derivative cannot be larger than the order of the generalized dual number.");
+            Order <= Degree, 
+            "The order of derivative cannot be larger than the degree of the generalized dual" ~
+            " number.");
 
-        static if (DerivOrder < Order) 
-            alias DerivType = GenDualNum!(Order - DerivOrder);
+        static if (Order < Degree) 
+            alias DerivType = GenDualNum!(Degree - Order);
         else
             alias DerivType = real;
     }
 
+    private static DerivType!1 mkNaNDeriv()
+    {
+        static if (Degree == 1)
+            return real.nan;
+        else
+            return DerivType!1(real.nan, DerivType!1.mkNaNDeriv());
+    }
+
     private static DerivType!1 mkZeroDeriv()
     {
-        static if (Order == 1)
+        static if (Degree == 1)
             return 0;
         else
             return DerivType!1(0, DerivType!1.mkZeroDeriv());
@@ -69,19 +69,19 @@ struct GenDualNum(ulong Order = 1)
         _dx = derivs;
     }
 
-    private this(in real[Order + 1] derivVals...)
+    private this(in real[Degree + 1] derivVals...)
     {
         _x = derivVals[0];
 
-        static if (Order == 1)
+        static if (Degree == 1)
             _dx = derivVals[1];
         else
-            _dx = DerivType!1(derivVals[1 .. Order + 1]);
+            _dx = DerivType!1(derivVals[1 .. Degree + 1]);
     }
 
     /**
-    This function constructs a GenDualNum representing a constant with
-    respect to the derivative.
+    This function constructs a generalized dual number representing a parameter 
+    or constant with respect to differentiation.
         
     Params:
         val = The value of the parameter or constant.
@@ -95,8 +95,8 @@ struct GenDualNum(ulong Order = 1)
     }
 
     /**
-    This functions constructs a GenDualNum representing the variable of 
-    differentiation.
+    This functions constructs a generalized dual number representing the 
+    variable of differentiation.
     
     Params:
         val = The value of the variable.
@@ -106,7 +106,7 @@ struct GenDualNum(ulong Order = 1)
     */
     static nothrow pure @safe GenDualNum var(in real val)
     {
-        static if (Order == 1)
+        static if (Degree == 1)
             return GenDualNum(val, 1);
         else
             return GenDualNum(val, DerivType!1.one);
@@ -114,56 +114,82 @@ struct GenDualNum(ulong Order = 1)
 
     // TODO consider adding the following constructor for converting a 
     //   parameter to a variable.
-    // @safe
-    // export static pure nothrow GenDualNum var(in GenDualNum val)
-    // do
+    // static nothrow pure @safe GenDualNum var(in GenDualNum param)
     // {
-    //     if (val.d.same(DerivType!1.zero) {
-    //         return var(val.val);
+    //     if (param.d!1.same(DerivType!1.zero) {
+    //         return var(param.val);
     //     } else {
-    //         return val;
+    //         return param;
     // }
 
     // CONSTANTS
 
-    /// A constant zero represented as a GenDualNum.
+    /// This is a constant _zero represented as a generalized dual number.
     static immutable GenDualNum zero = GenDualNum(0, mkZeroDeriv());
 
-    /// A constant one represented as a GenDualNum.
+    /// This is a constant _one represented as a generalized dual number.
     static immutable GenDualNum one = GenDualNum(1, mkZeroDeriv());
 
     // PROPERTIES OF REAL
 
-    static immutable ulong dig = real.dig;
-
-    static immutable ulong mant_dig = real.mant_dig;
-
-    static immutable int max_10_exp = real.max_10_exp;
-
-    static immutable int max_exp = real.max_exp;
-
-    static immutable int min_10_exp = real.min_10_exp;
-
-    static immutable int min_exp = real.min_exp;
-
-    static if (Order == 1)
-        static immutable GenDualNum nan = GenDualNum(real.nan, real.nan);
-    else
-        static immutable GenDualNum nan = GenDualNum(real.nan, DerivType!1.nan);
-
+    /// This is a generalized dual number representing infinity.
     static immutable GenDualNum infinity = GenDualNum(real.infinity, mkZeroDeriv());
 
+    /// This is a generalized dual number representing `NaN`.
+    static immutable GenDualNum nan = GenDualNum(real.nan, mkNaNDeriv());
+
+    /// This is the number of decimal digits of precision of the value.
+    static immutable int dig = real.dig;
+
+    /** 
+    This is the smallest generalized dual number such that 
+    `one + epsilon > one`.
+    */
     static immutable GenDualNum epsilon = GenDualNum(real.epsilon, mkZeroDeriv());
 
+    /// This is the number of bits in the mantissa of the value.
+    static immutable int mant_dig = real.mant_dig;
+
+    /**
+    This is the maximum `int` value such that `10 ^^ max_10_exp` is 
+    representable as a generalized dual number.
+    */    
+    static immutable int max_10_exp = real.max_10_exp;
+
+    /** 
+    This is the maximum `int` value such that `2 ^^ (max_exp - 1)` is 
+    representable as a generalized dual number.
+    */
+    static immutable int max_exp = real.max_exp;
+
+    /** 
+    This is the minimum `int` value such that `10 ^^ min_10_exp` is 
+    representable as a generalized dual number. 
+    */
+    static immutable int min_10_exp = real.min_10_exp;
+
+    /** 
+    This is the minimum `int` value such that `2 ^^ (min_exp - 1)` is 
+    representable as a generalized dual number.
+    */
+    static immutable int min_exp = real.min_exp;
+
+    /// This is the largest finite generalized dual number. 
     static immutable GenDualNum max = GenDualNum(real.max, mkZeroDeriv());
 
+    /// This is the smallest positive generalized dual number. 
     static immutable GenDualNum min_normal = GenDualNum(real.min_normal, mkZeroDeriv());
 
+    /// This is the real part.
     @property nothrow pure @safe GenDualNum re() const
     {
         return this;
     }
 
+    /**
+    This is the imaginary part. It is always has a zero value since GenDualNum 
+    only supports real numbers.
+    */
     @property nothrow pure @safe GenDualNum im() const
     {
         return zero;
@@ -172,7 +198,7 @@ struct GenDualNum(ulong Order = 1)
     // MEMBERS
 
     /**
-    Returns the value represented by the GenDualNum.
+    This is the value of the generalized dual number.
         
     Returns:
         the value
@@ -182,44 +208,40 @@ struct GenDualNum(ulong Order = 1)
         return _x;
     }
 
-    // TODO can this be moved out of the struct?
     /**
-    Returns the derivative of order DerivOrder of the GenDualNum. DerivOrder 
-    must be at least one but no more than Order. If DerivOrder == Order, the 
-    derivative will be a value of the type of the underlying field. 
-    Otherwise the derivative will be a generalized dual number but with order 
-    Order - DeriveOrder. If no value is provided for DerivOrder, a value of 1 
-    is assumed.  
+    This is the derivative of order `Order` of the generalized dual number. The 
+    order must be at least one but no more that the degree of the generalized 
+    dual number. If `Order == Degree`, the derivative will be a `real`. 
+    Otherwise it will be a `GenDualNum` but with degree `Degree - Order`. 
     
     Params:
-        DerivOrder = The order of the derivate to compute.
+        Order = the order of the derivate to compute, default `1`
         
     Returns:
         the derivative
     */
-    nothrow pure @safe DerivType!DerivOrder d(ulong DerivOrder = 1)() const 
-    if (0 < DerivOrder && DerivOrder <= Order)
+    nothrow pure @safe DerivType!Order d(ulong Order = 1)() const 
+    if (0 < Order && Order <= Degree)
     {
-        static if (DerivOrder == 1)
+        static if (Order == 1)
             return _dx;
         else
-            return _dx.d!(DerivOrder - 1);
+            return _dx.d!(Order - 1);
     }
 
     /// ditto
-    nothrow pure @safe GenDualNum d(ulong DerivOrder : 0)() const
+    nothrow pure @safe GenDualNum d(ulong Order : 0)() const
     {
         return this;
     }
 
-    // TODO can this be moved out of the struct?
     /**
-    Computes the inverse of a GenDualNum. That is, given a generalized dual 
-    number x, it computes the generalized dual number y where x * y is 
-    identically 1.
+    This computes the inverse of a generalized dual number. That is, given a 
+    generalized dual number *x*, it computes the generalized dual number *y* 
+    where *xy = 1*.
     
     Returns:
-    It returns the inverted generalized dual number.
+        the inverted generalized dual number
     */
     nothrow pure @safe GenDualNum inv() const
     {
@@ -227,17 +249,9 @@ struct GenDualNum(ulong Order = 1)
         return GenDualNum(1 / _x, -_dx / (reducedX * reducedX));
     }
 
-    /**
-    Computes the natural logarithm of a GenDualNum. The logarithm is a
-    method attached to this struct because it is required to compute the 
-    derivative of the ^^ operator.
-
-    The derivative of the logarithm is undefined when operand is 
-    non-positive.
-    
-    Returns:
-        A new generalized dual number that is the natural logarithm of this 
-        one.
+    /*
+    The logarithm is defined in this module instead of core, because it is 
+    required to compute the derivative of the ^^ operator.
     */
     package GenDualNum log() const
     {
@@ -249,7 +263,7 @@ struct GenDualNum(ulong Order = 1)
 
     package DerivType!1 reduce() const
     {
-        static if (Order == 1)
+        static if (Degree == 1)
             return DerivType!1(_x);
         else
             return DerivType!1(_x, _dx.reduce());
@@ -257,11 +271,36 @@ struct GenDualNum(ulong Order = 1)
 
     // OPERATOR OVERLOADING
 
-    nothrow pure @safe int opCmp(in GenDualNum that) const
+    /**
+    This provides support for using the operators `==` and `!=` to compare a 
+    generalized dual number to a real or another generalized dual number. Two
+    generalized dual numbers are equal if their values are equal regardless of 
+    the values of their derivative terms.
+    */
+    nothrow pure @safe bool opEquals(ulong D)(in GenDualNum!D that) const
+    {
+        return this._x == that._x;
+    }
+
+    /// ditto
+    nothrow pure @safe bool opEquals(in real val) const
+    {
+        return _x == val;
+    }
+
+    /**
+    This provides support for using the operators `<`, `<=`, `>=`, and `>` to 
+    compare a generalized dual number to a real or another generalized dual 
+    number. If *x* and *y* are two generalized dual numbers, *x < y*, if the 
+    value of *x* is less than the value of *y* regardless of the values of their 
+    derivative terms.
+    */
+    nothrow pure @safe int opCmp(ulong D)(in GenDualNum!D that) const
     {
         return opCmp(that._x);
     }
 
+    /// ditto
     nothrow pure @safe int opCmp(in real val) const
     {
         if (_x < val)
@@ -272,16 +311,7 @@ struct GenDualNum(ulong Order = 1)
             return 0;
     }
 
-    nothrow pure @safe bool opEquals(in GenDualNum that) const 
-    {
-        return this._x == that._x;
-    }
-
-    nothrow pure @safe bool opEquals(in real val) const 
-    {
-        return _x == val;
-    }
-
+    /// This provides support for using the prefix operators `+` and `-`.
     nothrow pure @safe GenDualNum opUnary(string op)() const 
     {
         static if (op == "+")
@@ -292,76 +322,49 @@ struct GenDualNum(ulong Order = 1)
             static assert(false, "Operator " ~ op ~ " not implemented");
     }
 
-    nothrow pure @safe GenDualNum opBinaryRight(string op)(in real val) const 
-    {
-        static if (op == "+")
-            return param(val) + this;
-        else static if (op == "-")
-            return param(val) - this;
-        else static if (op == "*")
-            return param(val) * this;
-        else static if (op == "/")
-            return param(val) / this;
-        else static if (op == "%")
-            return param(val) % this;
-        else static if (op == "^^")
-            return param(val) ^^ this;
-        else
-            static assert(false, "Operator " ~ op ~ " not implemented");
-    }
-
-    nothrow pure @safe GenDualNum opBinary(string op)(in real val) const 
-    {
-        static if (op == "+")
-            return this + param(val);
-        else static if (op == "-")
-            return this - param(val);
-        else static if (op == "*")
-            return this * param(val);
-        else static if (op == "/")
-            return this / param(val);
-        else static if (op == "%")
-            return this % param(val);
-        else static if (op == "^^")
-            return this ^^ param(val);
-        else
-            static assert(false, "Operator " ~ op ~ " not implemented");
-    }
-
-    nothrow pure @safe GenDualNum opBinary(string op : "+")(in GenDualNum that) const 
+    /**
+    This provides support for using the arithmetic infix operators `+`, `-`, 
+    `*`, `/`, `%`, and `^^` for combining a generalized dual number with a real 
+    number or another generalized dual number. 
+    */
+    nothrow pure @safe GenDualNum opBinary(string op : "+")(in GenDualNum that) const
     {
         return GenDualNum(this._x + that._x, this._dx + that._dx);
     }
 
-    nothrow pure @safe GenDualNum opBinary(string op : "-")(in GenDualNum that) const 
+    /// ditto
+    nothrow pure @safe GenDualNum opBinary(string op : "-")(in GenDualNum that) const
     {
         return this + -that;
     }
 
-    nothrow pure @safe GenDualNum opBinary(string op : "*")(in GenDualNum that) const 
+    /// ditto
+    nothrow pure @safe GenDualNum opBinary(string op : "*")(in GenDualNum that) const
     {
-        return GenDualNum(
-            this._x * that._x, this._dx * that.reduce() + this.reduce() * that._dx);
+        return GenDualNum(this._x * that._x, this._dx * that.reduce() + this.reduce() * that._dx);
     }
 
-    nothrow pure @safe GenDualNum opBinary(string op : "/")(in GenDualNum that) const 
+    /// ditto
+    nothrow pure @safe GenDualNum opBinary(string op : "/")(in GenDualNum that) const
     {
         return this * that.inv();
     }
 
-    nothrow pure @safe GenDualNum opBinary(string op : "%")(in GenDualNum that) const 
+    /// ditto
+    nothrow pure @safe GenDualNum opBinary(string op : "%")(in GenDualNum that) const
     {
         const thisModThat = this._x % that._x;
         const reduceThis = this.reduce();
         const reduceThat = that.reduce();
         const dThat_that = that._dx / reduceThat;
-        const dx_term1 = (reduceThis % reduceThat) * dThat_that;
-        const dx_term2a = this._dx - reduceThis * dThat_that;
-        const dx_term2b = (thisModThat == 0 && this._x / that._x != 0) ? -infinity : one;
-        return GenDualNum(thisModThat, dx_term1 + dx_term2a * dx_term2b.reduce());
+        const dxTerm1 = (reduceThis % reduceThat) * dThat_that;
+        const dxTerm2a = this._dx - reduceThis * dThat_that;
+        const dxTerm2b = (thisModThat == 0 && this._x / that._x != 0) ? -infinity : one;
+        return GenDualNum(thisModThat, dxTerm1 + dxTerm2a * dxTerm2b.reduce());
     }
 
-    nothrow pure @safe GenDualNum opBinary(string op : "^^")(in GenDualNum that) const 
+    /// ditto
+    nothrow pure @safe GenDualNum opBinary(string op : "^^")(in GenDualNum that) const
     {
         const f = this.reduce();
         const fp = this._dx;
@@ -371,6 +374,19 @@ struct GenDualNum(ulong Order = 1)
         return GenDualNum(this._x ^^ that._x, gp * fug * f.log() + fp * fug * g / f);
     }
 
+    /// ditto
+    nothrow pure @safe GenDualNum opBinary(string op)(in real val) const
+    {
+        return mixin("this " ~ op ~ " param(val)");
+    }
+
+    /// ditto
+    nothrow pure @safe GenDualNum opBinaryRight(string op)(in real val) const 
+    {
+        return mixin("param(val) " ~ op ~ " this");
+    }
+
+    /// This generates a hash for a generalized dual number.
     nothrow pure @trusted hash_t toHash() const
     {
         auto buf = cast(const(ubyte)*)&_x;
@@ -389,6 +405,12 @@ struct GenDualNum(ulong Order = 1)
         return res;
     }
 
+    /**
+    This generates a string version of a generalized dual number. The form of 
+    the string will be *x₀*` + `*x₁*`d + `*x₂*`d2 + `*…*` + `*xₙ*`d`*n* for a 
+    generalized dual number of degree *n* with value *x₀*, first derivative *x₁*, 
+    second derivative *x₂*, etc.
+    */
     pure @safe string toString() const
     {
         return toString(0);
@@ -396,7 +418,7 @@ struct GenDualNum(ulong Order = 1)
 
     private pure @safe string toString(in ulong derivOrder) const
     {
-        static if (Order == 1)
+        static if (Degree == 1)
             const tail = format("%g%s", _dx, formatDerivOrder(derivOrder + 1));
         else
             const tail = _dx.toString(derivOrder + 1);
@@ -406,10 +428,9 @@ struct GenDualNum(ulong Order = 1)
     }
 }
 
-/// ditto
-struct GenDualNum(ulong Order : 0)
+package struct GenDualNum(ulong Degree : 0)
 {
-    static assert(Order > 0, "The order of generalized dual number must be greater than zero.");
+    static assert(false, "The degree of generalized dual number must be greater than zero.");
 }
 
 // .init
@@ -646,25 +667,25 @@ unittest
     assert(!same(real.infinity, 2.9L));
 }
 
-package template same(T, ulong GDNOrder)
-if (isImplicitlyConvertible!(T, real) && GDNOrder > 0)
+package template same(T, ulong GDNDegree)
+if (isImplicitlyConvertible!(T, real))
 {
-    bool same(in T, in GenDualNum!GDNOrder)
+    bool same(in T, in GenDualNum!GDNDegree)
     {
         return false;
     }
 
-    bool same(in GenDualNum!GDNOrder, in T)
+    bool same(in GenDualNum!GDNDegree, in T)
     {
         return false;
     }
 }
 
-package template same(ulong LOrder, ulong ROrder) if (LOrder > 0 || ROrder > 0)
+package template same(ulong LDegree, ulong RDegree)
 {
-    bool same(in GenDualNum!LOrder lhs, in GenDualNum!ROrder rhs)
+    bool same(in GenDualNum!LDegree lhs, in GenDualNum!RDegree rhs)
     {
-        static if (LOrder != ROrder)
+        static if (LDegree != RDegree)
             return false;
         else
             return same(lhs.val, rhs.val) && same(lhs.d, rhs.d);
