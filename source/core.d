@@ -1,9 +1,14 @@
-/** 
+/**
 This module implements automatic differentiation using forward accumulation and
-operator overloading. It can only differentiate functions of the form *f:R->R*. 
-This is a completely unoptimized version. The traditional definition of 
-differentiation is used, not the generalized notion from distribution theory.
-*/
+operator overloading. It can only differentiate functions of the form 
+$(MATH f:R->R). This is a completely unoptimized version. The traditional 
+definition of differentiation is used, not the generalized notion from 
+distribution theory.
+
+Macros:
+    MATH = <var style="white-space: nowrap">$0</var>
+    SUP  = <sup style="font-size: 70%; vertical-align: super;">$0</sup>
+ */
 module ad.core;
 
 import std.format : format;
@@ -181,25 +186,25 @@ struct GenDualNum(ulong Degree = 1)
     static immutable int mant_dig = real.mant_dig;
 
     /**
-    This is the maximum `int` value such that `10 ^^ max_10_exp` is 
+    This is the maximum `int` value such that $(MATH 10$(SUP max_10_exp)) is 
     representable as a generalized dual number.
     */    
     static immutable int max_10_exp = real.max_10_exp;
 
     /** 
-    This is the maximum `int` value such that `2 ^^ (max_exp - 1)` is 
+    This is the maximum `int` value such that $(MATH 2$(SUP max_exp - 1)) is 
     representable as a generalized dual number.
     */
     static immutable int max_exp = real.max_exp;
 
     /** 
-    This is the minimum `int` value such that `10 ^^ min_10_exp` is 
+    This is the minimum `int` value such that $(MATH 10$(SUP min_10_exp)) is 
     representable as a generalized dual number. 
     */
     static immutable int min_10_exp = real.min_10_exp;
 
     /** 
-    This is the minimum `int` value such that `2 ^^ (min_exp - 1)` is 
+    This is the minimum `int` value such that $(MATH 2$(SUP min_exp - 1)) is 
     representable as a generalized dual number.
     */
     static immutable int min_exp = real.min_exp;
@@ -267,8 +272,8 @@ struct GenDualNum(ulong Degree = 1)
 
     /**
     This computes the inverse of a generalized dual number. That is, given a 
-    generalized dual number *x*, it computes the generalized dual number *y* 
-    where *xy = 1*.
+    generalized dual number $(MATH x), it computes the generalized dual number 
+    $(MATH y) where $(MATH xy = 1).
     
     Returns:
         the inverted generalized dual number
@@ -321,9 +326,9 @@ struct GenDualNum(ulong Degree = 1)
     /**
     This provides support for using the operators `<`, `<=`, `>=`, and `>` to 
     compare a generalized dual number to a real or another generalized dual 
-    number. If *x* and *y* are two generalized dual numbers, *x < y*, if the 
-    value of *x* is less than the value of *y* regardless of the values of their 
-    derivative terms.
+    number. If $(MATH x) and $(MATH y) are two generalized dual numbers, 
+    $(MATH x < y), if the value of $(MATH x) is less than the value of $(MATH y) 
+    regardless of the values of their derivative terms.
     */
     int opCmp(ulong D)(in GenDualNum!D that) const nothrow pure @nogc @safe
     {
@@ -460,9 +465,9 @@ struct GenDualNum(ulong Degree = 1)
     /**
     This generates a string version of a generalized dual number. The form of 
     the string will be 
-    *f(x₀)*` + `*f⁽ⁱ⁾(x₀)*`dx + `*f⁽²⁾(x₀)*`(dx)² + `*…*` + `*f⁽ⁿ⁾(x₀)*`(dx)`*ⁿ* 
-    for a generalized dual number of degree *n* with value *f(x₀)*, first 
-    derivative *f⁽ⁱ⁾(x₀)*, second derivative *f⁽²⁾(x₀)*, etc.
+    $(MATH f(x₀))` + `$(MATH f⁽ⁱ⁾(x₀))`dx + `$(MATH f⁽²⁾(x₀))`(dx)² + `$(MATH …)` + `$(MATH f⁽ⁿ⁾(x₀))`(dx)`$(MATH ⁿ) 
+    for a generalized dual number of degree $(MATH n) with value $(MATH f(x₀)), 
+    first derivative $(MATH f⁽ⁱ⁾(x₀)), second derivative $(MATH f⁽²⁾(x₀)), etc.
     */
     string toString() const pure @safe
     {
@@ -661,7 +666,7 @@ unittest
     assert(GenDualNum!1(0, 1).toString == "0 + 1dx", "GenDualNum.toString not working");
 
     assert(
-        GenDualNum!2(0, 1, 2).toString(0) == "0 + 1dx + 2dx²", 
+        GenDualNum!2(0, 1, 2).toString(0) == "0 + 1dx + 2(dx)²", 
         "GendDualNum.toString(derivOrder) not working");
 }
 
@@ -718,7 +723,7 @@ private string formatDerivOrder(ulong derivOrder) pure @safe
     case 1:
         return "dx";
     default:
-        return format("dx%s", formatPower(derivOrder));
+        return format("(dx)%s", formatPower(derivOrder));
     }
 }
 
