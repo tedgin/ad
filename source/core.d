@@ -79,7 +79,7 @@ struct GenDualNum(ulong Degree = 1)
         derivVals = the array of the derivative values where the index is the 
             order of the derivative
     */
-    this(in real[Degree + 1] derivVals...)
+    this(in real[Degree + 1] derivVals...) nothrow pure @nogc @safe
     {
         _x = derivVals[0];
 
@@ -99,7 +99,7 @@ struct GenDualNum(ulong Degree = 1)
         ThatDegree = the degree of generalized dual number being copied
         that = the generalized dual number being copied
     */
-    nothrow pure @safe this(ulong ThatDegree)(in GenDualNum!ThatDegree that)
+    this(ulong ThatDegree)(in GenDualNum!ThatDegree that) nothrow pure @nogc @safe
     {
         this._x = that._x;
 
@@ -111,7 +111,7 @@ struct GenDualNum(ulong Degree = 1)
             this._dx = DerivType!1(that._dx);
     }
 
-    package this(in real val, in DerivType!1 derivs)
+    package this(real val, DerivType!1 derivs)
     {
         _x = val;
         _dx = derivs;
@@ -127,7 +127,7 @@ struct GenDualNum(ulong Degree = 1)
     Returns:
         The representation of the parameter or constant
     */
-    static nothrow pure @safe GenDualNum param(in real val)
+    static GenDualNum param(in real val) nothrow pure @nogc @safe
     {
         return GenDualNum(val, mkZeroDeriv());
     }
@@ -142,7 +142,7 @@ struct GenDualNum(ulong Degree = 1)
     Returns:
         The representation of the variable.
     */
-    static nothrow pure @safe GenDualNum var(in real val)
+    static GenDualNum var(in real val) nothrow pure @nogc @safe
     {
         static if (Degree == 1)
             return GenDualNum(val, 1);
@@ -211,7 +211,7 @@ struct GenDualNum(ulong Degree = 1)
     static immutable GenDualNum min_normal = GenDualNum(real.min_normal, mkZeroDeriv());
 
     /// This is the real part.
-    @property nothrow pure @safe GenDualNum re() const
+    GenDualNum re() const nothrow pure @safe @nogc
     {
         return this;
     }
@@ -220,7 +220,7 @@ struct GenDualNum(ulong Degree = 1)
     This is the imaginary part. It is always has a zero value since GenDualNum 
     only supports real numbers.
     */
-    @property nothrow pure @safe GenDualNum im() const
+    GenDualNum im() const nothrow pure @nogc @safe
     {
         return zero;
     }
@@ -233,7 +233,7 @@ struct GenDualNum(ulong Degree = 1)
     Returns:
         the value
     */
-    nothrow pure @safe real val() const
+    real val() const nothrow pure @nogc @safe
     {
         return _x;
     }
@@ -250,7 +250,7 @@ struct GenDualNum(ulong Degree = 1)
     Returns:
         the derivative
     */
-    nothrow pure @safe DerivType!Order d(ulong Order = 1)() const 
+    DerivType!Order d(ulong Order = 1)() const nothrow pure @nogc @safe
     if (0 < Order && Order <= Degree)
     {
         static if (Order == 1)
@@ -260,7 +260,7 @@ struct GenDualNum(ulong Degree = 1)
     }
 
     /// ditto
-    nothrow pure @safe GenDualNum d(ulong Order : 0)() const
+    GenDualNum d(ulong Order : 0)() const nothrow pure @nogc @safe
     {
         return this;
     }
@@ -273,7 +273,7 @@ struct GenDualNum(ulong Degree = 1)
     Returns:
         the inverted generalized dual number
     */
-    nothrow pure @safe GenDualNum inv() const
+    GenDualNum inv() const nothrow pure @nogc @safe
     {
         const reducedX = reduce();
         return GenDualNum(1 / _x, -_dx / (reducedX * reducedX));
@@ -307,13 +307,13 @@ struct GenDualNum(ulong Degree = 1)
     generalized dual numbers are equal if their values are equal regardless of 
     the values of their derivative terms.
     */
-    nothrow pure @safe bool opEquals(ulong D)(in GenDualNum!D that) const
+    bool opEquals(ulong D)(in GenDualNum!D that) const nothrow pure @nogc @safe
     {
         return this._x == that._x;
     }
 
     /// ditto
-    nothrow pure @safe bool opEquals(in real val) const
+    bool opEquals(in real val) const nothrow pure @nogc @safe
     {
         return _x == val;
     }
@@ -325,13 +325,13 @@ struct GenDualNum(ulong Degree = 1)
     value of *x* is less than the value of *y* regardless of the values of their 
     derivative terms.
     */
-    nothrow pure @safe int opCmp(ulong D)(in GenDualNum!D that) const
+    int opCmp(ulong D)(in GenDualNum!D that) const nothrow pure @nogc @safe
     {
         return opCmp(that._x);
     }
 
     /// ditto
-    nothrow pure @safe int opCmp(in real val) const
+    int opCmp(in real val) const nothrow pure @nogc @safe
     {
         if (_x < val)
             return -1;
@@ -342,7 +342,7 @@ struct GenDualNum(ulong Degree = 1)
     }
 
     /// This provides support for using the prefix operators `+` and `-`.
-    nothrow pure @safe GenDualNum opUnary(string op)() const 
+    GenDualNum opUnary(string op)() const nothrow pure @nogc @safe
     {
         static if (op == "+")
             return GenDualNum(+_x, +_dx);
@@ -357,9 +357,9 @@ struct GenDualNum(ulong Degree = 1)
     `*`, `/`, `%`, and `^^` for combining a generalized dual number with a real 
     number or another generalized dual number. 
     */
-    nothrow pure @safe 
     GenDualNum!(ThatDegree < Degree ? ThatDegree : Degree) 
-    opBinary(string Op, ulong ThatDegree)(in GenDualNum!ThatDegree that) const 
+    opBinary(string Op, ulong ThatDegree)(in GenDualNum!ThatDegree that) 
+    const nothrow pure @nogc @safe
     if (ThatDegree != Degree)
     {
         static if (ThatDegree < Degree)
@@ -373,41 +373,36 @@ struct GenDualNum(ulong Degree = 1)
     }
 
     /// ditto
-    nothrow pure @safe 
-    GenDualNum 
-    opBinary(string Op : "+", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) const
+    GenDualNum opBinary(string Op : "+", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) 
+    const nothrow pure @nogc @safe
     {
         return GenDualNum(this.val + that.val, this.d + that.d);
     }
 
     /// ditto
-    nothrow pure @safe 
-    GenDualNum 
-    opBinary(string Op : "-", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) const
+    GenDualNum opBinary(string Op : "-", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) 
+    const nothrow pure @nogc @safe
     {
         return this + -that;
     }
 
     /// ditto
-    nothrow pure @safe 
-    GenDualNum 
-    opBinary(string Op : "*", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) const
+    GenDualNum opBinary(string Op : "*", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) 
+    const nothrow pure @nogc @safe
     {
         return GenDualNum(this._x * that._x, this._dx * that.reduce() + this.reduce() * that._dx);
     }
 
     /// ditto
-    nothrow pure @safe 
-    GenDualNum 
-    opBinary(string Op : "/", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) const
+    GenDualNum opBinary(string Op : "/", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) 
+    const nothrow pure @nogc @safe
     {
         return this * that.inv();
     }
 
     /// ditto
-    nothrow pure @safe 
-    GenDualNum 
-    opBinary(string Op : "%", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) const
+    GenDualNum opBinary(string Op : "%", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) 
+    const nothrow pure @nogc @safe
     {
         const thisModThat = this._x % that._x;
         const reduceThis = this.reduce();
@@ -420,9 +415,8 @@ struct GenDualNum(ulong Degree = 1)
     }
 
     /// ditto
-    nothrow pure @safe 
-    GenDualNum 
-    opBinary(string Op : "^^", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) const
+    GenDualNum opBinary(string Op : "^^", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that) 
+    const nothrow pure @nogc @safe
     {
         const f = this.reduce();
         const fp = this._dx;
@@ -433,19 +427,19 @@ struct GenDualNum(ulong Degree = 1)
     }
 
     /// ditto
-    nothrow pure @safe GenDualNum opBinary(string Op)(in real val) const
+    GenDualNum opBinary(string Op)(in real val) const nothrow pure @nogc @safe
     {
         return mixin("this " ~ Op ~ " param(val)");
     }
 
     /// ditto
-    nothrow pure @safe GenDualNum opBinaryRight(string Op)(in real val) const 
+    GenDualNum opBinaryRight(string Op)(in real val) const nothrow pure @nogc @safe
     {
         return mixin("param(val) " ~ Op ~ " this");
     }
 
     /// This generates a hash for a generalized dual number.
-    nothrow pure @trusted hash_t toHash() const
+    hash_t toHash() const nothrow pure @nogc @trusted
     {
         auto buf = cast(const(ubyte)*)&_x;
 
@@ -470,12 +464,12 @@ struct GenDualNum(ulong Degree = 1)
     for a generalized dual number of degree *n* with value *f(x₀)*, first 
     derivative *f⁽ⁱ⁾(x₀)*, second derivative *f⁽²⁾(x₀)*, etc.
     */
-    pure @safe string toString() const
+    string toString() const pure @safe
     {
         return toString(0);
     }
 
-    private pure @safe string toString(ulong derivOrder) const
+    private string toString(ulong derivOrder) const pure @safe
     {
         static if (Degree == 1)
             const tail = format("%g%s", _dx, formatDerivOrder(derivOrder + 1));
@@ -715,7 +709,7 @@ unittest
     assert(!same(x, y), "GenDualNum objects of different degree cannot be the same");
 }
 
-private pure @safe string formatDerivOrder(ulong derivOrder)
+private string formatDerivOrder(ulong derivOrder) pure @safe
 {
     switch (derivOrder)
     {
@@ -728,7 +722,7 @@ private pure @safe string formatDerivOrder(ulong derivOrder)
     }
 }
 
-private pure @safe string formatPower(ulong power)
+private string formatPower(ulong power) pure @safe
 {
     switch (power)
     {
