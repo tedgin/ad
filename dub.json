@@ -8,8 +8,9 @@
 	"name": "ad",
 	"buildTypes": {
 		"docs": {
-			"buildOptions": [ "syntaxOnly" ], 
-			"dflags": ["-c", "-Dddocs", "ad.ddoc"]
+			"buildOptions": [ "syntaxOnly" ],
+			"dflags": ["-Dddocs", "ad.ddoc"],
+			"excludedSourceFiles": ["source/ad/math/impl.d"]
 		}
 	}
 }
