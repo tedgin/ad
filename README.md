@@ -14,7 +14,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `sqrt`
     * `cbrt`
     * `hypot`
-    * `poly` (not implemented yet)
+    * `poly`
     * `nextPow2` (not implemented yet)
     * `truncPow2` (not implemented yet)
   * `std.math.trigonometry` (not implemented yet)

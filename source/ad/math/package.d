@@ -6,8 +6,8 @@ public import std.math;
 public import ad.core;
 
 static import core.math;
-import std.algorithm.iteration: map;
-import std.array: array;
+import std.algorithm.iteration : map;
+import std.array : array;
 import std.traits : isFloatingPoint, isImplicitlyConvertible, Select;
 
 static import ad.math.impl;
@@ -31,7 +31,6 @@ pragma(inline, true)
         const f = cos(GenDualNum!2(0));
         assert(f == 1 && f.d == 0 && f.d!2 == -1);
     }
-
 
     /**
     This function computes $(MATH 2$(SUP exp)x).
@@ -166,8 +165,7 @@ pragma(inline, true)
         T = the float point type to be converted to
         x = the generalized dual number to be converted
     */
-    T toPrec(T, ulong Degree)(in GenDualNum!Degree x) nothrow pure @nogc @safe
-    if (isFloatingPoint!T)
+    T toPrec(T, ulong Degree)(in GenDualNum!Degree x) nothrow pure @nogc @safe if (isFloatingPoint!T)
     {
         return core.math.toPrec!T(x.val);
     }
@@ -176,11 +174,6 @@ pragma(inline, true)
     unittest
     {
         assert(typeid(toPrec!float(GenDualNum!1.zero)) == typeid(float));
-    }
-
-    T toPrec(T, ulong Deg)(in GenDualNum!Deg _) if (!isFloatingPoint!T)
-    {
-        static assert(false, typeid(T).name ~ " is not a floating point type");
     }
 
     /**
@@ -206,14 +199,14 @@ pragma(inline, true)
 
     /// ditto
     GenDualNum!Degree yl2x(T, ulong Degree)(in GenDualNum!Degree x, in T c) nothrow pure @nogc @safe
-    if (isImplicitlyConvertible!(T, real))
+            if (isImplicitlyConvertible!(T, real))
     {
         return ad.math.impl.yl2x(x, c);
     }
 
     /// ditto
     GenDualNum!Degree yl2x(T, ulong Degree)(in T c, in GenDualNum!Degree y) nothrow pure @nogc @safe
-    if (isImplicitlyConvertible!(T, real))
+            if (isImplicitlyConvertible!(T, real))
     {
         return ad.math.impl.yl2x(c, y);
     }
@@ -227,8 +220,7 @@ pragma(inline, true)
         const x = yl2x(GenDualNum!1(+0., -1), GenDualNum!1(1));
         assert(x == -real.infinity && x.d == -real.infinity);
 
-        const y = yl2x(GenDualNum!2(1), GenDualNum!1(2));
-        assert(typeof(y).DEGREE == 1);
+        assert(typeof(yl2x(GenDualNum!2(1), GenDualNum!1(2))).DEGREE == 1);
 
         const z = yl2x(GenDualNum!1(1), 2.);
         assert(z == 0 && z.d == 2 / std.math.LN2);
@@ -263,16 +255,14 @@ pragma(inline, true)
 
     /// ditto
     GenDualNum!Degree yl2xp1(T, ulong Degree)(in GenDualNum!Degree x, in T c) nothrow pure
-    @nogc @safe
-    if (isImplicitlyConvertible!(T, real))
+    @nogc @safe if (isImplicitlyConvertible!(T, real))
     {
         return ad.math.impl.yl2xp1(x, c);
     }
 
     /// ditto
     GenDualNum!Degree yl2xp1(T, ulong Degree)(in T c, in GenDualNum!Degree y) nothrow pure
-    @nogc @safe
-    if (isImplicitlyConvertible!(T, real))
+    @nogc @safe if (isImplicitlyConvertible!(T, real))
     {
         return ad.math.impl.yl2xp1(c, y);
     }
@@ -283,8 +273,7 @@ pragma(inline, true)
         const f = yl2xp1(GenDualNum!1(0), GenDualNum!1(3));
         assert(f == 0 && f.d == 3 / std.math.LN2);
 
-        const x = yl2xp1(GenDualNum!2(0), GenDualNum!1(1));
-        assert(typeof(x).DEGREE == 1);
+        assert(typeof(yl2xp1(GenDualNum!2(0), GenDualNum!1(1))).DEGREE == 1);
 
         const y = yl2xp1(GenDualNum!1(0), 1);
         assert(y == 0 && y.d == 1 / std.math.LN2);
@@ -500,7 +489,7 @@ nothrow pure @nogc @safe
 /// ditto
 pragma(inline, true)
 GenDualNum!Degree hypot(T, ulong Degree)(in GenDualNum!Degree x, in T c) nothrow pure @nogc @safe
-if (isImplicitlyConvertible!(T, real))
+        if (isImplicitlyConvertible!(T, real))
 {
     return ad.math.impl.hypot(x, c);
 }
@@ -518,7 +507,6 @@ unittest
     const f = hypot(GenDualNum!1(1), GenDualNum!1(2));
     assert(f == std.math.sqrt(5.0L) && f.d == 3 / std.math.sqrt(5.0L));
 }
-
 
 /**
 Calculates the distance of the point $(MATH (x, y, z)) from the origin $(MATH (0, 0, 0)). If any of
@@ -540,13 +528,13 @@ nothrow pure @nogc @safe
     alias XYDeg = Select!(XDegree < YDegree, XDegree, YDegree);
     alias Deg = Select!(XYDeg < ZDegree, XYDeg, ZDegree);
 
-    return ad.math.impl.hypot(cast(GenDualNum!Deg)x, cast(GenDualNum!Deg)y, cast(GenDualNum!Deg)z);
+    return ad.math.impl.hypot(cast(GenDualNum!Deg) x, cast(GenDualNum!Deg) y, cast(GenDualNum!Deg) z);
 }
 
 /// ditto
 GenDualNum!(XDegree < YDegree ? XDegree : YDegree)
 hypot(T, ulong XDegree, ulong YDegree)(in GenDualNum!XDegree x, in GenDualNum!YDegree y, in T c)
-if (isImplicitlyConvertible!(T, real))
+        if (isImplicitlyConvertible!(T, real))
 {
     return hypot(x, y, GenDualNum!(XDegree < YDegree ? XDegree : YDegree).mkConst(c));
 }
@@ -554,7 +542,7 @@ if (isImplicitlyConvertible!(T, real))
 /// ditto
 GenDualNum!(XDegree < ZDegree ? XDegree : ZDegree)
 hypot(T, ulong XDegree, ulong ZDegree)(in GenDualNum!XDegree x, in T c, in GenDualNum!ZDegree z)
-if (isImplicitlyConvertible!(T, real))
+        if (isImplicitlyConvertible!(T, real))
 {
     return hypot(x, GenDualNum!(XDegree < ZDegree ? XDegree : ZDegree).mkConst(c), z);
 }
@@ -562,28 +550,28 @@ if (isImplicitlyConvertible!(T, real))
 /// ditto
 GenDualNum!(YDegree < ZDegree ? YDegree : ZDegree)
 hypot(T, ulong YDegree, ulong ZDegree)(in T c, in GenDualNum!YDegree y, in GenDualNum!ZDegree z)
-if (isImplicitlyConvertible!(T, real))
+        if (isImplicitlyConvertible!(T, real))
 {
     return hypot(GenDualNum!(YDegree < ZDegree ? YDegree : ZDegree).mkConst(c), y, z);
 }
 
 /// ditto
 GenDualNum!Degree hypot(T, U, ulong Degree)(in GenDualNum!Degree x, in T c1, in U c2)
-if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
+        if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
     return hypot(x, GenDualNum!Degree.mkConst(c1), GenDualNum!Degree.mkConst(c2));
 }
 
 /// ditto
 GenDualNum!Degree hypot(T, U, ulong Degree)(in T c1, in GenDualNum!Degree y, in U c2)
-if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
+        if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
     return hypot(GenDualNum!Degree.mkConst(c1), y, GenDualNum!Degree.mkConst(c2));
 }
 
 /// ditto
 GenDualNum!Degree hypot(T, U, ulong Degree)(in T c1, in U c2, in GenDualNum!Degree z)
-if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
+        if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
     return hypot(GenDualNum!Degree.mkConst(c1), GenDualNum!Degree.mkConst(c2), z);
 }
@@ -620,7 +608,6 @@ unittest
     assert(y.same(GDN!1(u, -4 / u)));
 }
 
-/+ TODO: finish implementing poly
 /**
 This evaluates the polynomial $(MATH A(x) = a$(SUB 0) + a$(SUB 1)x + a$(SUB 2)x$(SUP 2) + ...) using
 Horner's rule $(MATH A(x) = a$(SUB 0) + x(a$(SUB 1) + x(a$(SUB 2) + ...))). It either $(MATH x) or
@@ -629,7 +616,7 @@ the same degree as the other parameters.
 
 If $(MATH f(x) = h$(SUB 0)(x) + h$(SUB 1)(x)g(x) + h$(SUB 2)(x)g(x)$(SUP 2) + ... + h$(SUB n)(x)g(x)$(SUP n)),
 then
-$(MATH f' = h$(SUB 0)' + h$(SUB 1)g' + g⋅(h$(SUB 1)' + 2h$(SUB 2)g' + g⋅(h$(SUB 2)' + 3h$(SUB 3)g' + g(...(h$(SUB n)')...)))).
+$(MATH f' = h$(SUB 0)' + h$(SUB 1)g' + g⋅(h$(SUB 1)' + 2h$(SUB 2)g' + g⋅(h$(SUB 2)' + 3h$(SUB 3)g' + g⋅(...(h$(SUB n)')...)))).
 
 Params:
     x = the argument of the polynomial
@@ -642,21 +629,24 @@ Returns:
 GenDualNum!(XDegree < ADegree ? XDegree : ADegree)
 poly(ulong XDegree, ulong ADegree)(in GenDualNum!XDegree x, in GenDualNum!ADegree[] A) nothrow pure
 @nogc @trusted
-in {
+in
+{
     assert(A.length > 0);
 }
-do {
+do
+{
     return typeof(return)(poly_impl_base(x.val, A), poly_impl_deriv(x, A));
 }
 
 /// ditto
 GenDualNum!Degree poly(T, ulong Degree)(in GenDualNum!Degree x, in T[] A) nothrow pure
-@nogc @trusted
-if (isFloatingPoint!T)
-in {
+@nogc @trusted if (isFloatingPoint!T)
+in
+{
     assert(A.length > 0);
 }
-do {
+do
+{
     static if (Degree == 1)
         auto df_acc = 0.0L;
     else
@@ -666,8 +656,9 @@ do {
 
     ptrdiff_t n = A.length;
     n--;
-    while (n > 0) {
-        df_acc = n*A[n]*x.d + g*df_acc;
+    while (n > 0)
+    {
+        df_acc = n * A[n] * x.d + g * df_acc;
         n--;
     }
 
@@ -676,12 +667,13 @@ do {
 
 /// ditto
 GenDualNum!Degree poly(T, ulong Degree)(in T x, in GenDualNum!Degree[] A) nothrow pure
-@nogc @trusted
-if (isFloatingPoint!T)
-in {
+@nogc @trusted if (isFloatingPoint!T)
+in
+{
     assert(A.length > 0);
 }
-do {
+do
+{
     return GenDualNum!Degree(
         poly_impl_base(x, A),
         poly_impl_deriv(GenDualNum!Degree.mkConst(x), A));
@@ -692,27 +684,24 @@ pragma(inline, true)
 GenDualNum!(XDegree < ADegree ? XDegree : ADegree)
 poly(ulong XDegree, ulong ADegree, int N)(
     in GenDualNum!XDegree x, ref const GenDualNum!ADegree[N] A)
-nothrow pure @nogc @safe
-if (N > 0 && N <= 10)
+nothrow pure @nogc @safe if (N > 0 && N <= 10)
 {
     return typeof(return)(poly_impl_base(x.val, A), poly_impl_deriv(x, A));
 }
 
-// TODO: test
 /// ditto
 pragma(inline, true)
 GenDualNum!Degree poly(T, ulong Degree, int N)(in GenDualNum!Degree x, const ref T[N] A)
-nothrow pure @nogc @safe
-if (isFloatingPoint!T && N > 0 && N <= 10)
+nothrow pure @nogc @safe if (isFloatingPoint!T && N > 0 && N <= 10)
 {
     static if (Degree == 1)
         auto df_acc = 0.0L;
     else
         auto df_acc = GenDualNum!Degree.DerivType!1.zero;
 
-    static foreach (i; 1 .. N) {
-        auto n = N - 1 - i;
-        df_acc = i*A[i]*x.d + x.reduce()*df_acc;
+    static foreach (i; 1 .. N)
+    {
+        df_acc = (N - i) * A[N - i] * x.d + x.reduce() * df_acc;
     }
 
     return GenDualNum!Degree(std.math.poly(x.val, A), df_acc);
@@ -721,8 +710,7 @@ if (isFloatingPoint!T && N > 0 && N <= 10)
 /// ditto
 pragma(inline, true)
 GenDualNum!Degree poly(T, ulong Degree, uint N)(in T x, const ref GenDualNum!Degree[N] A)
-nothrow pure @safe
-if (isFloatingPoint!T && N > 0 && N <= 10)
+nothrow pure @safe if (isFloatingPoint!T && N > 0 && N <= 10)
 {
     return GenDualNum!Degree(
         poly_impl_base(x, A),
@@ -763,29 +751,49 @@ unittest
     const r = poly(GDN!2(-2), e);
     assert(typeof(r).DEGREE == 2, format("%s", r));
 
-    const t = poly(-2., e);
-    assert(typeof(t).DEGREE == 3);
+    assert(typeof(poly(-2., e)).DEGREE == 3);
+
+    static real[3] y = [0., 1., 2.];
+
+    const u = poly(GDN!1(-1), y);
+    // f = 1
+    // f' = 0 + 1*1 + -1(0 + 2*2*1 + -1(0))
+    //    = 1 + -1(4)
+    //    = 1 - 4
+    //    = -3
+    assert(u.same(GDN!1(1, -3)), format("poly(<-1,1>, %s) = %s", y, u));
+
+    const i = poly(GDN!2(-2), y);
+    // f = 6
+    // <f',f"> = 0 + 1<1,0> + 2*2<-2,1><1,0>
+    //    = <1,0> + 4<-2,1>
+    //    = <1,0> + <-8,4>
+    //    = <-7,4>
+    assert(i.same(GDN!2(6, -7, 4)));
 }
 
 private pragma(inline, true)
-GenDualNum!(GDeg < HDeg ? GDeg : HDeg).DerivType!1
-poly_impl_deriv(ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg[] h)
+GenDualNum!(GDeg < HDeg ? GDeg : HDeg).DerivType!1 poly_impl_deriv(ulong GDeg, ulong HDeg)(
+    in GenDualNum!GDeg g, in GenDualNum!HDeg[] h)
 nothrow pure @nogc @safe
-in {
+in
+{
     assert(h.length > 0);
 }
-do {
+do
+{
     alias Deg = Select!(GDeg < HDeg, GDeg, HDeg);
 
-    const gd = cast(GenDualNum!Deg)g;
+    const gd = cast(GenDualNum!Deg) g;
     const gd_red = gd.reduce();
 
     ptrdiff_t n = h.length;
     n--;
-    auto acc = (cast(GenDualNum!Deg)h[n]).d;
-    while (n > 0) {
-        acc = (cast(GenDualNum!Deg)h[n - 1]).d
-            + n * (cast(GenDualNum!Deg)h[n]).reduce() * gd.d
+    auto acc = (cast(GenDualNum!Deg) h[n]).d;
+    while (n > 0)
+    {
+        acc = (cast(GenDualNum!Deg) h[n - 1]).d
+            + n * (cast(GenDualNum!Deg) h[n]).reduce() * gd.d
             + gd_red * acc;
         n--;
     }
@@ -807,14 +815,17 @@ unittest
 
 // Taken from std.math.algebraic.polyImplBase
 private real poly_impl_base(ulong Deg)(in real x, in GenDualNum!Deg[] h) nothrow pure @nogc @safe
-in {
+in
+{
     assert(h.length > 0);
 }
-do {
+do
+{
     ptrdiff_t n = h.length;
     --n;
     auto acc = h[n].val;
-    while (--n >= 0) {
+    while (--n >= 0)
+    {
         acc *= x;
         acc += h[n].val;
     }
@@ -826,7 +837,6 @@ unittest
     assert(poly_impl_base(0, [GenDualNum!1(-1)]) == -1);
     assert(poly_impl_base(2, [GenDualNum!3(-2), GenDualNum!3(-3), GenDualNum!3(4)]) == 8);
 }
-+/
 
 /+ TODO: Implement the following
 nextPow2

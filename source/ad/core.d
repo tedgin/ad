@@ -70,14 +70,6 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
             alias DerivType = real;
     }
 
-    template DerivType(ulong Order) if (Order > Degree)
-    {
-        static assert(
-            false,
-            "The order of derivative cannot be larger than the degree of the generalized dual" ~
-                " number.");
-    }
-
     // Constructs an object that has the same type as the derivative where all elements are NaN.
     package static DerivType!1 mkNaNDeriv()
     {
@@ -447,7 +439,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         return GenDualNum(-_x, -_dx);
     }
 
-    /*
+    /**
     This ensures that when two generalized dual numbers are combined, the degree of the resulting
     generalized dual number is the lesser of the degrees of the two being combined.
     */
@@ -684,7 +676,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         return GenDualNum(this._x ^^ that._x, fug * (gp * f.log() + fp * g / f));
     }
 
-    /*
+    /**
     This allows real numbers to be used on the right-hand side of the  +, -, *, /, %, and ^^
     operators. The real number is promoted to generalized dual number of the same degree as the
     left-hand side with all derivatives being zero, a constant.
@@ -694,7 +686,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         return mixin("this " ~ Op ~ " GenDualNum(constant, mkZeroDeriv())");
     }
 
-    /*
+    /**
     This allows real numbers to be used on the left-hand side of the  +, -, *, /, %, and ^^
     operators. The real number is promoted to generalized dual number of the same degree as the
     right-hand side with all derivatives being zero, a constant.
@@ -755,14 +747,6 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     }
 }
 
-/*
-This fails with an explanation when an attempt is made to create a zero degree generalized dual
-number.
-*/
-struct GenDualNum(ulong Degree : 0)
-{
-    static assert(false, "The degree of generalized dual number must be greater than zero.");
-}
 
 // .init
 unittest
