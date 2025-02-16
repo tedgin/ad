@@ -263,7 +263,8 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     assert(x.d!0 is x);
     ```
     */
-    DerivType!Order d(ulong Order = 1)() const nothrow pure @nogc @safe if (0 < Order && Order <= Degree)
+    DerivType!Order d(ulong Order = 1)() const nothrow pure @nogc @safe
+    if (0 < Order && Order <= Degree)
     {
         static if (Order == 1)
             return _dx;
@@ -291,10 +292,10 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     /**
     This computes the inverse of a generalized dual number. That is, given a generalized dual number
-    $(MATH x), it computes the generalized dual number $(MATH y) (or $(MATH x$(SUP -1))) where
-    $(MATH xy = 1).
+    $(MATH g), it computes the generalized dual number $(MATH h) (or $(MATH g$(SUP -1))) where
+    $(MATH gh = 1).
 
-    If $(MATH f(g) = g$(SUP -1)) ($(MATH = 1/g)), then $(MATH f' = -g$(SUP -2)g').
+    If $(MATH f(x) = g$(SUP -1)(x)), then $(MATH f' = -g$(SUP -2)g').
 
     Examples:
     ```
@@ -421,7 +422,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     This defines the identity operator for a generalized dual number.
 
-    If $(MATH f(g) = +g), then $(MATH f' = g').
+    If $(MATH f(x) = +g(x)), then $(MATH f' = g').
     */
     GenDualNum opUnary(string Op : "+")() const nothrow pure @nogc @safe
     {
@@ -432,7 +433,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     This negates a generalized dual number.
 
-    If $(MATH f(g) = -g), then $(MATH f' = -g').
+    If $(MATH f(x) = -g(x)), then $(MATH f' = -g').
     */
     GenDualNum opUnary(string Op : "-")() const nothrow pure @nogc @safe
     {
@@ -668,12 +669,29 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     GenDualNum opBinary(string Op : "^^", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that)
     const nothrow pure @nogc @safe
     {
-        const f = this.reduce();
-        const fp = this._dx;
-        const g = that.reduce();
-        const gp = that._dx;
-        const fug = f ^^ g;
-        return GenDualNum(this._x ^^ that._x, fug * (gp * f.log() + fp * g / f));
+        const g = this.reduce();
+        const gp = this._dx;
+        const h = that.reduce();
+        const hp = that._dx;
+
+        static if (DEGREE == 1)
+            const hpNaN = isNaN(hp);
+        else
+            const hpNaN = isNaN(hp.val);
+
+        if (this._x == 0 && signbit(this._x) == 0 && that._x > 0 && !hpNaN) {
+            return GenDualNum(this._x^^that._x, g^^(h-1)*gp*h);
+        }
+        return GenDualNum(this._x^^that._x, g^^h*(gp*h/g + hp*g.log()));
+    }
+
+    GenDualNum opBinary(string Op : "^^")(in real c) const nothrow pure @nogc @safe
+    {
+        if (c == 0) {
+            return GenDualNum.one;
+        } else {
+            return GenDualNum(_x^^c, c*reduce()^^(c-1)*_dx);
+        }
     }
 
     /**
@@ -999,6 +1017,9 @@ unittest
     assert(g1g2.DEGREE == 1, "g1 * g2 should have degree 1");
     assert(g2g1.DEGREE == 1, "g2 * g1 should have degree 1");
     assert(g1g2.val == -2 && g1g2.d == 7, "g1 * g2 is incorrect");
+
+    const t = GDN!1(-1, 0) * GDN!1(1, -real.infinity);
+    assert(t.val == -1 && t.d == real.infinity);
 }
 
 // opBinary(/)
@@ -1184,16 +1205,16 @@ unittest
     assert(qw.val == -0. && isNaN(qw.d), "(-0) ^ (y>0, odd) is incorrect");
 
     const qe = pz ^^ pl;
-    // dqe = +0(1*3/+0 + 1ln(+0)) = NaN
-    assert(qe.val == +0. && isNaN(qe.d), "(+0) ^ (y>0, odd) is incorrect");
+    // dqe = +0*1*3 = +0
+    assert(qe.val == +0. && qe.d == +0., "(+0) ^ (y>0, odd) is incorrect");
 
     const qr = nz ^^ a1;
     // dqr = +0(1*2/-0 + -1ln(-0)) = NaN
     assert(qr.val == +0. && isNaN(qr.d), "(-0) ^ (y>0, not odd) is incorrect");
 
     const qt = pz ^^ a1;
-    // dqt = +0(1*2/+0 + -1ln(+0)) = NaN
-    assert(qt.val == +0. && isNaN(qt.d), "(+0) ^ (y>0, not odd) is incorrect");
+    // dqt = +0*1*2 = +0
+    assert(qt.val == +0. && qt.d == +0., "(+0) ^ (y>0, not odd) is incorrect");
 
     const qy = GDN!1(2, real.infinity);
     const qu = po ^^ qy;
@@ -1225,6 +1246,16 @@ unittest
     //    = <1,2><2,-2> = <2,2*2 + 1*-2>
     //    = <2,2>
     assert(qs.val == 1 && qs.d == 2 && qs.d!2 == 2, format("%s ^ %s is not %s", qp, qa, qs));
+
+    const qd = 2 ^^ GDN!1(0, -real.infinity);
+    assert(qd.val == 1 && qd.d == -real.infinity);
+
+    const qg = GDN!1(0, 1) ^^ GDN!1(2, 0);
+    assert(qg == 0 && qg.d == 0);
+    // f' = g^(h-1)g'h + g^h*h'ln(g)
+    // <0,1> ^ <2,0>, <0,1>*<0,1> = <0,1*0 + 0*1> = <0,0>
+    // f = 0
+    // f' = 0^1*1*2 + 0^2*0*ln(0)
 }
 
 // toHash

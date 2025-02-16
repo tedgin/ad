@@ -18,11 +18,31 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `nextPow2` (not implemented yet)
     * `truncPow2` (not implemented yet)
   * `std.math.trigonometry` (not implemented yet)
-  * `std.math.rounding` (not implemented yet)
+  * `std.math.rounding`
+    * `ceil`
+    * `floor` (not implemented yet)
+    * `lrint` (not implemented yet)
+    * `lround` (not implemented yet)
+    * `nearbyint` (not implemented yet)
+    * `quantize` (not implemented yet)
+    * `rint` (not implemented yet)
+    * `rndtol` (not implemented yet)
+    * `round` (not implemented yet)
+    * `trunc` (not implemented yet)
   * `std.math.exponential` (not implemented yet)
   * `std.math.remainder` (not implemented yet)
   * `std.math.operations` (not implemented yet)
-  * `std.math.traits` (not implemented yet)
+  * `std.math.traits`
+    * `copysign` (not implemented yet)
+    * `isFinite` (not implemented yet)
+    * `isIdentical` (not implemented yet)
+    * `isInfinity` (not implemented yet)
+    * `isNaN` (not implemented yet)
+    * `isNormal` (not implemented yet)
+    * `isPowerOf2` (not implemented yet)
+    * `isSubnormal` (not implemented yet)
+    * `sgn`
+    * `signbit` (not implemented yet)
   * `std.math.hardware` (not implemented yet)
 * supports arbitrary order differentiation, must be fixed at compile time
 
