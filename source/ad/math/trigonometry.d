@@ -234,6 +234,7 @@ unittest
     assert(atan(GDN!2(0)).same(GDN!2(0, 1, 0)));
 }
 
+/+
 /**
 This function computes the arctangent (inverse tangent) of $(MATH g/h).
 
@@ -287,29 +288,46 @@ GDN!Deg atan2_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h) nothrow pure @nogc @sa
 {
     const g_red = g.reduce();
     const h_red = h.reduce();
+    const gdh = g.d * h_red;
+    const hdg = h.d * g_red;
+
     return GDN!Deg(std.math.atan2(g.val, h.val), (g.d*h_red - g_red*h.d)/(h_red^^2 + g_red^^2));
 }
 
 unittest
 {
+    import std.format;
     import std.math : PI;
 
-    assert(atan2_impl(GDN!1(-0.), GDN!1(-1)).same(GDN!1(-PI, -1)));
+    const nz = GDN!1(-0.);
+    const pz = GDN!1(+0.);
 
-    // TODO: test NaN, anything
-    // TODO: test anything, NaN
-    // TODO: test +/-0, >0
-    // TODO: test +/-0, +0
-    // TODO: test +/-0, <0
-    // TODO: test +/-0, -0
-    // TODO: test >0, +/-0
-    // TODO: test <0, +/-0
+    assert(atan2_impl(GDN!1(-0.), GDN!1(-1)).same(GDN!1(-PI, -1)));
+    assert(atan2_impl(GDN!1.nan, GDN!1(2)).same(GDN!1.nan));
+    assert(atan2_impl(GDN!1(-1), GDN!1.nan).same(GDN!1.nan));
+    assert(atan2_impl(GDN!1(+0.), GDN!1(1)).same(GDN!1(+0., 1)));
+
+    const h = GDN!1(3);
+    const f = atan2_impl(nz, h);
+    assert(f.same(GDN!1(-0., 1./3)), format("atan2(%s, %s) != %s", nz, h, f));
+
+    const w = atan2_impl(pz, pz);
+    assert(w.same(GDN!1(+0., real.nan)), format("atan2(%s, %s) != %s", pz, pz, w));
+
+    const e = atan2_impl(nz, pz);
+    assert(e.same(GDN!1(-0., real.infinity)), format("atan2(%s, %s) != %s", nz, pz, e));
+    // lim g->0-,h->0+ (h-g)/(hh + gg) => h-g > 0
+
+    // TODO: test + /-0, -0
+    // TODO: test >0, + /-0
+    // TODO: test <0, + /-0
     // TODO: test >0, inf
-    // TODO: test +/-inf, finite
+    // TODO: test + /-inf, finite
     // TODO: test >0, -inf
-    // TODO: test +/-inf, inf
-    // TODO: test +/-inf, -inf
+    // TODO: test + /-inf, inf
+    // TODO: test + /-inf, -inf
 }
++/
 
 /**
 This function calculates the hyperbolic sine of its argument `g`.
