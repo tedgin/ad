@@ -1,4 +1,4 @@
-/// It extends `std.math.rounding` to support `GenDualNum` objects.
+/// It extends `std.math.rounding` to support `GDN` objects.
 module ad.math.rounding;
 
 public import std.math.rounding;
@@ -17,7 +17,7 @@ Returns the value of `g` rounded upward to the nearest integer.
 
 If $(MATH f(x) = ⌈g(x)⌉), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
 */
-GenDualNum!Deg ceil(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
+GDN!Deg ceil(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 {
     static if (Deg == 1) {
         const f_red = std.math.ceil(g.reduce());
@@ -27,29 +27,27 @@ GenDualNum!Deg ceil(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
         const f_val = f_red.val;
     }
 
-    GenDualNum!Deg.DerivType!1 df;
+    GDN!Deg.DerivType!1 df;
     if (isFinite(g.val)) {
         df = g.d * dirac(g.reduce() - f_red);
     }
 
-    return GenDualNum!Deg(f_val, df);
+    return GDN!Deg(f_val, df);
 }
 
 ///
 unittest
 {
-    const q = ceil(GenDualNum!1(1));
+    const q = ceil(GDN!1(1));
     assert(q == 1 && q.d == real.infinity);
 
-    const w = ceil(GenDualNum!1(-1.4));
+    const w = ceil(GDN!1(-1.4));
     assert(w == -1 && w.d == 0);
 }
 
 unittest
 {
     import std.math : LN2;
-
-    alias GDN = GenDualNum;
 
     assert(ceil(GDN!1.nan).same(GDN!1.nan));
     assert(ceil(GDN!1(real.infinity)).same(GDN!1(real.infinity, real.nan)));
@@ -63,7 +61,7 @@ Returns the value of `g` rounded downward to the nearest integer.
 
 If $(MATH f(x) = ⌊g(x)⌋), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
 */
-GenDualNum!Deg floor(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
+GDN!Deg floor(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 {
     static if (Deg == 1) {
         const f_red = std.math.floor(g.reduce());
@@ -73,29 +71,27 @@ GenDualNum!Deg floor(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
         const f_val = f_red.val;
      }
 
-    GenDualNum!Deg.DerivType!1 df;
+    GDN!Deg.DerivType!1 df;
     if (std.math.isFinite(g.val)) {
         df = g.d * dirac(g.reduce() - f_red);
     }
 
-    return GenDualNum!Deg(f_val, df);
+    return GDN!Deg(f_val, df);
 }
 
 ///
 unittest
 {
-    const q = floor(GenDualNum!1(1));
+    const q = floor(GDN!1(1));
     assert(q == 1 && q.d == real.infinity);
 
-    const w = floor(GenDualNum!1(-1.4));
+    const w = floor(GDN!1(-1.4));
     assert(w == -2 && w.d == 0);
 }
 
 unittest
 {
     import std.math : LN2;
-
-    alias GDN = GenDualNum;
 
     assert(floor(GDN!1.nan).same(GDN!1.nan));
     assert(floor(GDN!1(real.infinity)).same(GDN!1(real.infinity, real.nan)));

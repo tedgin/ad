@@ -7,17 +7,26 @@ This is an automatic differentiation library written in D supporting one-dimensi
 * supports all of D's arithmetic operators
 * support the same set of functions as `core.math`
 * supports the same set of functions as `std.math`
-  * `std.math.constants`
   * `std.math.algebraic`
-    * `abs` (implicitly)
-    * `fabs`
-    * `sqrt`
-    * `cbrt`
-    * `hypot`
-    * `poly`
-    * `nextPow2` (not implemented yet)
-    * `truncPow2` (not implemented yet)
-  * `std.math.trigonometry` (not implemented yet)
+  * `std.math.constants`
+  * `std.math.exponential`
+    * `exp` (not implemented yet)
+    * `exp2` (not implemented yet)
+    * `expm1` (not implemented yet)
+    * `frexp` (not implemented yet)
+    * `ilogb` (not implemented yet)
+    * `ldexp` (not implemented yet)
+    * `log` (not implemented yet)
+    * `log10` (not implemented yet)
+    * `log1p` (not implemented yet)
+    * `log2`
+    * `logb` (not implemented yet)
+    * `pow` (not implemented yet)
+    * `powmod` (not implemented yet)
+    * `scalebn` (not implemented yet)
+  * `std.math.hardware` (not implemented yet)
+  * `std.math.operations` (not implemented yet)
+  * `std.math.remainder` (not implemented yet)
   * `std.math.rounding`
     * `ceil`
     * `floor` (not implemented yet)
@@ -29,9 +38,20 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `rndtol` (not implemented yet)
     * `round` (not implemented yet)
     * `trunc` (not implemented yet)
-  * `std.math.exponential` (not implemented yet)
-  * `std.math.remainder` (not implemented yet)
-  * `std.math.operations` (not implemented yet)
+  * `std.math.trigonometry`
+    * `acos`
+    * `acosh` (not implemented yet)
+    * `asin`
+    * `asinh` (not implemented yet)
+    * `atan`
+    * `atan2` (not implemented yet)
+    * `atanh` (not implemented yet)
+    * `cos`
+    * `cosh` (not implemented yet)
+    * `sin`
+    * `sinh` (not implemented yet)
+    * `tan`
+    * `tanh` (not implemented yet)
   * `std.math.traits`
     * `copysign` (not implemented yet)
     * `isFinite` (not implemented yet)
@@ -43,7 +63,6 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `isSubnormal` (not implemented yet)
     * `sgn`
     * `signbit` (not implemented yet)
-  * `std.math.hardware` (not implemented yet)
 * supports arbitrary order differentiation, must be fixed at compile time
 
 ## Examples

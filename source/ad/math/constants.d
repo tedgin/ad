@@ -1,4 +1,4 @@
-/// This module extends the `std.math.constants` to support `GenDualNum` objects.
+/// This module extends the `std.math.constants` to support `GDN` objects.
 module ad.math.constants;
 
 public import std.math.constants;
@@ -6,49 +6,49 @@ public import std.math.constants;
 import ad.core;
 
 /// Euler's constant $(MATH e)
-enum GenDualNum!Deg E(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.E);
+enum GDN!Deg E(ulong Deg) = GDN!Deg.mkConst(std.math.constants.E);
 
 /// $(MATH π)
-enum GenDualNum!Deg PI(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.PI);
+enum GDN!Deg PI(ulong Deg) = GDN!Deg.mkConst(std.math.constants.PI);
 
 /// $(MATH π/2)
-enum GenDualNum!Deg PI_2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.PI_2);
+enum GDN!Deg PI_2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.PI_2);
 
 /// $(MATH π/4)
-enum GenDualNum!Deg PI_4(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.PI_4);
+enum GDN!Deg PI_4(ulong Deg) = GDN!Deg.mkConst(std.math.constants.PI_4);
 
 /// $(MATH 1/π)
-enum GenDualNum!Deg M_1_PI(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.M_1_PI);
+enum GDN!Deg M_1_PI(ulong Deg) = GDN!Deg.mkConst(std.math.constants.M_1_PI);
 
 /// $(MATH 2/π)
-enum GenDualNum!Deg M_2_PI(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.M_2_PI);
+enum GDN!Deg M_2_PI(ulong Deg) = GDN!Deg.mkConst(std.math.constants.M_2_PI);
 
 /// $(MATH 2/√π)
-enum GenDualNum!Deg M_2_SQRTPI(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.M_2_SQRTPI);
+enum GDN!Deg M_2_SQRTPI(ulong Deg) = GDN!Deg.mkConst(std.math.constants.M_2_SQRTPI);
 
 /// $(MATH ln(10))
-enum GenDualNum!Deg LN10(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LN10);
+enum GDN!Deg LN10(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LN10);
 
 /// $(MATH ln(2))
-enum GenDualNum!Deg LN2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LN2);
+enum GDN!Deg LN2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LN2);
 
 /// $(MATH log(2))
-enum GenDualNum!Deg LOG2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LOG2);
+enum GDN!Deg LOG2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LOG2);
 
 /// $(MATH lg(e))
-enum GenDualNum!Deg LOG2E(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LOG2E);
+enum GDN!Deg LOG2E(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LOG2E);
 
 /// $(MATH lg(10))
-enum GenDualNum!Deg LOG2T(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LOG2T);
+enum GDN!Deg LOG2T(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LOG2T);
 
 /// $(MATH log(e))
-enum GenDualNum!Deg LOG10E(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LOG10E);
+enum GDN!Deg LOG10E(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LOG10E);
 
 /// $(MATH √2)
-enum GenDualNum!Deg SQRT2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.SQRT2);
+enum GDN!Deg SQRT2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.SQRT2);
 
 /// $(MATH √½)
-enum GenDualNum!Deg SQRT1_2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.SQRT1_2);
+enum GDN!Deg SQRT1_2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.SQRT1_2);
 
 unittest
 {

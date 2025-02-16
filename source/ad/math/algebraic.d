@@ -1,4 +1,4 @@
-/// It extends the `std.math.algebraic` to support `GenDualNum` objects.
+/// It extends the `std.math.algebraic` to support `GDN` objects.
 module ad.math.algebraic;
 
 public import std.math.algebraic;
@@ -17,7 +17,7 @@ import ad.math.traits : sgn;
 // abs support
 unittest
 {
-    assert(abs(GenDualNum!1(-1)).same(GenDualNum!1(1, -1)), "std.math.abs(GDN) not working");
+    assert(abs(GDN!1(-1)).same(GDN!1(1, -1)), "std.math.abs(GDN) not working");
 }
 
 /**
@@ -25,35 +25,33 @@ This function computes the absolute value of the argument.
 
 If $(MATH f(x) = |g(x)|), then $(MATH f' = sgn(g)g'), when $(MATH g ≠ 0)
 */
-pragma(inline, true) GenDualNum!Deg fabs(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
+pragma(inline, true) GDN!Deg fabs(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 {
     const df_val = signbit(g.val) == 0 ? 1.0L : -1.0L;
 
     static if (Deg == 1)
         const df = df_val;
     else
-        const df = GenDualNum!Deg.DerivType!1.mkConst(df_val);
+        const df = GDN!Deg.DerivType!1.mkConst(df_val);
 
-    return GenDualNum!Deg(core.math.fabs(g.val), df * g.d);
+    return GDN!Deg(core.math.fabs(g.val), df * g.d);
 }
 
 ///
 unittest
 {
-    const f = fabs(GenDualNum!2(-3));
+    const f = fabs(GDN!2(-3));
     assert(f == 3 && f.d == -1 && f.d!2 == 0);
 
-    const x = fabs(GenDualNum!1(+0.));
+    const x = fabs(GDN!1(+0.));
     assert(x == +0. && x.d == 1);
 
-    const y = fabs(GenDualNum!1(-0.));
+    const y = fabs(GDN!1(-0.));
     assert(y == +0. && y.d == -1);
 }
 
 unittest
 {
-    alias GDN = GenDualNum ;
-
     assert(fabs(GDN!1(-1)).same(GDN!1(1, -1)));
 }
 
@@ -62,21 +60,21 @@ This function computes the square root of its argument.
 
 If $(MATH f(x) = √g(x)), then $(MATH f' = g$(SUP -½)g'/2).
 */
-pragma(inline, true) GenDualNum!Deg sqrt(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
+pragma(inline, true) GDN!Deg sqrt(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 {
-    const df = signbit(g.val) == 1 ? GenDualNum!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
-    return GenDualNum!Deg(core.math.sqrt(g.val), df * g.d);
+    const df = signbit(g.val) == 1 ? GDN!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
+    return GDN!Deg(core.math.sqrt(g.val), df * g.d);
 }
 
 ///
 unittest
 {
-    const f = sqrt(GenDualNum!2(1));
+    const f = sqrt(GDN!2(1));
     // f = 1
     // <f',f"> = <1,0>/[2*sqrt(<1,1>)] = .5<1,0><1,1>^-.5 = <.5,-.25>
     assert(f == 1 && f.d == 0.5 && f.d!2 == -0.25);
 
-    const x = sqrt(GenDualNum!1(+0.));
+    const x = sqrt(GDN!1(+0.));
     assert(x == 0 && x.d == real.infinity);
 }
 
@@ -84,14 +82,12 @@ unittest
 {
     import std.format;
 
-    alias GDN1 = GenDualNum!1;
+    assert(sqrt(GDN!1(-0.)).same(GDN!1(-0., real.nan)), "sqrt(-0) incorrect");
 
-    assert(sqrt(GDN1(-0.)).same(GDN1(-0., real.nan)), "sqrt(-0) incorrect");
+    const x = sqrt(-GDN!1.one);
+    assert(x.same(GDN!1.nan), format("sqrt(-1) = %s, should be %s", x, GDN!1.nan));
 
-    const x = sqrt(-GDN1.one);
-    assert(x.same(GDN1.nan), format("sqrt(-1) = %s, should be %s", x, GDN1.nan));
-
-    assert(sqrt(GDN1.infinity).same(GDN1(real.infinity, 0)), "sqrt(inf) incorrect");
+    assert(sqrt(GDN!1.infinity).same(GDN!1(real.infinity, 0)), "sqrt(inf) incorrect");
 }
 
 /**
@@ -99,16 +95,15 @@ This function computes the cube root of the argument.
 
 If $(MATH f(x) = ∛g(x)), then $(MATH f' = g$(SUP -⅔)g'/3)
 */
-GenDualNum!Deg cbrt(ulong Deg)(in GenDualNum!Deg g) nothrow @nogc @safe
+GDN!Deg cbrt(ulong Deg)(in GDN!Deg g) nothrow @nogc @safe
 {
-    alias GDN = GenDualNum!Deg;
-
-    if (g == 0)
-        return GDN(0, GDN.DerivType!1.infinity);
+    if (g == 0) {
+        return GDN!Deg(0, GDN!Deg.DerivType!1.infinity);
+    }
 
     const p = -2.0L / 3;
     const g_pow = isInfinity(g.val) && g < 0 ? -(-g.reduce())^^p : g.reduce()^^p;
-    return GDN(std.math.cbrt(g.val), g.d * g_pow / 3);
+    return GDN!Deg(std.math.cbrt(g.val), g.d * g_pow / 3);
 }
 
 ///
@@ -116,7 +111,7 @@ unittest
 {
     import std.math : isClose;
 
-    const f = cbrt(GenDualNum!2(8));
+    const f = cbrt(GDN!2(8));
     assert(f == 2 && f.d == 1.0L / 12 && isClose(f.d!2, -1.0L / 144));
 }
 
@@ -124,7 +119,7 @@ unittest
 {
     import std.format;
 
-    alias GDN1 = GenDualNum!1;
+    alias GDN1 = GDN!1;
 
     assert(cbrt(GDN1(1)).same(GDN1(1, 1.0L / 3.0L)), "cbrt(1) incorrect");
     assert(cbrt(GDN1(0)).same(GDN1(0, real.infinity)), "cbrt(0) incorrect");
@@ -147,23 +142,21 @@ the other parameter.
 If $(MATH f(x) = [g(x)$(SUP 2) + h(x)$(SUP 2)]$(SUP ½)), then
 $(MATH f' = (gg' + hh')(g$(SUP 2) + h$(SUP 2))$(SUP -½)).
 */
-GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
-hypot(ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg h)
-nothrow pure @nogc @safe
+GDN!(GDeg < HDeg ? GDeg : HDeg) hypot(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
+    nothrow pure @nogc @safe
 {
     return hypot_impl(g, h);
 }
 
 /// ditto
-GenDualNum!Deg hypot(T, ulong Deg)(in GenDualNum!Deg g, in T c) nothrow pure @nogc @safe
+GDN!Deg hypot(T, ulong Deg)(in GDN!Deg g, in T c) nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real))
 {
-    return hypot_impl(g, GenDualNum!Deg.mkConst(c));
+    return hypot_impl(g, GDN!Deg.mkConst(c));
 }
 
 /// ditto
-pragma(inline, true)
-GenDualNum!Deg hypot(T, ulong Deg)(in T c, in GenDualNum!Deg h) nothrow pure @nogc @safe
+pragma(inline, true) GDN!Deg hypot(T, ulong Deg)(in T c, in GDN!Deg h) nothrow pure @nogc @safe
 {
     return hypot(h, c);
 }
@@ -171,13 +164,12 @@ GenDualNum!Deg hypot(T, ulong Deg)(in T c, in GenDualNum!Deg h) nothrow pure @no
 ///
 unittest
 {
-    const f = hypot(GenDualNum!1(1), GenDualNum!1(2));
+    const f = hypot(GDN!1(1), GDN!1(2));
     assert(f == std.math.sqrt(5.0L) && f.d == 3 / std.math.sqrt(5.0L));
 }
 
 private pragma(inline, true)
-GenDualNum!Deg hypot_impl(ulong Deg)(in GenDualNum!Deg g, in GenDualNum!Deg h) nothrow pure
-@nogc @safe
+GDN!Deg hypot_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h) nothrow pure @nogc @safe
 {
     const g_red = g.reduce();
     const h_red = h.reduce();
@@ -191,14 +183,12 @@ GenDualNum!Deg hypot_impl(ulong Deg)(in GenDualNum!Deg g, in GenDualNum!Deg h) n
     }
 
     const df = (g_red * g.d + h_red * h.d) / f_red;
-    return GenDualNum!Deg(f_val, df);
+    return GDN!Deg(f_val, df);
 }
 
 unittest
 {
     import std.math : isClose, sqrt;
-
-    alias GDN = GenDualNum;
 
     const f = hypot_impl(GDN!2(1), GDN!2(2));
     // f = sqrt(5)
@@ -224,21 +214,19 @@ Returns:
     The resulting generalized dual number will have a degree equal to the least of the degrees of
     `g`, `h`, and `i`.
 */
-auto
-hypot(ulong GDeg, ulong HDeg, ulong IDeg)(
-    in GenDualNum!GDeg g, in GenDualNum!HDeg h, in GenDualNum!IDeg i)
-nothrow pure @nogc @safe
+auto hypot(ulong GDeg, ulong HDeg, ulong IDeg)(in GDN!GDeg g, in GDN!HDeg h, in GDN!IDeg i)
+    nothrow pure @nogc @safe
 {
     alias GHDeg = Select!(GDeg < HDeg, GDeg, HDeg);
     alias Deg = Select!(GHDeg < IDeg, GHDeg, IDeg);
 
-    return hypot_impl(cast(GenDualNum!Deg) g, cast(GenDualNum!Deg) h, cast(GenDualNum!Deg) i);
+    return hypot_impl(cast(GDN!Deg) g, cast(GDN!Deg) h, cast(GDN!Deg) i);
 }
 
 /// ditto
-GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
-hypot(T, ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg h, in T c)
-nothrow pure @nogc @safe
+GDN!(GDeg < HDeg ? GDeg : HDeg)
+hypot(T, ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h, in T c)
+    nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real))
 {
     return hypot_impl(cast(typeof(return)) g, cast(typeof(return)) h, typeof(return).mkConst(c));
@@ -246,9 +234,9 @@ if (isImplicitlyConvertible!(T, real))
 
 /// ditto
 pragma(inline, true)
-GenDualNum!(GDeg < IDeg ? GDeg : IDeg)
-hypot(T, ulong GDeg, ulong IDeg)(in GenDualNum!GDeg g, in T c, in GenDualNum!IDeg i)
-nothrow pure @nogc @safe
+GDN!(GDeg < IDeg ? GDeg : IDeg)
+hypot(T, ulong GDeg, ulong IDeg)(in GDN!GDeg g, in T c, in GDN!IDeg i)
+    nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real))
 {
     return hypot(g, i, c);
@@ -256,8 +244,8 @@ if (isImplicitlyConvertible!(T, real))
 
 /// ditto
 pragma(inline, true)
-GenDualNum!(HDeg < IDeg ? HDeg : IDeg)
-hypot(T, ulong HDeg, ulong IDeg)(in T c, in GenDualNum!HDeg h, in GenDualNum!IDeg i)
+GDN!(HDeg < IDeg ? HDeg : IDeg)
+hypot(T, ulong HDeg, ulong IDeg)(in T c, in GDN!HDeg h, in GDN!IDeg i)
 nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real))
 {
@@ -265,17 +253,15 @@ if (isImplicitlyConvertible!(T, real))
 }
 
 /// ditto
-GenDualNum!Deg hypot(T, U, ulong Deg)(in GenDualNum!Deg g, in T c1, in U c2) nothrow pure
-@nogc @safe
+GDN!Deg hypot(T, U, ulong Deg)(in GDN!Deg g, in T c1, in U c2) nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
-    return hypot_impl(g, GenDualNum!Deg.mkConst(c1), GenDualNum!Deg.mkConst(c2));
+    return hypot_impl(g, GDN!Deg.mkConst(c1), GDN!Deg.mkConst(c2));
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Deg hypot(T, U, ulong Deg)(in T c1, in GenDualNum!Deg h, in U c2) nothrow pure
-@nogc @safe
+GDN!Deg hypot(T, U, ulong Deg)(in T c1, in GDN!Deg h, in U c2) nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
     return hypot(h, c1, c2);
@@ -283,8 +269,7 @@ if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Deg hypot(T, U, ulong Deg)(in T c1, in U c2, in GenDualNum!Deg i) nothrow pure
-@nogc @safe
+GDN!Deg hypot(T, U, ulong Deg)(in T c1, in U c2, in GDN!Deg i) nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
     return hypot(i, c1, c2);
@@ -295,15 +280,13 @@ unittest
 {
     import std.math : isClose;
 
-    const f = hypot(GenDualNum!1(1), GenDualNum!1(2), GenDualNum!1(3));
+    const f = hypot(GDN!1(1), GDN!1(2), GDN!1(3));
     assert(isClose(f.val, std.math.sqrt(14.0L)) && isClose(f.d, 6 / std.math.sqrt(14.0L)));
 }
 
 unittest
 {
     import std.format;
-
-    alias GDN = GenDualNum;
 
     assert(typeof(hypot(GDN!2.one, GDN!2.one, GDN!1.one)).DEGREE == 1);
     assert(typeof(hypot(GDN!2.one, GDN!1.one, GDN!3.one)).DEGREE == 1);
@@ -325,8 +308,7 @@ unittest
 }
 
 private pragma(inline, true)
-GenDualNum!Deg hypot_impl(ulong Deg)(in GenDualNum!Deg g, in GenDualNum!Deg h, in GenDualNum!Deg i)
-nothrow pure @nogc @safe
+GDN!Deg hypot_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h, in GDN!Deg i) nothrow pure @nogc @safe
 {
     const g_red = g.reduce();
     const h_red = h.reduce();
@@ -341,14 +323,12 @@ nothrow pure @nogc @safe
     }
 
     const df = (g_red*g.d + h_red*h.d + i_red*i.d) / f_red;
-    return GenDualNum!Deg(f_val, df);
+    return GDN!Deg(f_val, df);
 }
 
 unittest
 {
     import std.math : isClose, sqrt;
-
-    alias GDN = GenDualNum;
 
     const f = hypot_impl(GDN!2(1), GDN!2(2), GDN!2(3));
     // f = sqrt(14)
@@ -380,51 +360,47 @@ Returns:
     The resulting generalized dual number will have a degree equal to the lesser of the degrees of
     `g` and `H`.
 */
-GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
-poly(ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg[] H)
-nothrow pure @nogc @trusted
+GDN!(GDeg < HDeg ? GDeg : HDeg) poly(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg[] H)
+    nothrow pure @nogc @trusted
 in(H.length > 0, "coefficient array cannot be empty")
 {
     return typeof(return)(poly_impl_base(g.val, H), poly_impl_deriv(g, H));
 }
 
 /// ditto
-GenDualNum!Deg poly(T, ulong Deg)(in GenDualNum!Deg g, in T[] H) nothrow pure @nogc @trusted
+GDN!Deg poly(T, ulong Deg)(in GDN!Deg g, in T[] H) nothrow pure @nogc @trusted
 if (isFloatingPoint!T)
 in(H.length > 0, "coefficient array cannot be empty")
 {
     static if (Deg == 1)
         auto df_acc = 0.0L;
     else
-        auto df_acc = GenDualNum!Deg.DerivType!1.zero;
+        auto df_acc = GDN!Deg.DerivType!1.zero;
 
     const g_red = g.reduce();
 
     ptrdiff_t n = H.length;
     n--;
-    while (n > 0)
-    {
+    while (n > 0) {
         df_acc = n * H[n] * g.d + g_red * df_acc;
         n--;
     }
 
-    return GenDualNum!Deg(std.math.poly(g.val, H), df_acc);
+    return GDN!Deg(std.math.poly(g.val, H), df_acc);
 }
 
 /// ditto
-GenDualNum!Deg poly(T, ulong Deg)(in T g, in GenDualNum!Deg[] H) nothrow pure @nogc @trusted
+GDN!Deg poly(T, ulong Deg)(in T g, in GDN!Deg[] H) nothrow pure @nogc @trusted
 if (isFloatingPoint!T)
 in(H.length > 0, "coefficient array cannot be empty")
 {
-    return GenDualNum!Deg(
-        poly_impl_base(g, H),
-        poly_impl_deriv(GenDualNum!Deg.mkConst(g), H));
+    return GDN!Deg(poly_impl_base(g, H), poly_impl_deriv(GDN!Deg.mkConst(g), H));
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
-poly(ulong GDeg, ulong HDeg, int N)(in GenDualNum!GDeg g, ref const GenDualNum!HDeg[N] H)
+GDN!(GDeg < HDeg ? GDeg : HDeg)
+poly(ulong GDeg, ulong HDeg, int N)(in GDN!GDeg g, ref const GDN!HDeg[N] H)
 nothrow pure @nogc @safe
 if (N > 0 && N <= 10)
 {
@@ -433,31 +409,25 @@ if (N > 0 && N <= 10)
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Deg poly(T, ulong Deg, int N)(in GenDualNum!Deg g, const ref T[N] H) nothrow pure
-@nogc @safe
+GDN!Deg poly(T, ulong Deg, int N)(in GDN!Deg g, const ref T[N] H) nothrow pure @nogc @safe
 if (isFloatingPoint!T && N > 0 && N <= 10)
 {
     static if (Deg == 1)
         auto df_acc = 0.0L;
     else
-        auto df_acc = GenDualNum!Deg.DerivType!1.zero;
+        auto df_acc = GDN!Deg.DerivType!1.zero;
 
-    static foreach (i; 1 .. N)
-    {
-        df_acc = (N-i) * H[N-i] * g.d + g.reduce() * df_acc;
-    }
+    static foreach (i; 1 .. N) df_acc = (N-i) * H[N-i] * g.d + g.reduce() * df_acc;
 
-    return GenDualNum!Deg(std.math.poly(g.val, H), df_acc);
+    return GDN!Deg(std.math.poly(g.val, H), df_acc);
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Deg poly(T, ulong Deg, uint N)(in T g, const ref GenDualNum!Deg[N] H) nothrow pure @nogc @safe
+GDN!Deg poly(T, ulong Deg, uint N)(in T g, const ref GDN!Deg[N] H) nothrow pure @nogc @safe
 if (isFloatingPoint!T && N > 0 && N <= 10)
 {
-    return GenDualNum!Deg(
-        poly_impl_base(g, H),
-        poly_impl_deriv(GenDualNum!Deg.mkConst(g), H));
+    return GDN!Deg(poly_impl_base(g, H), poly_impl_deriv(GDN!Deg.mkConst(g), H));
 }
 
 ///
@@ -465,18 +435,16 @@ unittest
 {
     import std.format;
 
-    const q = poly(GenDualNum!1(3), [GenDualNum!1(0), GenDualNum!1(1), GenDualNum!1(2)]);
+    const q = poly(GDN!1(3), [GDN!1(0), GDN!1(1), GDN!1(2)]);
     assert(q == 21 && q.d == 26, format("%s", q));
 
-    const w = poly(GenDualNum!2(-1), [-2., -3., 4.]);
+    const w = poly(GDN!2(-1), [-2., -3., 4.]);
     assert(w == 5 && w.d == -11 && w.d!2 == 8, format("%s", w));
 }
 
 unittest
 {
     import std.format;
-
-    alias GDN = GenDualNum;
 
     assert(typeof(poly(GDN!1(0), [GDN!2(-1)])).DEGREE == 1);
     assert(typeof(poly(GDN!3(-2), [GDN!1(-3), GDN!1(4)])).DEGREE == 1);
@@ -516,22 +484,20 @@ unittest
 }
 
 private pragma(inline, true)
-GenDualNum!(GDeg < HDeg ? GDeg : HDeg).DerivType!1 poly_impl_deriv(ulong GDeg, ulong HDeg)(
-    in GenDualNum!GDeg g, in GenDualNum!HDeg[] h)
-nothrow pure @nogc @safe
+auto poly_impl_deriv(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg[] h) nothrow pure
+    @nogc @safe
 {
     alias Deg = Select!(GDeg < HDeg, GDeg, HDeg);
 
-    const gd = cast(GenDualNum!Deg) g;
+    const gd = cast(GDN!Deg) g;
     const gd_red = gd.reduce();
 
     ptrdiff_t n = h.length;
     n--;
-    auto acc = (cast(GenDualNum!Deg) h[n]).d;
-    while (n > 0)
-    {
-        acc = (cast(GenDualNum!Deg) h[n - 1]).d
-            + n * (cast(GenDualNum!Deg) h[n]).reduce() * gd.d
+    auto acc = (cast(GDN!Deg) h[n]).d;
+    while (n > 0) {
+        acc = (cast(GDN!Deg) h[n - 1]).d
+            + n * (cast(GDN!Deg) h[n]).reduce() * gd.d
             + gd_red * acc;
         n--;
     }
@@ -541,8 +507,6 @@ nothrow pure @nogc @safe
 
 unittest
 {
-    alias GDN = GenDualNum;
-
     const q = poly_impl_deriv(GDN!2(0), [GDN!2(1), GDN!2(2)]);
     // f' = <h0',h0"> + <h1,h1'><g',g"> + <g,g'><h1',h1">
     //    = <1,0> + <2,1><1,0> + <0,1><1,0>
@@ -552,7 +516,7 @@ unittest
 }
 
 // Taken from std.math.algebraic.polyImplBase
-private real poly_impl_base(ulong Deg)(in real x, in GenDualNum!Deg[] h) nothrow pure @nogc @safe
+private real poly_impl_base(ulong Deg)(in real x, in GDN!Deg[] h) nothrow pure @nogc @safe
 {
     ptrdiff_t n = h.length;
     --n;
@@ -567,8 +531,8 @@ private real poly_impl_base(ulong Deg)(in real x, in GenDualNum!Deg[] h) nothrow
 
 unittest
 {
-    assert(poly_impl_base(0, [GenDualNum!1(-1)]) == -1);
-    assert(poly_impl_base(2, [GenDualNum!3(-2), GenDualNum!3(-3), GenDualNum!3(4)]) == 8);
+    assert(poly_impl_base(0, [GDN!1(-1)]) == -1);
+    assert(poly_impl_base(2, [GDN!3(-2), GDN!3(-3), GDN!3(4)]) == 8);
 }
 
 /**
@@ -576,7 +540,7 @@ Gives the next power of two after `g`.
 
 This function is equivalent to $(MATH lim$(SUB 𝜀⟶0$(SUP +)) sgn(g)2$(SUP ⌈lg|g| + 𝜀⌉)).
 */
-GenDualNum!Deg nextPow2(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
+GDN!Deg nextPow2(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 out (f; f.val == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextPow2")
 {
     const lg_abs_g = log2(fabs(g));
@@ -592,18 +556,16 @@ out (f; f.val == std.math.nextPow2(g.val), "result doesn't agree with std.math.n
 ///
 unittest
 {
-    const q = nextPow2(GenDualNum!1(3));
+    const q = nextPow2(GDN!1(3));
     assert(q == 4 && q.d == 0);
 
-    const w = nextPow2(GenDualNum!1(1));
+    const w = nextPow2(GDN!1(1));
     assert(w == 2 &&  w.d == real.infinity);
 }
 
 unittest
 {
     import std.format;
-
-    alias GDN = GenDualNum;
 
     const e = GDN!1(-1);
     const r = nextPow2(e);
@@ -662,7 +624,7 @@ Gives the previous power of two no larger than `g`.
 
 This function is equivalent to $(MATH sgn(g)2$(SUP ⌊lg|g|⌋)).
 */
-GenDualNum!Deg truncPow2(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
+GDN!Deg truncPow2(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 out (f; f.val == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")
 {
     return  sgn(g) * 2^^floor(log2(fabs(g)));
@@ -671,17 +633,15 @@ out (f; f.val == std.math.truncPow2(g.val), "result doesn't agree with std.math.
 ///
 unittest
 {
-    const q = truncPow2(GenDualNum!1(3));
+    const q = truncPow2(GDN!1(3));
     assert(q == 2 && q.d == 0);
 
-    const w = truncPow2(GenDualNum!1(1));
+    const w = truncPow2(GDN!1(1));
     assert(w == 1 &&  w.d == real.infinity);
 }
 
 unittest
 {
-    alias GDN = GenDualNum;
-
     assert(truncPow2(GDN!1(-1)).same(GDN!1(-1, real.infinity)));
     assert(truncPow2(GDN!1(+0.)).same(GDN!1(+0., real.nan)));
     assert(truncPow2(GDN!1(-0.)).same(GDN!1(-0., real.nan)));

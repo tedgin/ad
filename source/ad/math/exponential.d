@@ -1,4 +1,4 @@
-/// It extends `std.math.exponential` to support `GenDualNum` objects.
+/// It extends `std.math.exponential` to support `GDN` objects.
 module ad.math.exponential;
 
 public import std.math.exponential;
@@ -23,19 +23,19 @@ nothrow pure @safe real pow(in real x, real y)
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Deg pow(ulong Deg)(in GenDualNum!Deg x, in real y)
+nothrow pure @safe GDN!Deg pow(ulong Deg)(in GDN!Deg x, in real y)
 {
     return x ^^ y;
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Deg pow(ulong Deg)(in real x, in GenDualNum!Deg y)
+nothrow pure @safe GDN!Deg pow(ulong Deg)(in real x, in GDN!Deg y)
 {
     return x ^^ y;
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Deg pow(ulong Deg)(in GenDualNum!Deg x, in GenDualNum!Deg y)
+nothrow pure @safe GDN!Deg pow(ulong Deg)(in GDN!Deg x, in GDN!Deg y)
 {
     return x ^^ y;
 }
@@ -52,25 +52,25 @@ nothrow pure @safe real exp(in real x)
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Deg exp(ulong Deg)(in GenDualNum!Deg x)
+nothrow pure @safe GDN!Deg exp(ulong Deg)(in GDN!Deg x)
 {
-    return GenDualNum!Deg(exp(x.val), x.d * exp(x.reduce()));
+    return GDN!Deg(exp(x.val), x.d * exp(x.reduce()));
 }
 
 unittest
 {
     import std.format;
 
-    assert(exp(GenDualNum!1.nan).same(GenDualNum!1.nan));
+    assert(exp(GDN!1.nan).same(GDN!1.nan));
 
-    assert(exp(GenDualNum!1.zero).same(GenDualNum!1.one));
+    assert(exp(GDN!1.zero).same(GDN!1.one));
 
     // XXX - derivSeq isn't implemented due to the following bug
     // https: //issues.dlang.org/show_bug.cgi?id=22621 is fixed.
-    // assert(exp(GenDualNum!1.infinity).same(derivSeq(real.infinity, real.infinity)));
+    // assert(exp(GDN!1.infinity).same(derivSeq(real.infinity, real.infinity)));
 
-    const e = exp(-GenDualNum!1.infinity);
-    assert(e.same(GenDualNum!1(0, -0.)), format("exp(-inf) != %s", e));
+    const e = exp(-GDN!1.infinity);
+    assert(e.same(GDN!1(0, -0.)), format("exp(-inf) != %s", e));
 }
 
 /**
@@ -86,7 +86,7 @@ nothrow pure @safe real log(in real x)
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Deg log(ulong Deg)(in GenDualNum!Deg x)
+nothrow pure @safe GDN!Deg log(ulong Deg)(in GDN!Deg x)
 {
     return x.log();
 }
@@ -97,10 +97,10 @@ Calculates the base-2 logarithm of `g`.
 
 If $(MATH f(x) = lg(g(x))), then $(MATH f' = g'/[g⋅ln(2)])
 */
-GenDualNum!Deg log2(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
+GDN!Deg log2(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 {
-    const df = signbit(g.val) == 1 ? GenDualNum!Deg.mkNaNDeriv : g.d / (LN2 * g.reduce());
-    return GenDualNum!Deg(std.math.log2(g.val), df);
+    const df = signbit(g.val) == 1 ? GDN!Deg.mkNaNDeriv : g.d / (LN2 * g.reduce());
+    return GDN!Deg(std.math.log2(g.val), df);
 }
 
 ///
@@ -108,20 +108,18 @@ unittest
 {
     import std.math : isNaN, LN2;
 
-    const q = log2(GenDualNum!1(2));
+    const q = log2(GDN!1(2));
     assert(q == 1 && q.d == 1 / (2 * LN2));
 
-    const w = log2(GenDualNum!1(-0.));
+    const w = log2(GDN!1(-0.));
     assert(w == -real.infinity && isNaN(w.d));
 
-    const e = log2(GenDualNum!1(+0.));
+    const e = log2(GDN!1(+0.));
     assert(e == -real.infinity && e.d == real.infinity);
 }
 
 unittest
 {
-    alias GDN = GenDualNum;
-
     const q = log2(GDN!2(1));
     assert(q.same(GDN!2(0, 1/LN2, -1/LN2)));
 

@@ -5,7 +5,7 @@ import ad.core;
 
 package nothrow pure @nogc @safe
 {
-    pragma(inline, true) GenDualNum!Deg dirac(ulong Deg)(in GenDualNum!Deg g)
+    pragma(inline, true) GDN!Deg dirac(ulong Deg)(in GDN!Deg g)
     {
         return g.dirac();
     }

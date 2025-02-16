@@ -9,7 +9,7 @@ import std.math : abs, isFinite, isInfinity, isNaN, LN2, log, signbit;
 import std.traits : fullyQualifiedName, isImplicitlyConvertible, TemplateOf;
 
 //
-// GenDualNum
+// GDN
 //
 
 /**
@@ -17,28 +17,27 @@ This data structure implements a <em>generalized dual number</em>, a generalizat
 number that supports derivatives of arbitrary order. The <em>degree</em> of a generalized dual
 number is the maximum order of derivative that it supports.
 
-`GenDualNum` is intended to be a drop-in replacement for a `real`. When no operation is explicitly
-defined for a `GenDualNum` is will implicitly be converted to a `real`.
+`GDN` is intended to be a drop-in replacement for a `real`. When no operation is explicitly defined
+for a `GDN` is will implicitly be converted to a `real`.
 
 In addition to differentiation, it supports basic algebraic operations mostly through operator
 overloading. The `+` and `-` prefix operators are overloaded as well as the `+`, `-`, `*`, `/`, `%`,
-and `^^` binary, infix operators. When two `GenDualNum`s are combined by a binary operation, the
-degree of the resulting `GenDualNum` will be the lesser of the degrees of the two input
-`GenDualNum`s.
+and `^^` binary, infix operators. When two `GDN`s are combined by a binary operation, the degree of
+the resulting `GDN` will be the lesser of the degrees of the two input `GDN`s.
 
 ```
-auto x = GenDualNum!2(3);
-auto y = GenDualNum!1(4);
+auto x = GDN!2(3);
+auto y = GDN!1(4);
 auto z = x + y;
 assert(typeof(z).DEGREE == 1);
 ```
 
-The infix operators are also overloaded to support combining a `GenDualNum` with a `real`. The
-`real` is converted to a constant `GenDualNum` of the same degree as the other input `GenDualNum`. A
-<em>constant</em> generalized dual number is one where the derivative of any order is 0.
+The infix operators are also overloaded to support combining a `GDN` with a `real`. The `real` is
+converted to a constant `GDN` of the same degree as the other input `GDN`. A <em>constant</em>
+generalized dual number is one where the derivative of any order is 0.
 
 ```
-auto x = GenDualNum!1(2);
+auto x = GDN!1(2);
 real y = 3;
 
 auto u = x + y;
@@ -51,7 +50,7 @@ assert(v is u);
 Params:
     Degree = the highest order of derivative that can be taken
 */
-struct GenDualNum(ulong Degree = 1) if (Degree > 0)
+struct GDN(ulong Degree = 1) if (Degree > 0)
 {
     /// The degree of the Generalized dual number
     enum ulong DEGREE = Degree;
@@ -65,7 +64,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     template DerivType(ulong Order = 1) if (Order <= Degree)
     {
         static if (Order < Degree)
-            alias DerivType = GenDualNum!(Degree - Order);
+            alias DerivType = GDN!(Degree - Order);
         else
             alias DerivType = real;
     }
@@ -112,7 +111,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         static if (Degree == 1)
             _dx = 1;
         else
-            _dx = GenDualNum!(Degree - 1)(1, GenDualNum!(Degree - 1).mkZeroDeriv());
+            _dx = GDN!(Degree - 1)(1, GDN!(Degree - 1).mkZeroDeriv());
     }
 
     /**
@@ -143,7 +142,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         ThatDegree = the degree of generalized dual number being copied
         that = the generalized dual number being copied
     */
-    this(ulong ThatDegree)(in GenDualNum!ThatDegree that) nothrow pure @nogc @safe
+    this(ulong ThatDegree)(in GDN!ThatDegree that) nothrow pure @nogc @safe
     {
         this._x = that._x;
 
@@ -162,33 +161,33 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         _dx = derivs;
     }
 
-    package static GenDualNum mkConst(in real val) nothrow pure @nogc @safe
+    package static GDN mkConst(in real val) nothrow pure @nogc @safe
     {
-        return GenDualNum(val, mkZeroDeriv());
+        return GDN(val, mkZeroDeriv());
     }
 
     // PROPERTIES
 
     /// This is a constant zero represented as a generalized dual number.
-    enum auto zero = GenDualNum.mkConst(0);
+    enum auto zero = GDN.mkConst(0);
 
     /// This is a constant one represented as a generalized dual number.
-    enum auto one = GenDualNum.mkConst(1);
+    enum auto one = GDN.mkConst(1);
 
     /// This is a constant generalized dual number representing infinity.
-    enum auto infinity = GenDualNum.mkConst(real.infinity);
+    enum auto infinity = GDN.mkConst(real.infinity);
 
     /// This is a generalized dual number representing `NaN`. All derivatives are NaN as well.
-    enum auto nan = GenDualNum();
+    enum auto nan = GDN();
 
     /// This is the smallest generalized dual number such that `one + epsilon > one`.
-    enum auto epsilon = GenDualNum.mkConst(real.epsilon);
+    enum auto epsilon = GDN.mkConst(real.epsilon);
 
     /// This is the largest finite generalized dual number.
-    enum auto max = GenDualNum.mkConst(real.max);
+    enum auto max = GDN.mkConst(real.max);
 
     /// This is the smallest positive generalized dual number.
-    enum auto min_normal = GenDualNum.mkConst(real.min_normal);
+    enum auto min_normal = GDN.mkConst(real.min_normal);
 
     /// This is the number of decimal digits of precision of the value.
     enum int dig = real.dig;
@@ -221,21 +220,21 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     enum int min_exp = real.min_exp;
 
     /**
-    This is the real part. It is identical to the generalized dual number, since `GenDualNum` only
-    support real numbers.
+    This is the real part. It is identical to the generalized dual number, since `GDN` only supports
+    real numbers.
     */
-    GenDualNum re() const nothrow pure @safe @nogc
+    GDN re() const nothrow pure @safe @nogc
     {
         return this;
     }
 
     /**
-    This is the imaginary part. It is always has a zero value, since `GenDualNum` only supports real
+    This is the imaginary part. It is always has a zero value, since `GDN` only supports real
     numbers.
     */
-    GenDualNum im() const nothrow pure @nogc @safe
+    GDN im() const nothrow pure @nogc @safe
     {
-        return GenDualNum.zero;
+        return GDN.zero;
     }
 
     // MEMBERS
@@ -249,15 +248,14 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     /**
     This is the derivative of order `Ord` of the generalized dual number. The order must be at least
     one but no more that the degree of the generalized dual number. If `Ord == Degree`, the
-    derivative will be of type `real`. Otherwise it will be a `GenDualNum` but with degree
-    `Degree - Ord`.
+    derivative will be of type `real`. Otherwise it will be a `GDN` but with degree `Degree - Ord`.
 
     Params:
         Ord = the order of the derivate to compute, default `1`
 
     Examples:
     ```
-    auto x = GenDualNum!3(2, 3, -1, -2);
+    auto x = GDN!3(2, 3, -1, -2);
     assert(x.d.val == 3);
     assert(x.d!3 == -2);
     assert(x.d!0 is x);
@@ -272,13 +270,13 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     }
 
     /// ditto
-    GenDualNum d(ulong Ord : 0)() const nothrow pure @nogc @safe
+    GDN d(ulong Ord : 0)() const nothrow pure @nogc @safe
     {
         return this;
     }
 
     // This function evaluated the Dirac delta function of the generalized dual number.
-    package GenDualNum dirac() const nothrow pure @nogc @safe
+    package GDN dirac() const nothrow pure @nogc @safe
     {
         static if (Degree == 1)
             const df = _x != 0
@@ -286,7 +284,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         else
             const df = reduce().dirac() * (signbit(_x) == 1 ? 1 : -1);
 
-        return GenDualNum(_x == 0 ? real.infinity : 0, df * _dx);
+        return GDN(_x == 0 ? real.infinity : 0, df * _dx);
     }
 
     /**
@@ -298,15 +296,15 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    auto x = GenDualNum!1(2, 3);
+    auto x = GDN!1(2, 3);
     auto y = x.inv;
     assert(y == 0.5L && y.d == -0.75);
     ```
     */
-    GenDualNum inv() const nothrow pure @nogc @safe
+    GDN inv() const nothrow pure @nogc @safe
     {
         const reduced = reduce();
-        return GenDualNum(1 / _x, -_dx / (reduced * reduced));
+        return GDN(1/_x, -_dx/(reduced * reduced));
     }
 
     /*
@@ -315,13 +313,13 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     It is defined in this module instead of core, because it is required to compute the derivative
     of the ^^ operator.
     */
-    package GenDualNum log() const nothrow pure @nogc @safe
+    package GDN log() const nothrow pure @nogc @safe
     {
         static import std.math;
 
         if (signbit(_x) == 1)
             return nan;
-        return GenDualNum(std.math.log(_x), _dx / reduce());
+        return GDN(std.math.log(_x), _dx/reduce());
     }
 
     /*
@@ -329,9 +327,9 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     As a result the highest order derivative is removed.
     */
     static if (Degree > 1)
-        package GenDualNum!(Degree - 1) reduce() const nothrow pure @nogc @safe
+        package GDN!(Degree - 1) reduce() const nothrow pure @nogc @safe
         {
-            return GenDualNum!(Degree - 1)(_x, _dx.reduce);
+            return GDN!(Degree - 1)(_x, _dx.reduce);
         }
     else
         package real reduce() const nothrow pure @nogc @safe
@@ -342,18 +340,18 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     // OPERATOR OVERLOADING
 
     /**
-    This provides support for the `cast()` operator. It allows casting from a `GenDualNum` to one
-    with a different degree.
+    This provides support for the `cast()` operator. It allows casting from a `GDN` to one with a
+    different degree.
 
     Examples:
     ```
-    auto x = GenDualNum!1(2);
-    auto y = cast(GenDualNum!2) x;
+    auto x = GDN!1(2);
+    auto y = cast(GDN!2) x;
     assert(y == x && typeof(y).DEGREE == 2);
     ```
     */
     pragma(inline, true) T opCast(T)() const nothrow pure @nogc @safe
-    if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GenDualNum")
+    if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN")
     {
         static if (T.DEGREE == Degree)
             return this;
@@ -368,13 +366,13 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    auto x = GenDualNum!1(2, 3);
-    auto y = GenDualNum!2(2, 1, 0);
+    auto x = GDN!1(2, 3);
+    auto y = GDN!2(2, 1, 0);
     assert(x == y);
     assert(x == 2.0L);
     ```
     */
-    bool opEquals(ulong D)(in GenDualNum!D that) const nothrow pure @nogc @safe
+    bool opEquals(ulong D)(in GDN!D that) const nothrow pure @nogc @safe
     {
         return this._x == that._x;
     }
@@ -393,15 +391,15 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    auto x = GenDualNum!1(2, 3);
-    auto y = GenDualNum!2(3, 1, 0);
-    auto z = GenDualNum!1(2, 2);
+    auto x = GDN!1(2, 3);
+    auto y = GDN!2(3, 1, 0);
+    auto z = GDN!1(2, 2);
     assert(x < y);
     assert(x <= z);
     assert(x > 1.0L);
     ```
     */
-    int opCmp(ulong D)(in GenDualNum!D that) const nothrow pure @nogc @safe
+    int opCmp(ulong D)(in GDN!D that) const nothrow pure @nogc @safe
     {
         return opCmp(that._x);
     }
@@ -417,47 +415,44 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
             return 0;
     }
 
-    /** <b>+x</b>
+    /** <b>+g</b>
 
     This defines the identity operator for a generalized dual number.
 
     If $(MATH f(x) = +g(x)), then $(MATH f' = g').
     */
-    GenDualNum opUnary(string Op : "+")() const nothrow pure @nogc @safe
+    GDN opUnary(string Op : "+")() const nothrow pure @nogc @safe
     {
         return this;
     }
 
-    /** <b>-x</b>
+    /** <b>-g</b>
 
     This negates a generalized dual number.
 
     If $(MATH f(x) = -g(x)), then $(MATH f' = -g').
     */
-    GenDualNum opUnary(string Op : "-")() const nothrow pure @nogc @safe
+    GDN opUnary(string Op : "-")() const nothrow pure @nogc @safe
     {
-        return GenDualNum(-_x, -_dx);
+        return GDN(-_x, -_dx);
     }
 
     /**
     This ensures that when two generalized dual numbers are combined, the degree of the resulting
     generalized dual number is the lesser of the degrees of the two being combined.
     */
-    GenDualNum!(ThatDegree < Degree ? ThatDegree : Degree)
-    opBinary(string Op, ulong ThatDegree)(in GenDualNum!ThatDegree that)
-    const nothrow pure @nogc @safe if (ThatDegree != Degree)
+    GDN!(ThatDegree < Degree ? ThatDegree : Degree)
+    opBinary(string Op, ulong ThatDegree)(in GDN!ThatDegree that)
+    const nothrow pure @nogc @safe
+    if (ThatDegree != Degree)
     {
         static if (ThatDegree < Degree)
-        {
-            return GenDualNum!ThatDegree(this).opBinary!Op(that);
-        }
+            return GDN!ThatDegree(this).opBinary!Op(that);
         else
-        {
-            return this.opBinary!Op(GenDualNum!Degree(that));
-        }
+            return this.opBinary!Op(GDN!Degree(that));
     }
 
-    /** <b>x + y</b>
+    /** <b>g + h</b>
 
     This adds one generalized dual number to another. If either term has type `real`, that term is
     converted to a constant generalized dual number with the same degree as the other.
@@ -473,21 +468,21 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    auto x = GenDualNum!2(2);
-    auto y = GenDualNum!3(3);
+    auto x = GDN!2(2);
+    auto y = GDN!3(3);
     auto z = x + y;
     auto w = 5 + x;
     assert(z == 5 && z.d == 2 && z.d!2 == 0);
     assert(w == 7 && w.d == 1 && w.d!2 == 0);
     ```
     */
-    GenDualNum opBinary(string Op : "+", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that)
+    GDN opBinary(string Op : "+", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
     const nothrow pure @nogc @safe
     {
-        return GenDualNum(this.val + that.val, this.d + that.d);
+        return GDN(this.val+that.val, this.d+that.d);
     }
 
-    /** <b>x - y</b>
+    /** <b>g - h</b>
 
     This subtracts one generalized dual number from another. If either term has type `real`, it is
     converted to a constant generalized dual number with the same degree as the other.
@@ -503,21 +498,21 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    auto x = GenDualNum!1(2);
-    auto y = GenDualNum!1(3);
+    auto x = GDN!1(2);
+    auto y = GDN!1(3);
     auto z = x - y;
     auto w = 5 - x;
     assert(z == -1 && z.d == 0);
     assert(w == 3 && w.d == -1);
     ```
     */
-    GenDualNum opBinary(string Op : "-", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that)
+    GDN opBinary(string Op : "-", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
     const nothrow pure @nogc @safe
     {
         return this + -that;
     }
 
-    /** <b>x * y</b>
+    /** <b>g * h</b>
 
     This multiplies one generalized dual number by another. If either factor has type `real`, it is
     converted to a constant generalized dual number with the same degree as the other.
@@ -533,25 +528,25 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    auto x = GenDualNum!1(2);
-    auto y = GenDualNum!1(3);
+    auto x = GDN!1(2);
+    auto y = GDN!1(3);
     auto z = x * y;
     auto w = 5 * x;
     assert(z == 6 && z.d == 5);
     assert(w == 10 && w.d == 5);
     ```
     */
-    GenDualNum opBinary(string Op : "*", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that)
+    GDN opBinary(string Op : "*", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
     const nothrow pure @nogc @safe
     {
         const prod = this._x * that._x;
 
         if (isNaN(prod))
             return nan;
-        return GenDualNum(prod, this._dx * that.reduce() + this.reduce() * that._dx);
+        return GDN(prod, this._dx*that.reduce() + this.reduce()*that._dx);
     }
 
-    /** <b>x / y</b>
+    /** <b>g / h</b>
 
     This divides one generalized dual number by another. If either the dividend or the divisor has
     type `real`, it is converted to a constant generalized dual number with the same degree as the
@@ -568,20 +563,20 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    auto x = GenDualNum!1(2);
-    auto y = GenDualNum!1(-1);
+    auto x = GDN!1(2);
+    auto y = GDN!1(-1);
     auto z = x / y;
     auto w = 5 / x;
     assert(z == -2 && z.d == -3);
     assert(w == 2.5 && w.d == -1.25);
     */
-    GenDualNum opBinary(string Op : "/", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that)
+    GDN opBinary(string Op : "/", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
     const nothrow pure @nogc @safe
     {
         return this * that.inv();
     }
 
-    /**<b>x % y</b>
+    /**<b>g % h</b>
 
     This computes the modulus (remainder) of one generalized dual number divided by another. If
     either the dividend or the divisor has type `real`, it is converted to a constant generalized
@@ -599,8 +594,8 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    auto x = GenDualNum!1(2);
-    auto y = GenDualNum!1(-1);
+    auto x = GDN!1(2);
+    auto y = GDN!1(-1);
     auto z = x % y;
     auto w = 5 % x;
     assert(z == 0 && z.d == -real.infinity);
@@ -615,7 +610,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
            f/g ∈ ℤ when f (mod g) = 0, d⌊f/g⌋ = 𝛿(f (mod g))
        = f' - {f - [f (mod g)]}g'/g - 𝛿(f (mod g))gd(f/g)
     */
-    GenDualNum opBinary(string Op : "%", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that)
+    GDN opBinary(string Op : "%", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
     const nothrow pure @nogc @safe
     {
         const x = this.reduce(), dx = this.d;
@@ -633,12 +628,12 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         const dw = dx - term2 - term3;
 
         static if (Degree == 1)
-            return GenDualNum(w, dw);
+            return GDN(w, dw);
         else
-            return GenDualNum(w.val, dw);
+            return GDN(w.val, dw);
     }
 
-    /** <b>x ^^ y</b>
+    /** <b>g ^^ h</b>
 
     This raises one generalized dual number to the pow of another. If the base or exponent has
     type `real`, it is converted to a constant generalized dual number with the same degree as the
@@ -657,15 +652,15 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     ```
     static import std.math;
 
-    auto x = GenDualNum!1(2, -1);
-    auto y = GenDualNum!1(-2, 3);
+    auto x = GDN!1(2, -1);
+    auto y = GDN!1(-2, 3);
     auto u = x ^^ y;
     auto w = 3 ^^ x;
     assert(u == 0.25 && u.d == 0.25 + 0.75*std.math.LN2);
     assert(w == 9 && std.math.isClose(w.d, -std.math.log(19_683)));
     ```
     */
-    GenDualNum opBinary(string Op : "^^", ulong ThatDegree : Degree)(in GenDualNum!ThatDegree that)
+    GDN opBinary(string Op : "^^", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
     const nothrow pure @nogc @safe
     {
         const g = this.reduce();
@@ -679,18 +674,19 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
             const hpNaN = isNaN(hp.val);
 
         if (this._x == 0 && signbit(this._x) == 0 && that._x > 0 && !hpNaN) {
-            return GenDualNum(this._x^^that._x, g^^(h-1)*gp*h);
+            return GDN(this._x^^that._x, g^^(h-1)*gp*h);
         }
-        return GenDualNum(this._x^^that._x, g^^h*(gp*h/g + hp*g.log()));
+
+        return GDN(this._x^^that._x, g^^h*(gp*h/g + hp*g.log()));
     }
 
-    GenDualNum opBinary(string Op : "^^")(in real c) const nothrow pure @nogc @safe
+    GDN opBinary(string Op : "^^")(in real c) const nothrow pure @nogc @safe
     {
         if (c == 0) {
-            return GenDualNum.one;
-        } else {
-            return GenDualNum(_x^^c, c*reduce()^^(c-1)*_dx);
+            return GDN.one;
         }
+
+        return GDN(_x^^c, c*reduce()^^(c-1)*_dx);
     }
 
     /**
@@ -698,9 +694,9 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     operators. The real number is promoted to generalized dual number of the same degree as the
     left-hand side with all derivatives being zero, a constant.
     */
-    GenDualNum opBinary(string Op)(in real constant) const nothrow pure @nogc @safe
+    GDN opBinary(string Op)(in real constant) const nothrow pure @nogc @safe
     {
-        return mixin("this " ~ Op ~ " GenDualNum(constant, mkZeroDeriv())");
+        return mixin("this " ~ Op ~ " GDN(constant, mkZeroDeriv())");
     }
 
     /**
@@ -708,9 +704,9 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     operators. The real number is promoted to generalized dual number of the same degree as the
     right-hand side with all derivatives being zero, a constant.
     */
-    GenDualNum opBinaryRight(string Op)(in real constant) const nothrow pure @nogc @safe
+    GDN opBinaryRight(string Op)(in real constant) const nothrow pure @nogc @safe
     {
-        return mixin("GenDualNum(constant, mkZeroDeriv()) " ~ Op ~ " this");
+        return mixin("GDN(constant, mkZeroDeriv()) " ~ Op ~ " this");
     }
 
     /// This generates a hash for a generalized dual number.
@@ -740,7 +736,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     Examples:
     ```
-    const x = GenDualNum!6(1, -1, +0., -0., real.infinity, -real.infinity, -real.nan);
+    const x = GDN!6(1, -1, +0., -0., real.infinity, -real.infinity, -real.nan);
     assert(x.toString == "1 + -1dx + +0(dx)² + -0(dx)³ + ∞(dx)⁴ + -∞(dx)⁵ + NaN(dx)⁶");
     ```
     */
@@ -768,7 +764,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 // .init
 unittest
 {
-    const GenDualNum!2 w;
+    const GDN!2 w;
     assert(isNaN(w._x), "_x doesn't default init to NaN");
     assert(isNaN(w._dx._x), "_dx doesn't default init to NaN");
     assert(isNaN(w._dx._dx), "_dx._dx doesn't default init to NaN");
@@ -778,11 +774,8 @@ unittest
 // DerivType
 unittest
 {
-    alias GDN = GenDualNum;
     assert(is(GDN!1.DerivType!1 == real), "The degree 1 derivative type should be real");
-    assert(
-        is(GDN!2.DerivType!1 == GDN!1),
-        "The degree 2 derivative type should be a degree 1 GenDualNum");
+    assert(is(GDN!2.DerivType!1 == GDN!1), "The degree 2 derivative type should be a degree 1 GDN");
     assert(isNaN(GDN!1.mkNaNDeriv), "The degree 1 derivative NaN should be a real NaN");
 
     const x = GDN!2.mkNaNDeriv;
@@ -793,62 +786,54 @@ unittest
 // constructors
 unittest
 {
-    alias GDN = GenDualNum;
-
     const n = GDN!1();
-    assert(isNaN(n._x), "The default GenDualNum has value NaN");
-    assert(isNaN(n._dx), "The default GenDualNum has derivative NaN");
+    assert(isNaN(n._x), "The default GDN has value NaN");
+    assert(isNaN(n._dx), "The default GDN has derivative NaN");
 
     const q = GDN!1(2);
-    assert(q._x == 2.0L, "GenDualNum!1(2)._x should be 2");
-    assert(q._dx == 1.0L, "GenDualNum!1(2)._dx should be 1");
+    assert(q._x == 2.0L, "GDN!1(2)._x should be 2");
+    assert(q._dx == 1.0L, "GDN!1(2)._dx should be 1");
 
     const w = GDN!2(2);
-    assert(w._x == 2.0, "GenDualNum!2(2)._x should be 2");
-    assert(w._dx._x == 1 && w._dx._dx == 0, "GenDualNum!2(2) should be GenDualNum!1(1, 0)");
+    assert(w._x == 2.0, "GDN!2(2)._x should be 2");
+    assert(w._dx._x == 1 && w._dx._dx == 0, "GDN!2(2) should be GDN!1(1, 0)");
 
     const e = GDN!2(0, 1, 2);
     assert(e._x == 0.0L, "value is set incorrectly");
     assert(e._dx._x == 1 && e._dx._dx == 2, "derivatives are set incorrectly");
 
-    assert(same(GDN!3(0, 1, 2, 0), GDN!3(e)), "GenDualNum lifting not working");
-    assert(same(GDN!1(0, 1), GDN!1(e)), "GenDualNum truncating not working");
+    assert(same(GDN!3(0, 1, 2, 0), GDN!3(e)), "GDN lifting not working");
+    assert(same(GDN!1(0, 1), GDN!1(e)), "GDN truncating not working");
 }
 
 // real properties
 unittest
 {
-    alias GDN = GenDualNum!1;
+    assert(isInfinity(GDN!1.infinity._x), "infinity should be a variable of value infinity");
+    assert(GDN!1.infinity._dx == 0, "infinity should have a derivative of 0");
 
-    assert(isInfinity(GDN.infinity._x), "infinity should be a variable of value infinity");
-    assert(GDN.infinity._dx == 0, "infinity should have a derivative of 0");
+    assert(isNaN(GDN!1.nan._x), "The value of NaN should be NaN");
+    assert(isNaN(GDN!1.nan._dx), "The derivative of NaN should be NaN");
 
-    assert(isNaN(GDN.nan._x), "The value of NaN should be NaN");
-    assert(isNaN(GDN.nan._dx), "The derivative of NaN should be NaN");
-
-    const q = GDN();
-    assert(q.re is q, "The real part of a GenDualNum should be the GenDualNum");
-    assert(q.im.same(GDN(0, 0)), "The imaginary part of a GenDualNum should be zero");
+    const q = GDN!1();
+    assert(q.re is q, "The real part of a GDN should be the GDN");
+    assert(q.im.same(GDN!1(0, 0)), "The imaginary part of a GDN should be zero");
 }
 
 // d
 unittest
 {
-    alias GDN = GenDualNum;
-
     const q = GDN!3(3, GDN!2(2, GDN!1(1, 0)));
     assert(same(q, q.d!0));
 
     const d2q = q.d!2;
-    assert(is(typeof(d2q) == const(GDN!1)), "The type of GenDualNum!3.d!2 should be GenDualNum!1");
-    assert(d2q.val == 1, "GenDualNum!3.d!2.val has incorrect value");
+    assert(is(typeof(d2q) == const(GDN!1)), "The type of GDN!3.d!2 should be GDN!1");
+    assert(d2q.val == 1, "GDN!3.d!2.val has incorrect value");
 }
 
 // dirac
 unittest
 {
-    alias GDN = GenDualNum;
-
     const x = GDN!1(3, 4).dirac();
     assert(x.val == 0 && x.d == 0);
 
@@ -871,8 +856,6 @@ unittest
 // inv
 unittest
 {
-    alias GDN = GenDualNum;
-
     const x = GDN!1(3, 4);
     const res = x.inv;
     assert(res.val == 1. / 3 && res.d == -4. / 9, "x.inv is incorrect");
@@ -889,8 +872,6 @@ unittest
 // log
 unittest
 {
-    alias GDN = GenDualNum;
-
     const p = GDN!2(1).log();
     assert(p.val == 0, "log(1) is incorrect");
     assert(p.d.val == 1, "derivative of log(1) is incorrect");
@@ -908,21 +889,19 @@ unittest
 // comparison operations
 unittest
 {
-    alias GDN = GenDualNum;
-
     const q = GDN!1(4, 2);
-    assert(q == 4, "GenDualNum!1(4, 2) should equal 4");
-    assert(q > 1, "GenDualNum!1(4, 2) should be greater than 1");
-    assert(q <= 4, "GenDualNum!(4, 2) should be less than or equal to 4");
+    assert(q == 4, "GDN!1(4, 2) should equal 4");
+    assert(q > 1, "GDN!1(4, 2) should be greater than 1");
+    assert(q <= 4, "GDN!(4, 2) should be less than or equal to 4");
 
     const w = GDN!2(4, 3, 1);
-    assert(w == q, "Two GenDualNum objects with the same value should be equal");
+    assert(w == q, "Two GDN objects with the same value should be equal");
 
     const e = GDN!2(3, 3, 1);
     assert(
         e < w,
-        "If the value of 1 GenDualNum object is less than another, the GenDualNum object should"
-            ~ " be less than the other.");
+        "If the value of 1 GDN object is less than another, the GDN object should be less than the"
+        ~ " other.");
 
     const nz = GDN!1(-0.);
     const pz = GDN!1(+0.);
@@ -932,8 +911,6 @@ unittest
 // opUnary
 unittest
 {
-    alias GDN = GenDualNum;
-
     const q = GDN!1(2, 1);
     assert(same(q, +q), "+q should be the identical to q");
     assert(GDN!1(-2, -1).same(-q), "-q should be the negation of q and all its derivatives");
@@ -950,13 +927,11 @@ unittest
 // opBinary(+)
 unittest
 {
-    alias GDN = GenDualNum;
-
     const gdn1 = GDN!1(4, 5);
     const gdn2 = GDN!2(1, 2, 3);
     const sum = GDN!1(5, 7);
-    assert(same(sum, gdn2 + gdn1), "GenDualNum!2 + GenDualNum!1 not working");
-    assert(same(sum, gdn1 + gdn2), "GenDualNum!1 + GenDualNum!2 not working");
+    assert(same(sum, gdn2 + gdn1), "GDN!2 + GDN!1 not working");
+    assert(same(sum, gdn1 + gdn2), "GDN!1 + GDN!2 not working");
 
     const zi = GDN!1(0) + GDN!1(real.infinity);
     assert(isInfinity(zi._x) && zi._dx == 2, "0 + inf is incorrect");
@@ -971,16 +946,12 @@ unittest
 // opBinary(-)
 unittest
 {
-    alias GDN = GenDualNum;
-
-    assert(same(GDN!1(1, -1), GDN!1(2, 1) - GDN!1(1, 2)), "GenDualNum - GenDualNum not working");
+    assert(same(GDN!1(1, -1), GDN!1(2, 1) - GDN!1(1, 2)), "GDN - GDN not working");
 }
 
 // opBinary(*)
 unittest
 {
-    alias GDN = GenDualNum;
-
     const q = GDN!1(2, -3);
     const w = GDN!1(5, 7);
     const nz = GDN!1(-0.);
@@ -1024,8 +995,8 @@ unittest
 // opBinary(/)
 unittest
 {
-    const q = GenDualNum!1(6);
-    const w = GenDualNum!1(2);
+    const q = GDN!1(6);
+    const w = GDN!1(2);
     const r = q / w;
 
     assert(r._x == 3 && r._dx == -1, "division isn't correct");
@@ -1034,8 +1005,6 @@ unittest
 // opBinary(%)
 unittest
 {
-    alias GDN = GenDualNum;
-
     const x = GDN!1(2, 3);
     const s = GDN!1(5, 4);
     const e = GDN!1(-0., 1);
@@ -1081,8 +1050,6 @@ unittest
 // opBinary(^^)
 unittest
 {
-    alias GDN = GenDualNum;
-
     const a1 = GDN!1(2, -1);
     const a2 = GDN!1(-2, 3);
     const nz = GDN!1(-0.);
@@ -1260,19 +1227,19 @@ unittest
 // toHash
 unittest
 {
-    auto q = GenDualNum!1(0.1L, 0.2L);
-    auto w = GenDualNum!1(0.1L, 0.0L);
+    auto q = GDN!1(0.1L, 0.2L);
+    auto w = GDN!1(0.1L, 0.0L);
     assert(q.toHash() == w.toHash(), "toHash isn't working correctly");
 }
 
 // toString
 unittest
 {
-    const x = GenDualNum!1(0, -1).toString;
-    assert(x == "+0 + -1dx", format("GenDualNum!1(0,-1).toString != '%s'", x));
+    const x = GDN!1(0, -1).toString;
+    assert(x == "+0 + -1dx", format("GDN!1(0,-1).toString != '%s'", x));
 
-    const y = GenDualNum!2(-1, 1, -2).toString(0);
-    assert(y == "-1 + 1dx + -2(dx)²", format("GenDualNum!2(-1, 1, -2).toString(0) != '%s'", y));
+    const y = GDN!2(-1, 1, -2).toString(0);
+    assert(y == "-1 + 1dx + -2(dx)²", format("GDN!2(-1, 1, -2).toString(0) != '%s'", y));
 }
 
 //
@@ -1293,12 +1260,12 @@ package
 
     template same(T, ulong Deg) if (isImplicitlyConvertible!(T, real))
     {
-        bool same(in T, in GenDualNum!Deg) nothrow pure @nogc @safe
+        bool same(in T, in GDN!Deg) nothrow pure @nogc @safe
         {
             return false;
         }
 
-        bool same(in GenDualNum!Deg, in T) nothrow pure @nogc @safe
+        bool same(in GDN!Deg, in T) nothrow pure @nogc @safe
         {
             return false;
         }
@@ -1306,7 +1273,7 @@ package
 
     template same(ulong LDeg, ulong RDeg)
     {
-        bool same(in GenDualNum!LDeg lhs, in GenDualNum!RDeg rhs) nothrow pure @nogc @safe
+        bool same(in GDN!LDeg lhs, in GDN!RDeg rhs) nothrow pure @nogc @safe
         {
             static if (LDeg != RDeg)
                 return false;
@@ -1317,28 +1284,28 @@ package
 
     unittest
     {
-        const x = GenDualNum!1(0, 1);
+        const x = GDN!1(0, 1);
 
         assert(same(x, x), "identity relation fails");
 
-        const z = GenDualNum!1(0, 1);
+        const z = GDN!1(0, 1);
         assert(same(x, z), "same is not working");
 
-        const q = GenDualNum!1(real.infinity, -real.infinity);
+        const q = GDN!1(real.infinity, -real.infinity);
         assert(same(q, q), "same doesn't work with infinity");
 
-        const w = GenDualNum!1(-0., 1);
-        const e = GenDualNum!1(+0, 1);
+        const w = GDN!1(-0., 1);
+        const e = GDN!1(+0, 1);
         assert(!same(w, e), "same doesn't distinguish -0 from +0");
 
-        const r = GenDualNum!1.nan;
+        const r = GDN!1.nan;
         assert(same(r, r), "same doesn't work with NaN");
 
-        assert(!same(0, x), "0 should not be the same as GenDualNum!1(0, 1)");
-        assert(!same(x, 0), "GenDualNum!1(0, 1) should not be the same as 0");
+        assert(!same(0, x), "0 should not be the same as GDN!1(0, 1)");
+        assert(!same(x, 0), "GDN!1(0, 1) should not be the same as 0");
 
-        const y = GenDualNum!2(0, 1, 0);
-        assert(!same(x, y), "GenDualNum objects of different degree cannot be the same");
+        const y = GDN!2(0, 1, 0);
+        assert(!same(x, y), "GDN objects of different degree cannot be the same");
     }
 }
 
