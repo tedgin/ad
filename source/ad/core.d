@@ -802,8 +802,13 @@ unittest
     assert(e._x == 0.0L, "value is set incorrectly");
     assert(e._dx._x == 1 && e._dx._dx == 2, "derivatives are set incorrectly");
 
-    assert(same(GDN!3(0, 1, 2, 0), GDN!3(e)), "GDN lifting not working");
-    assert(same(GDN!1(0, 1), GDN!1(e)), "GDN truncating not working");
+    const r = GDN!3(0, 1, 2, 0);
+    const t = GDN!3(e);
+    assert(r == t && r.d == t.d && r.d!2 == t.d!2 && r.d!3 == t.d!3, "GDN lifting not working");
+
+    const y = GDN!1(0, 1);
+    const u = GDN!1(e);
+    assert(y == u && y.d == u.d, "GDN truncating not working");
 }
 
 // real properties
@@ -817,14 +822,14 @@ unittest
 
     const q = GDN!1();
     assert(q.re is q, "The real part of a GDN should be the GDN");
-    assert(q.im.same(GDN!1(0, 0)), "The imaginary part of a GDN should be zero");
+    assert(q.im is GDN!1.zero, "The imaginary part of a GDN should be zero");
 }
 
 // d
 unittest
 {
     const q = GDN!3(3, GDN!2(2, GDN!1(1, 0)));
-    assert(same(q, q.d!0));
+    assert(q is q.d!0);
 
     const d2q = q.d!2;
     assert(is(typeof(d2q) == const(GDN!1)), "The type of GDN!3.d!2 should be GDN!1");
@@ -881,9 +886,9 @@ unittest
     const q = e.log();
     assert(isNaN(q.val) && isNaN(q.d), "log(-0) should be NaN");
 
-    assert(GDN!1(+0.).log().same(GDN!1(-real.infinity, real.infinity)), "log(+0) is incorrect");
-    assert(GDN!1.infinity.log().same(GDN!1(real.infinity, 0)), "log(inf) incorrect");
-    assert(GDN!1.nan.log().same(GDN!1.nan), "log(nan) should be nan");
+    assert(GDN!1(+0.).log() is GDN!1(-real.infinity, real.infinity), "log(+0) is incorrect");
+    assert(GDN!1.infinity.log() is GDN!1(real.infinity, 0), "log(inf) incorrect");
+    assert(GDN!1.nan.log() is GDN!1.nan, "log(nan) should be nan");
 }
 
 // comparison operations
@@ -912,12 +917,12 @@ unittest
 unittest
 {
     const q = GDN!1(2, 1);
-    assert(same(q, +q), "+q should be the identical to q");
-    assert(GDN!1(-2, -1).same(-q), "-q should be the negation of q and all its derivatives");
+    assert(q is +q, "+q should be the identical to q");
+    assert(GDN!1(-2, -1) is -q, "-q should be the negation of q and all its derivatives");
 
     const nz = GDN!1(-0.);
     const pz = GDN!1(+0.);
-    assert(!same(nz, -pz), "-GDN(0) should not be the same as GDN(-0)");
+    assert(!(nz is -pz), "-GDN(0) should not be the same as GDN(-0)");
 
     const ni = -GDN!1(real.infinity);
     assert(isInfinity(ni._x) && ni._x < 0, "-inf has incorrect value");
@@ -930,8 +935,8 @@ unittest
     const gdn1 = GDN!1(4, 5);
     const gdn2 = GDN!2(1, 2, 3);
     const sum = GDN!1(5, 7);
-    assert(same(sum, gdn2 + gdn1), "GDN!2 + GDN!1 not working");
-    assert(same(sum, gdn1 + gdn2), "GDN!1 + GDN!2 not working");
+    assert(sum is gdn2 + gdn1, "GDN!2 + GDN!1 not working");
+    assert(sum is gdn1 + gdn2, "GDN!1 + GDN!2 not working");
 
     const zi = GDN!1(0) + GDN!1(real.infinity);
     assert(isInfinity(zi._x) && zi._dx == 2, "0 + inf is incorrect");
@@ -946,7 +951,7 @@ unittest
 // opBinary(-)
 unittest
 {
-    assert(same(GDN!1(1, -1), GDN!1(2, 1) - GDN!1(1, 2)), "GDN - GDN not working");
+    assert(GDN!1(1, -1) is GDN!1(2, 1) - GDN!1(1, 2), "GDN - GDN not working");
 }
 
 // opBinary(*)
