@@ -23,19 +23,19 @@ nothrow pure @safe real pow(in real x, real y)
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Degree pow(ulong Degree)(in GenDualNum!Degree x, in real y)
+nothrow pure @safe GenDualNum!Deg pow(ulong Deg)(in GenDualNum!Deg x, in real y)
 {
     return x ^^ y;
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Degree pow(ulong Degree)(in real x, in GenDualNum!Degree y)
+nothrow pure @safe GenDualNum!Deg pow(ulong Deg)(in real x, in GenDualNum!Deg y)
 {
     return x ^^ y;
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Degree pow(ulong Degree)(in GenDualNum!Degree x, in GenDualNum!Degree y)
+nothrow pure @safe GenDualNum!Deg pow(ulong Deg)(in GenDualNum!Deg x, in GenDualNum!Deg y)
 {
     return x ^^ y;
 }
@@ -52,9 +52,9 @@ nothrow pure @safe real exp(in real x)
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Degree exp(ulong Degree)(in GenDualNum!Degree x)
+nothrow pure @safe GenDualNum!Deg exp(ulong Deg)(in GenDualNum!Deg x)
 {
-    return GenDualNum!Degree(exp(x.val), x.d * exp(x.reduce()));
+    return GenDualNum!Deg(exp(x.val), x.d * exp(x.reduce()));
 }
 
 unittest
@@ -86,7 +86,7 @@ nothrow pure @safe real log(in real x)
 }
 
 /// ditto
-nothrow pure @safe GenDualNum!Degree log(ulong Degree)(in GenDualNum!Degree x)
+nothrow pure @safe GenDualNum!Deg log(ulong Deg)(in GenDualNum!Deg x)
 {
     return x.log();
 }
@@ -97,10 +97,10 @@ Calculates the base-2 logarithm of `g`.
 
 If $(MATH f(x) = lg(g(x))), then $(MATH f' = g'/[g⋅ln(2)])
 */
-GenDualNum!Degree log2(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg log2(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    const df = signbit(g.val) == 1 ? GenDualNum!Degree.mkNaNDeriv : g.d / (LN2 * g.reduce());
-    return GenDualNum!Degree(std.math.log2(g.val), df);
+    const df = signbit(g.val) == 1 ? GenDualNum!Deg.mkNaNDeriv : g.d / (LN2 * g.reduce());
+    return GenDualNum!Deg(std.math.log2(g.val), df);
 }
 
 ///

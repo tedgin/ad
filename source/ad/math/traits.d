@@ -22,7 +22,7 @@ nothrow pure @safe bool isNaN(in real x)
 }
 
 /// ditto
-nothrow pure @safe bool isNaN(ulong Degree)(in GenDualNum!Degree x)
+nothrow pure @safe bool isNaN(ulong Deg)(in GenDualNum!Deg x)
 {
     return std.math.isNaN(x.val);
 }
@@ -38,9 +38,9 @@ This function computes the sign of the argument.
 
 If $(MATH f(x) = sgn(g(x))), then $(MATH f' = 2𝛿(g)g'), where $(MATH 𝛿) is the Dirac delta function.
 */
-GenDualNum!Degree sgn(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg sgn(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-        return GenDualNum!Degree(std.math.sgn(g.val), 2 * dirac(g.reduce()) * g.d);
+    return GenDualNum!Deg(std.math.sgn(g.val), 2*dirac(g.reduce())*g.d);
 }
 
 ///

@@ -34,10 +34,10 @@ pragma(inline, true)
         g = the generalized dual number being scaled.
         c = the power of $(MATH 2) used to scale `g`,
     */
-    GenDualNum!Degree ldexp(ulong Degree)(in GenDualNum!Degree g, in int c) nothrow pure @nogc @safe
+    GenDualNum!Deg ldexp(ulong Deg)(in GenDualNum!Deg g, in int c) nothrow pure @nogc @safe
     {
-        alias ldexp_red = Select!(Degree == 1, core.math.ldexp, ldexp);
-        return GenDualNum!Degree(core.math.ldexp(g.val, c), ldexp_red(g.d, c));
+        alias ldexp_red = Select!(Deg == 1, core.math.ldexp, ldexp);
+        return GenDualNum!Deg(core.math.ldexp(g.val, c), ldexp_red(g.d, c));
     }
 
     ///
@@ -54,13 +54,13 @@ pragma(inline, true)
     If $(MATH f(g(x)) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
     $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
     */
-    GenDualNum!Degree rint(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+    GenDualNum!Deg rint(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
     {
         const f = core.math.rint(g.val);
 
-        auto df = GenDualNum!Degree.mkZeroDeriv();
+        auto df = GenDualNum!Deg.mkZeroDeriv();
         if (isInfinity(g.val)) {
-            df = GenDualNum!Degree.mkNaNDeriv();
+            df = GenDualNum!Deg.mkNaNDeriv();
         } else {
             auto fn = nearbyint(nextDown(g.val));
             auto fp = nearbyint(nextUp(g.val));
@@ -77,7 +77,7 @@ pragma(inline, true)
             }
         }
 
-        return GenDualNum!Degree(f, df*g.d);
+        return GenDualNum!Deg(f, df*g.d);
     }
 
     ///
@@ -115,7 +115,7 @@ pragma(inline, true)
     This function rounds `g` to a `long` using the current rounding mode. All of the derivative
     terms are lost.
     */
-    long rndtol(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+    long rndtol(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
     {
         return core.math.rndtol(g.val);
     }
@@ -133,7 +133,7 @@ pragma(inline, true)
         T = the float point type to be converted to
         g = the generalized dual number to be converted
     */
-    T toPrec(T, ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+    T toPrec(T, ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
     if (isFloatingPoint!T)
     {
         return core.math.toPrec!T(g.val);
@@ -159,27 +159,25 @@ pragma(inline, true)
         The resulting generalized dual number will have a degree equal to the lesser of the degrees
         of `g` and `h`.
     */
-    GenDualNum!(GDegree < HDegree ? GDegree : HDegree)
-    yl2x(ulong GDegree, ulong HDegree)(in GenDualNum!GDegree g, in GenDualNum!HDegree h)
+    GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
+    yl2x(ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg h)
     nothrow pure @nogc @safe
     {
-        alias Deg = Select!(GDegree < HDegree, GDegree, HDegree);
-
-        return yl2x_impl(cast(GenDualNum!Deg) g, cast(GenDualNum!Deg) h);
+        return yl2x_impl(cast(typeof(return)) g, cast(typeof(return)) h);
     }
 
     /// ditto
-    GenDualNum!Degree yl2x(T, ulong Degree)(in GenDualNum!Degree g, in T c) nothrow pure @nogc @safe
+    GenDualNum!Deg yl2x(T, ulong Deg)(in GenDualNum!Deg g, in T c) nothrow pure @nogc @safe
     if (isImplicitlyConvertible!(T, real))
     {
-        return yl2x_impl(g, GenDualNum!Degree.mkConst(c));
+        return yl2x_impl(g, GenDualNum!Deg.mkConst(c));
     }
 
     /// ditto
-    GenDualNum!Degree yl2x(T, ulong Degree)(in T c, in GenDualNum!Degree h) nothrow pure @nogc @safe
+    GenDualNum!Deg yl2x(T, ulong Deg)(in T c, in GenDualNum!Deg h) nothrow pure @nogc @safe
     if (isImplicitlyConvertible!(T, real))
     {
-        return yl2x_impl(GenDualNum!Degree.mkConst(c), h);
+        return yl2x_impl(GenDualNum!Deg.mkConst(c), h);
     }
 
     ///
@@ -250,29 +248,25 @@ pragma(inline, true)
         The resulting generalized dual number will have a degree equal to the lesser of the degrees
         of `g` and `h`.
     */
-    GenDualNum!(GDegree < HDegree ? GDegree : HDegree)
-    yl2xp1(ulong GDegree, ulong HDegree)(in GenDualNum!GDegree g, in GenDualNum!HDegree h)
+    GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
+    yl2xp1(ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg h)
     nothrow pure @nogc @safe
     {
-        alias Deg = Select!(GDegree < HDegree, GDegree, HDegree);
-
-        return yl2xp1_impl(cast(GenDualNum!Deg) g, cast(GenDualNum!Deg) h);
+        return yl2xp1_impl(cast(typeof(return)) g, cast(typeof(return)) h);
     }
 
     /// ditto
-    GenDualNum!Degree yl2xp1(T, ulong Degree)(in GenDualNum!Degree g, in T c) nothrow pure
-    @nogc @safe
+    GenDualNum!Deg yl2xp1(T, ulong Deg)(in GenDualNum!Deg g, in T c) nothrow pure @nogc @safe
     if (isImplicitlyConvertible!(T, real))
     {
-        return yl2xp1_impl(g, GenDualNum!Degree.mkConst(c));
+        return yl2xp1_impl(g, GenDualNum!Deg.mkConst(c));
     }
 
     /// ditto
-    GenDualNum!Degree yl2xp1(T, ulong Degree)(in T c, in GenDualNum!Degree h) nothrow pure
-    @nogc @safe
+    GenDualNum!Deg yl2xp1(T, ulong Deg)(in T c, in GenDualNum!Deg h) nothrow pure @nogc @safe
     if (isImplicitlyConvertible!(T, real))
     {
-        return yl2xp1_impl(GenDualNum!Degree.mkConst(c), h);
+        return yl2xp1_impl(GenDualNum!Deg.mkConst(c), h);
     }
 
     ///

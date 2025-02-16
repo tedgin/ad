@@ -247,13 +247,13 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     }
 
     /**
-    This is the derivative of order `Order` of the generalized dual number. The order must be at
-    least one but no more that the degree of the generalized dual number. If `Order == Degree`, the
+    This is the derivative of order `Ord` of the generalized dual number. The order must be at least
+    one but no more that the degree of the generalized dual number. If `Ord == Degree`, the
     derivative will be of type `real`. Otherwise it will be a `GenDualNum` but with degree
-    `Degree - Order`.
+    `Degree - Ord`.
 
     Params:
-        Order = the order of the derivate to compute, default `1`
+        Ord = the order of the derivate to compute, default `1`
 
     Examples:
     ```
@@ -263,17 +263,16 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     assert(x.d!0 is x);
     ```
     */
-    DerivType!Order d(ulong Order = 1)() const nothrow pure @nogc @safe
-    if (0 < Order && Order <= Degree)
+    DerivType!Ord d(ulong Ord = 1)() const nothrow pure @nogc @safe if (0 < Ord && Ord <= Degree)
     {
-        static if (Order == 1)
+        static if (Ord == 1)
             return _dx;
         else
-            return _dx.d!(Order - 1);
+            return _dx.d!(Ord - 1);
     }
 
     /// ditto
-    GenDualNum d(ulong Order : 0)() const nothrow pure @nogc @safe
+    GenDualNum d(ulong Ord : 0)() const nothrow pure @nogc @safe
     {
         return this;
     }
@@ -353,8 +352,8 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
     assert(y == x && typeof(y).DEGREE == 2);
     ```
     */
-    T opCast(T)() const nothrow pure @nogc @safe
-            if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GenDualNum")
+    pragma(inline, true) T opCast(T)() const nothrow pure @nogc @safe
+    if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GenDualNum")
     {
         static if (T.DEGREE == Degree)
             return this;
@@ -641,7 +640,7 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
 
     /** <b>x ^^ y</b>
 
-    This raises one generalized dual number to the power of another. If the base or exponent has
+    This raises one generalized dual number to the pow of another. If the base or exponent has
     type `real`, it is converted to a constant generalized dual number with the same degree as the
     exponent or base, respectively.
 
@@ -750,18 +749,18 @@ struct GenDualNum(ulong Degree = 1) if (Degree > 0)
         return toString(0);
     }
 
-    private string toString(ulong derivOrder) const pure @safe
+    private string toString(ulong derivOrd) const pure @safe
     {
         static if (Degree == 1)
         {
-            const tail = format("%s%s", formatNum(_dx), formatDerivOrder(derivOrder + 1));
+            const tail = format("%s%s", fmtNum(_dx), fmtDerivOrd(derivOrd + 1));
         }
         else
         {
-            const tail = _dx.toString(derivOrder + 1);
+            const tail = _dx.toString(derivOrd + 1);
         }
 
-        return format("%s%s + %s", formatNum(_x), formatDerivOrder(derivOrder), tail);
+        return format("%s%s + %s", fmtNum(_x), fmtDerivOrd(derivOrd), tail);
     }
 }
 
@@ -1292,24 +1291,24 @@ package
         }
     }
 
-    template same(T, ulong GDNDegree) if (isImplicitlyConvertible!(T, real))
+    template same(T, ulong Deg) if (isImplicitlyConvertible!(T, real))
     {
-        bool same(in T, in GenDualNum!GDNDegree) nothrow pure @nogc @safe
+        bool same(in T, in GenDualNum!Deg) nothrow pure @nogc @safe
         {
             return false;
         }
 
-        bool same(in GenDualNum!GDNDegree, in T) nothrow pure @nogc @safe
+        bool same(in GenDualNum!Deg, in T) nothrow pure @nogc @safe
         {
             return false;
         }
     }
 
-    template same(ulong LDegree, ulong RDegree)
+    template same(ulong LDeg, ulong RDeg)
     {
-        bool same(in GenDualNum!LDegree lhs, in GenDualNum!RDegree rhs) nothrow pure @nogc @safe
+        bool same(in GenDualNum!LDeg lhs, in GenDualNum!RDeg rhs) nothrow pure @nogc @safe
         {
-            static if (LDegree != RDegree)
+            static if (LDeg != RDeg)
                 return false;
             else
                 return same(lhs.val, rhs.val) && same(lhs.d, rhs.d);
@@ -1346,9 +1345,9 @@ package
 private pure @safe
 {
     //
-    // formatNum
+    // fmtNum
     //
-    string formatNum(in real num)
+    string fmtNum(in real num)
     {
         if (isNaN(num))
             return "NaN";
@@ -1363,62 +1362,62 @@ private pure @safe
     {
         string num;
 
-        num = formatNum(1);
+        num = fmtNum(1);
         assert(num == "1", "formatted 1 incorrectly");
 
-        num = formatNum(-23.4);
+        num = fmtNum(-23.4);
         assert(num == "-23.4", "formatted -23.4 incorrectly");
 
-        num = formatNum(+0.);
+        num = fmtNum(+0.);
         assert(num == "+0", "formatted +0 incorrectly");
 
-        num = formatNum(-0.);
+        num = fmtNum(-0.);
         assert(num == "-0", "formatted -0 incorrectly");
 
-        num = formatNum(real.infinity);
+        num = fmtNum(real.infinity);
         assert(num == "∞", "formatted +∞ incorrectly");
 
-        num = formatNum(-real.infinity);
+        num = fmtNum(-real.infinity);
         assert(num == "-∞", "formatted -∞ incorrectly");
 
-        num = formatNum(real.nan);
+        num = fmtNum(real.nan);
         assert(num == "NaN", "formatted NaN incorrectly");
 
-        num = formatNum(-real.nan);
+        num = fmtNum(-real.nan);
         assert(num == "NaN", "formatted -NaN incorrectly");
     }
 
     //
-    // formatDerivOrder
+    // fmtDerivOrd
     //
 
-    string formatDerivOrder(in ulong derivOrder)
+    string fmtDerivOrd(in ulong ord)
     {
-        switch (derivOrder)
+        switch (ord)
         {
         case 0:
             return "";
         case 1:
             return "dx";
         default:
-            return format("(dx)%s", formatPower(derivOrder));
+            return format("(dx)%s", fmtPow(ord));
         }
     }
 
     unittest
     {
-        assert(formatDerivOrder(0) == "", "formatDerivOrder(0) is incorrect");
-        assert(formatDerivOrder(1) == "dx", "formatDerivOrder(1) is incorrect");
-        assert(formatDerivOrder(3) == "(dx)³", "formatDerivOrder(3) is incorrect");
+        assert(fmtDerivOrd(0) == "", "fmtDerivOrd(0) is incorrect");
+        assert(fmtDerivOrd(1) == "dx", "fmtDerivOrd(1) is incorrect");
+        assert(fmtDerivOrd(3) == "(dx)³", "fmtDerivOrd(3) is incorrect");
     }
 
     //
-    // formatPower
+    // fmtPow
     //
 
-    string formatPower(in ulong power) nothrow
+    string fmtPow(in ulong pow) nothrow
     {
-        switch (power)
+        switch (pow)
         {
         case 0:
             return "\u2070";
@@ -1441,24 +1440,24 @@ private pure @safe
         case 9:
             return "\u2079";
         default:
-            return formatPower(power / 10) ~ formatPower(power % 10);
+            return fmtPow(pow / 10) ~ fmtPow(pow % 10);
         }
     }
 
     unittest
     {
-        assert(formatPower(0) == "⁰", "formatPower(0) should be ⁰");
-        assert(formatPower(1) == "¹", "formatPower(1) should be ¹");
-        assert(formatPower(2) == "²", "formatPower(2) should be ²");
-        assert(formatPower(3) == "³", "formatPower(3) should be ³");
-        assert(formatPower(4) == "⁴", "formatPower(4) should be ⁴");
-        assert(formatPower(5) == "⁵", "formatPower(5) should be ⁵");
-        assert(formatPower(6) == "⁶", "formatPower(6) should be ⁶");
-        assert(formatPower(7) == "⁷", "formatPower(7) should be ⁷");
-        assert(formatPower(8) == "⁸", "formatPower(8) should be ⁸");
-        assert(formatPower(9) == "⁹", "formatPower(9) should be ⁹");
-        assert(formatPower(10) == "¹⁰", "formatPower(10) should be ¹⁰");
-        assert(formatPower(25) == "²⁵", "formatPower(25) should be ²⁵");
-        assert(formatPower(3000) == "³⁰⁰⁰", "formatPower(3000) should be ³⁰⁰⁰");
+        assert(fmtPow(0) == "⁰", "fmtPow(0) should be ⁰");
+        assert(fmtPow(1) == "¹", "fmtPow(1) should be ¹");
+        assert(fmtPow(2) == "²", "fmtPow(2) should be ²");
+        assert(fmtPow(3) == "³", "fmtPow(3) should be ³");
+        assert(fmtPow(4) == "⁴", "fmtPow(4) should be ⁴");
+        assert(fmtPow(5) == "⁵", "fmtPow(5) should be ⁵");
+        assert(fmtPow(6) == "⁶", "fmtPow(6) should be ⁶");
+        assert(fmtPow(7) == "⁷", "fmtPow(7) should be ⁷");
+        assert(fmtPow(8) == "⁸", "fmtPow(8) should be ⁸");
+        assert(fmtPow(9) == "⁹", "fmtPow(9) should be ⁹");
+        assert(fmtPow(10) == "¹⁰", "fmtPow(10) should be ¹⁰");
+        assert(fmtPow(25) == "²⁵", "fmtPow(25) should be ²⁵");
+        assert(fmtPow(3000) == "³⁰⁰⁰", "fmtPow(3000) should be ³⁰⁰⁰");
     }
 }

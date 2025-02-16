@@ -17,9 +17,9 @@ Returns the value of `g` rounded upward to the nearest integer.
 
 If $(MATH f(x) = ⌈g(x)⌉), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
 */
-GenDualNum!Degree ceil(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg ceil(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    static if (Degree == 1) {
+    static if (Deg == 1) {
         const f_red = std.math.ceil(g.reduce());
         const f_val = f_red;
     } else {
@@ -27,12 +27,12 @@ GenDualNum!Degree ceil(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc 
         const f_val = f_red.val;
     }
 
-    GenDualNum!Degree.DerivType!1 df;
+    GenDualNum!Deg.DerivType!1 df;
     if (isFinite(g.val)) {
         df = g.d * dirac(g.reduce() - f_red);
     }
 
-    return GenDualNum!Degree(f_val, df);
+    return GenDualNum!Deg(f_val, df);
 }
 
 ///
@@ -63,9 +63,9 @@ Returns the value of `g` rounded downward to the nearest integer.
 
 If $(MATH f(x) = ⌊g(x)⌋), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
 */
-GenDualNum!Degree floor(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg floor(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    static if (Degree == 1) {
+    static if (Deg == 1) {
         const f_red = std.math.floor(g.reduce());
         const f_val = f_red;
      } else {
@@ -73,12 +73,12 @@ GenDualNum!Degree floor(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc
         const f_val = f_red.val;
      }
 
-    GenDualNum!Degree.DerivType!1 df;
+    GenDualNum!Deg.DerivType!1 df;
     if (std.math.isFinite(g.val)) {
         df = g.d * dirac(g.reduce() - f_red);
     }
 
-    return GenDualNum!Degree(f_val, df);
+    return GenDualNum!Deg(f_val, df);
 }
 
 ///

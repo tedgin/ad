@@ -2,6 +2,8 @@
 module ad.math.trigonometry;
 
 public import std.math.trigonometry;
+
+static import core.math;
 import std.math: sqrt;
 
 import ad.core;
@@ -12,15 +14,14 @@ This function computes the sine of its argument.
 
 If $(MATH f(x) = sin(g(x))), then $(MATH f' = cos(g)g').
 */
-pragma(inline, true)
-GenDualNum!Degree sin(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+pragma(inline, true) GenDualNum!Deg sin(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    static if (Degree == 1)
+    static if (Deg == 1)
         const cos_g = std.math.cos(g.reduce());
     else
         const cos_g = cos(g.reduce());
 
-    return GenDualNum!Degree(std.math.sin(g.val), cos_g*g.d);
+    return GenDualNum!Deg(core.math.sin(g.val), cos_g*g.d);
 }
 
 ///
@@ -54,15 +55,14 @@ This function computes the cosine of the argument.
 
 If $(MATH f(x) = cos(g(x))), then $(MATH f' = -sin(g)g').
 */
-pragma(inline, true)
-GenDualNum!Degree cos(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+pragma(inline, true) GenDualNum!Deg cos(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    static if (Degree == 1)
+    static if (Deg == 1)
         const sin_g = std.math.sin(g.reduce());
     else
         const sin_g = sin(g.reduce());
 
-    return GenDualNum!Degree(std.math.cos(g.val), -sin_g*g.d);
+    return GenDualNum!Deg(core.math.cos(g.val), -sin_g*g.d);
 }
 
 ///
@@ -97,14 +97,14 @@ This function computes the tangent of its argument
 
 If $(MATH f(x) = tan(g(x))), then $(MATH f' = g'sec$(SUP 2)(g)).
 */
-GenDualNum!Degree tan(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg tan(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    static if (Degree == 1)
+    static if (Deg == 1)
         const cos_g = std.math.cos(g.reduce());
     else
         const cos_g = cos(g.reduce());
 
-    return GenDualNum!Degree(std.math.tan(g.val), g.d/cos_g^^2);
+    return GenDualNum!Deg(std.math.tan(g.val), g.d/cos_g^^2);
 }
 
 ///
@@ -145,9 +145,9 @@ This function computes the arcsine (inverse sine) of its argument `g`.
 
 If $(MATH f(x) = sin$(SUP -1)g(x)), then $(MATH f' = g'/√(1 - g$(SUP 2)), |g| ≤ 1).
 */
-GenDualNum!Degree asin(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg asin(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    return GenDualNum!Degree(std.math.asin(g.val), g.d/sqrt(1 - g.reduce()^^2));
+    return GenDualNum!Deg(std.math.asin(g.val), g.d/sqrt(1 - g.reduce()^^2));
 }
 
 ///
@@ -190,9 +190,9 @@ This function computes the arccosine (inverse cosine) of its argument `g`.
 
 If $(MATH f(x) = cos$(SUP -1)g(x)), then $(MATH f' = -g'/√(1 - g$(SUP 2)), |g| ≤ 1).
 */
-GenDualNum!Degree acos(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg acos(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    return GenDualNum!Degree(std.math.acos(g.val), -g.d/sqrt(1 - g.reduce()^^2));
+    return GenDualNum!Deg(std.math.acos(g.val), -g.d/sqrt(1 - g.reduce()^^2));
 }
 
 ///
@@ -223,9 +223,9 @@ This function computes the arctangent (inverse tangent) of its argument `g`.
 
 If $(MATH f(x) = tan$(SUP -1)g(x)), then $(MATH f' = g'/(1 + g$(SUP 2))).
 */
-GenDualNum!Degree atan(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg atan(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    return GenDualNum!Degree(std.math.atan(g.val), g.d/(1 + g.reduce()^^2));
+    return GenDualNum!Deg(std.math.atan(g.val), g.d/(1 + g.reduce()^^2));
 }
 
 ///
@@ -251,23 +251,23 @@ This function computes the arctangent (inverse tangent) of $(MATH g/h).
 
 If $(MATH f(x) = tan$(SUP -1)(g(x)/h(x))), the $(MATH f' = (g'h - gh')/(h$(SUP 2) + g$(SUP 2))).
 */
-GenDualNum!(GDegree < HDegree ? GDegree : HDegree)
-atan2(ulong GDegree, ulong HDegree)(in GenDualNum!GDegree g, in GenDualNum!HDegree h)
+GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
+atan2(ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg h)
     nothrow pure @nogc @safe
 {
     return atan2_impl(cast(typeof(return)) g, cast(typeof(return)) h);
 }
 
 /// ditto
-GenDualNum!Degree atan2(ulong Degree)(in GenDualNum!Degree g, in real c) nothrow pure @nogc @safe
+GenDualNum!Deg atan2(ulong Deg)(in GenDualNum!Deg g, in real c) nothrow pure @nogc @safe
 {
-    return atan2_impl(g, GenDualNum!Degree.mkConst(c));
+    return atan2_impl(g, GenDualNum!Deg.mkConst(c));
 }
 
 /// ditto
-GenDualNum!Degree atan2(ulong Degree)(in real c, in GenDualNum!Degree h) nothrow pure @nogc @safe
+GenDualNum!Deg atan2(ulong Deg)(in real c, in GenDualNum!Deg h) nothrow pure @nogc @safe
 {
-    return atan2_impl(GenDualNum!Degree.mkConst(c), h);
+    return atan2_impl(GenDualNum!Deg.mkConst(c), h);
 }
 
 ///
@@ -298,12 +298,12 @@ unittest
 }
 
 package pragma(inline, true)
-GenDualNum!Degree atan2_impl(ulong Degree)(in GenDualNum!Degree g, in GenDualNum!Degree h)
-    nothrow pure @nogc @safe
+GenDualNum!Deg atan2_impl(ulong Deg)(in GenDualNum!Deg g, in GenDualNum!Deg h) nothrow pure
+    @nogc @safe
 {
     const g_red = g.reduce();
     const h_red = h.reduce();
-    return GenDualNum!Degree(
+    return GenDualNum!Deg(
         std.math.atan2(g.val, h.val),
         (g.d*h_red - g_red*h.d) / (h_red^^2 + g_red^^2));
 }
@@ -337,7 +337,7 @@ This function calculates the hyperbolic sine of its argument `g`.
 If $(MATH f(x) = sinh(g(x))), then $(MATH f' = g'cosh(g)).
 */
 // TODO: implement
-GenDualNum!Degree sinh(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe;
+GenDualNum!Deg sinh(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe;
 
 /**
 This function calculates the hyperbolic cosine of its argument `g`.
@@ -345,7 +345,7 @@ This function calculates the hyperbolic cosine of its argument `g`.
 If $(MATH f(x) = cosh(g(x))), then $(MATH f' = g'sinh(g)).
 */
 // TODO: implement
-GenDualNum!Degree cosh(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe;
+GenDualNum!Deg cosh(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe;
 
 /**
 This function calculates the hyperbolic tangent of its argument `g`.
@@ -353,7 +353,7 @@ This function calculates the hyperbolic tangent of its argument `g`.
 If $(MATH f(x) = tanh(g(x))), then $(MATH f' = g'/cosh$(SUP 2)(g)).
 */
 // TODO: implement
-GenDualNum!Degree tanh(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe;
+GenDualNum!Deg tanh(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe;
 
 /**
 This function calculates the inverse hyperbolic sine of its argument `g`.
@@ -361,7 +361,7 @@ This function calculates the inverse hyperbolic sine of its argument `g`.
 If $(MATH f(x) = sinh$(SUP -1)g(x)), then $(MATH f' = g'/√(1 + g$(SUP 2))).
 */
 // TODO: implement
-GenDualNum!Degree asinh(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe;
+GenDualNum!Deg asinh(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe;
 
 /**
 This function calculates the inverse hyperbolic cosine of its argument `g`.
@@ -369,7 +369,7 @@ This function calculates the inverse hyperbolic cosine of its argument `g`.
 If $(MATH f(x) = cosh$(SUP -1)g(x)), then $(MATH f' = g'/√(g$(SUP 2) - 1)).
 */
 // TODO: implement
-GenDualNum!Degree acosh(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe;
+GenDualNum!Deg acosh(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe;
 
 /**
 This function calculates the inverse hyperbolic tangent of its argument `g`.
@@ -377,4 +377,4 @@ This function calculates the inverse hyperbolic tangent of its argument `g`.
 If $(MATH f(x) = tanh$(SUP -1)g(x)), then $(MATH f' = g'/(1 - g$(SUP 2)), |g| < 1).
 */
 // TODO: implement
-GenDualNum!Degree atanh(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe;
+GenDualNum!Deg atanh(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe;

@@ -6,51 +6,49 @@ public import std.math.constants;
 import ad.core;
 
 /// Euler's constant $(MATH e)
-enum GenDualNum!Degree E(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.E);
+enum GenDualNum!Deg E(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.E);
 
 /// $(MATH π)
-enum GenDualNum!Degree PI(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.PI);
+enum GenDualNum!Deg PI(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.PI);
 
 /// $(MATH π/2)
-enum GenDualNum!Degree PI_2(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.PI_2);
+enum GenDualNum!Deg PI_2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.PI_2);
 
 /// $(MATH π/4)
-enum GenDualNum!Degree PI_4(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.PI_4);
+enum GenDualNum!Deg PI_4(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.PI_4);
 
 /// $(MATH 1/π)
-enum GenDualNum!Degree M_1_PI(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.M_1_PI);
+enum GenDualNum!Deg M_1_PI(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.M_1_PI);
 
 /// $(MATH 2/π)
-enum GenDualNum!Degree M_2_PI(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.M_2_PI);
+enum GenDualNum!Deg M_2_PI(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.M_2_PI);
 
 /// $(MATH 2/√π)
-enum GenDualNum!Degree M_2_SQRTPI(ulong Degree) = GenDualNum!Degree.mkConst(
-    std.math.constants.M_2_SQRTPI);
+enum GenDualNum!Deg M_2_SQRTPI(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.M_2_SQRTPI);
 
 /// $(MATH ln(10))
-enum GenDualNum!Degree LN10(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.LN10);
+enum GenDualNum!Deg LN10(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LN10);
 
 /// $(MATH ln(2))
-enum GenDualNum!Degree LN2(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.LN2);
+enum GenDualNum!Deg LN2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LN2);
 
 /// $(MATH log(2))
-enum GenDualNum!Degree LOG2(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.LOG2);
+enum GenDualNum!Deg LOG2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LOG2);
 
 /// $(MATH lg(e))
-enum GenDualNum!Degree LOG2E(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.LOG2E);
+enum GenDualNum!Deg LOG2E(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LOG2E);
 
 /// $(MATH lg(10))
-enum GenDualNum!Degree LOG2T(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.LOG2T);
+enum GenDualNum!Deg LOG2T(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LOG2T);
 
 /// $(MATH log(e))
-enum GenDualNum!Degree LOG10E(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.LOG10E);
+enum GenDualNum!Deg LOG10E(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.LOG10E);
 
 /// $(MATH √2)
-enum GenDualNum!Degree SQRT2(ulong Degree) = GenDualNum!Degree.mkConst(std.math.constants.SQRT2);
+enum GenDualNum!Deg SQRT2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.SQRT2);
 
 /// $(MATH √½)
-enum GenDualNum!Degree SQRT1_2(ulong Degree) = GenDualNum!Degree.mkConst(
-    std.math.constants.SQRT1_2);
+enum GenDualNum!Deg SQRT1_2(ulong Deg) = GenDualNum!Deg.mkConst(std.math.constants.SQRT1_2);
 
 unittest
 {

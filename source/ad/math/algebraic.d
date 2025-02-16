@@ -25,17 +25,16 @@ This function computes the absolute value of the argument.
 
 If $(MATH f(x) = |g(x)|), then $(MATH f' = sgn(g)g'), when $(MATH g ≠ 0)
 */
-pragma(inline, true)
-GenDualNum!Degree fabs(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+pragma(inline, true) GenDualNum!Deg fabs(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
     const df_val = signbit(g.val) == 0 ? 1.0L : -1.0L;
 
-    static if (Degree == 1)
+    static if (Deg == 1)
         const df = df_val;
     else
-        const df = GenDualNum!Degree.DerivType!1.mkConst(df_val);
+        const df = GenDualNum!Deg.DerivType!1.mkConst(df_val);
 
-    return GenDualNum!Degree(core.math.fabs(g.val), df * g.d);
+    return GenDualNum!Deg(core.math.fabs(g.val), df * g.d);
 }
 
 ///
@@ -63,11 +62,10 @@ This function computes the square root of its argument.
 
 If $(MATH f(x) = √g(x)), then $(MATH f' = g$(SUP -½)g'/2).
 */
-pragma(inline, true)
-GenDualNum!Degree sqrt(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+pragma(inline, true) GenDualNum!Deg sqrt(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 {
-    const df = signbit(g.val) == 1 ? GenDualNum!Degree.DerivType!1.nan : g.reduce()^^-0.5/2;
-    return GenDualNum!Degree(core.math.sqrt(g.val), df * g.d);
+    const df = signbit(g.val) == 1 ? GenDualNum!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
+    return GenDualNum!Deg(core.math.sqrt(g.val), df * g.d);
 }
 
 ///
@@ -101,9 +99,9 @@ This function computes the cube root of the argument.
 
 If $(MATH f(x) = ∛g(x)), then $(MATH f' = g$(SUP -⅔)g'/3)
 */
-GenDualNum!Degree cbrt(ulong Degree)(in GenDualNum!Degree g) nothrow @nogc @safe
+GenDualNum!Deg cbrt(ulong Deg)(in GenDualNum!Deg g) nothrow @nogc @safe
 {
-    alias GDN = GenDualNum!Degree;
+    alias GDN = GenDualNum!Deg;
 
     if (g == 0)
         return GDN(0, GDN.DerivType!1.infinity);
@@ -149,23 +147,23 @@ the other parameter.
 If $(MATH f(x) = [g(x)$(SUP 2) + h(x)$(SUP 2)]$(SUP ½)), then
 $(MATH f' = (gg' + hh')(g$(SUP 2) + h$(SUP 2))$(SUP -½)).
 */
-GenDualNum!(GDegree < HDegree ? GDegree : HDegree)
-hypot(ulong GDegree, ulong HDegree)(in GenDualNum!GDegree g, in GenDualNum!HDegree h)
+GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
+hypot(ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg h)
 nothrow pure @nogc @safe
 {
     return hypot_impl(g, h);
 }
 
 /// ditto
-GenDualNum!Degree hypot(T, ulong Degree)(in GenDualNum!Degree g, in T c) nothrow pure @nogc @safe
-        if (isImplicitlyConvertible!(T, real))
+GenDualNum!Deg hypot(T, ulong Deg)(in GenDualNum!Deg g, in T c) nothrow pure @nogc @safe
+if (isImplicitlyConvertible!(T, real))
 {
     return hypot_impl(g, GenDualNum!Deg.mkConst(c));
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Degree hypot(T, ulong Degree)(in T c, in GenDualNum!Degree h) nothrow pure @nogc @safe
+GenDualNum!Deg hypot(T, ulong Deg)(in T c, in GenDualNum!Deg h) nothrow pure @nogc @safe
 {
     return hypot(h, c);
 }
@@ -227,31 +225,29 @@ Returns:
     `g`, `h`, and `i`.
 */
 auto
-hypot(ulong GDegree, ulong HDegree, ulong IDegree)(
-    in GenDualNum!GDegree g, in GenDualNum!HDegree h, in GenDualNum!IDegree i)
+hypot(ulong GDeg, ulong HDeg, ulong IDeg)(
+    in GenDualNum!GDeg g, in GenDualNum!HDeg h, in GenDualNum!IDeg i)
 nothrow pure @nogc @safe
 {
-    alias GHDeg = Select!(GDegree < HDegree, GDegree, HDegree);
-    alias Deg = Select!(GHDeg < IDegree, GHDeg, IDegree);
+    alias GHDeg = Select!(GDeg < HDeg, GDeg, HDeg);
+    alias Deg = Select!(GHDeg < IDeg, GHDeg, IDeg);
 
     return hypot_impl(cast(GenDualNum!Deg) g, cast(GenDualNum!Deg) h, cast(GenDualNum!Deg) i);
 }
 
 /// ditto
-GenDualNum!(GDegree < HDegree ? GDegree : HDegree)
-hypot(T, ulong GDegree, ulong HDegree)(in GenDualNum!GDegree g, in GenDualNum!HDegree h, in T c)
+GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
+hypot(T, ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg h, in T c)
 nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real))
 {
-    alias Deg = Select!(GDegree < HDegree, GDegree, HDegree);
-
-    return hypot_impl(cast(GenDualNum!Deg) g, cast(GenDualNum!Deg) h, GenDualNum!Deg.mkConst(c));
+    return hypot_impl(cast(typeof(return)) g, cast(typeof(return)) h, typeof(return).mkConst(c));
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!(GDegree < IDegree ? GDegree : IDegree)
-hypot(T, ulong GDegree, ulong IDegree)(in GenDualNum!GDegree g, in T c, in GenDualNum!IDegree i)
+GenDualNum!(GDeg < IDeg ? GDeg : IDeg)
+hypot(T, ulong GDeg, ulong IDeg)(in GenDualNum!GDeg g, in T c, in GenDualNum!IDeg i)
 nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real))
 {
@@ -260,8 +256,8 @@ if (isImplicitlyConvertible!(T, real))
 
 /// ditto
 pragma(inline, true)
-GenDualNum!(HDegree < IDegree ? HDegree : IDegree)
-hypot(T, ulong HDegree, ulong IDegree)(in T c, in GenDualNum!HDegree h, in GenDualNum!IDegree i)
+GenDualNum!(HDeg < IDeg ? HDeg : IDeg)
+hypot(T, ulong HDeg, ulong IDeg)(in T c, in GenDualNum!HDeg h, in GenDualNum!IDeg i)
 nothrow pure @nogc @safe
 if (isImplicitlyConvertible!(T, real))
 {
@@ -269,16 +265,16 @@ if (isImplicitlyConvertible!(T, real))
 }
 
 /// ditto
-GenDualNum!Degree hypot(T, U, ulong Degree)(in GenDualNum!Degree g, in T c1, in U c2) nothrow pure
+GenDualNum!Deg hypot(T, U, ulong Deg)(in GenDualNum!Deg g, in T c1, in U c2) nothrow pure
 @nogc @safe
 if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
-    return hypot_impl(g, GenDualNum!Degree.mkConst(c1), GenDualNum!Degree.mkConst(c2));
+    return hypot_impl(g, GenDualNum!Deg.mkConst(c1), GenDualNum!Deg.mkConst(c2));
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Degree hypot(T, U, ulong Degree)(in T c1, in GenDualNum!Degree h, in U c2) nothrow pure
+GenDualNum!Deg hypot(T, U, ulong Deg)(in T c1, in GenDualNum!Deg h, in U c2) nothrow pure
 @nogc @safe
 if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
@@ -287,7 +283,7 @@ if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Degree hypot(T, U, ulong Degree)(in T c1, in U c2, in GenDualNum!Degree i) nothrow pure
+GenDualNum!Deg hypot(T, U, ulong Deg)(in T c1, in U c2, in GenDualNum!Deg i) nothrow pure
 @nogc @safe
 if (isImplicitlyConvertible!(T, real) && isImplicitlyConvertible!(U, real))
 {
@@ -384,23 +380,23 @@ Returns:
     The resulting generalized dual number will have a degree equal to the lesser of the degrees of
     `g` and `H`.
 */
-GenDualNum!(GDegree < HDegree ? GDegree : HDegree)
-poly(ulong GDegree, ulong HDegree)(in GenDualNum!GDegree g, in GenDualNum!HDegree[] H) nothrow pure
-@nogc @trusted
+GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
+poly(ulong GDeg, ulong HDeg)(in GenDualNum!GDeg g, in GenDualNum!HDeg[] H)
+nothrow pure @nogc @trusted
 in(H.length > 0, "coefficient array cannot be empty")
 {
     return typeof(return)(poly_impl_base(g.val, H), poly_impl_deriv(g, H));
 }
 
 /// ditto
-GenDualNum!Degree poly(T, ulong Degree)(in GenDualNum!Degree g, in T[] H) nothrow pure
-@nogc @trusted if (isFloatingPoint!T)
+GenDualNum!Deg poly(T, ulong Deg)(in GenDualNum!Deg g, in T[] H) nothrow pure @nogc @trusted
+if (isFloatingPoint!T)
 in(H.length > 0, "coefficient array cannot be empty")
 {
-    static if (Degree == 1)
+    static if (Deg == 1)
         auto df_acc = 0.0L;
     else
-        auto df_acc = GenDualNum!Degree.DerivType!1.zero;
+        auto df_acc = GenDualNum!Deg.DerivType!1.zero;
 
     const g_red = g.reduce();
 
@@ -412,55 +408,56 @@ in(H.length > 0, "coefficient array cannot be empty")
         n--;
     }
 
-    return GenDualNum!Degree(std.math.poly(g.val, H), df_acc);
+    return GenDualNum!Deg(std.math.poly(g.val, H), df_acc);
 }
 
 /// ditto
-GenDualNum!Degree poly(T, ulong Degree)(in T g, in GenDualNum!Degree[] H) nothrow pure
-@nogc @trusted if (isFloatingPoint!T)
+GenDualNum!Deg poly(T, ulong Deg)(in T g, in GenDualNum!Deg[] H) nothrow pure @nogc @trusted
+if (isFloatingPoint!T)
 in(H.length > 0, "coefficient array cannot be empty")
 {
-    return GenDualNum!Degree(
+    return GenDualNum!Deg(
         poly_impl_base(g, H),
-        poly_impl_deriv(GenDualNum!Degree.mkConst(g), H));
+        poly_impl_deriv(GenDualNum!Deg.mkConst(g), H));
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!(GDegree < HDegree ? GDegree : HDegree)
-poly(ulong GDegree, ulong HDegree, int N)(
-    in GenDualNum!GDegree g, ref const GenDualNum!HDegree[N] H)
-nothrow pure @nogc @safe if (N > 0 && N <= 10)
+GenDualNum!(GDeg < HDeg ? GDeg : HDeg)
+poly(ulong GDeg, ulong HDeg, int N)(in GenDualNum!GDeg g, ref const GenDualNum!HDeg[N] H)
+nothrow pure @nogc @safe
+if (N > 0 && N <= 10)
 {
     return typeof(return)(poly_impl_base(g.val, H), poly_impl_deriv(g, H));
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Degree poly(T, ulong Degree, int N)(in GenDualNum!Degree g, const ref T[N] H)
-nothrow pure @nogc @safe if (isFloatingPoint!T && N > 0 && N <= 10)
+GenDualNum!Deg poly(T, ulong Deg, int N)(in GenDualNum!Deg g, const ref T[N] H) nothrow pure
+@nogc @safe
+if (isFloatingPoint!T && N > 0 && N <= 10)
 {
-    static if (Degree == 1)
+    static if (Deg == 1)
         auto df_acc = 0.0L;
     else
-        auto df_acc = GenDualNum!Degree.DerivType!1.zero;
+        auto df_acc = GenDualNum!Deg.DerivType!1.zero;
 
     static foreach (i; 1 .. N)
     {
         df_acc = (N-i) * H[N-i] * g.d + g.reduce() * df_acc;
     }
 
-    return GenDualNum!Degree(std.math.poly(g.val, H), df_acc);
+    return GenDualNum!Deg(std.math.poly(g.val, H), df_acc);
 }
 
 /// ditto
 pragma(inline, true)
-GenDualNum!Degree poly(T, ulong Degree, uint N)(in T g, const ref GenDualNum!Degree[N] H)
-nothrow pure @safe if (isFloatingPoint!T && N > 0 && N <= 10)
+GenDualNum!Deg poly(T, ulong Deg, uint N)(in T g, const ref GenDualNum!Deg[N] H) nothrow pure @nogc @safe
+if (isFloatingPoint!T && N > 0 && N <= 10)
 {
-    return GenDualNum!Degree(
+    return GenDualNum!Deg(
         poly_impl_base(g, H),
-        poly_impl_deriv(GenDualNum!Degree.mkConst(g), H));
+        poly_impl_deriv(GenDualNum!Deg.mkConst(g), H));
 }
 
 ///
@@ -579,7 +576,7 @@ Gives the next power of two after `g`.
 
 This function is equivalent to $(MATH lim$(SUB 𝜀⟶0$(SUP +)) sgn(g)2$(SUP ⌈lg|g| + 𝜀⌉)).
 */
-GenDualNum!Degree nextPow2(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg nextPow2(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 out (f; f.val == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextPow2")
 {
     const lg_abs_g = log2(fabs(g));
@@ -665,7 +662,7 @@ Gives the previous power of two no larger than `g`.
 
 This function is equivalent to $(MATH sgn(g)2$(SUP ⌊lg|g|⌋)).
 */
-GenDualNum!Degree truncPow2(ulong Degree)(in GenDualNum!Degree g) nothrow pure @nogc @safe
+GenDualNum!Deg truncPow2(ulong Deg)(in GenDualNum!Deg g) nothrow pure @nogc @safe
 out (f; f.val == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")
 {
     return  sgn(g) * 2^^floor(log2(fabs(g)));
