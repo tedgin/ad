@@ -24,7 +24,6 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `pow` (not implemented yet)
     * `powmod` (not implemented yet)
     * `scalebn` (not implemented yet)
-  * `std.math.hardware` (not implemented yet)
   * `std.math.operations` (not implemented yet)
   * `std.math.remainder` (not implemented yet)
   * `std.math.rounding`

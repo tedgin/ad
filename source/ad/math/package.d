@@ -7,7 +7,6 @@ public import ad.core;
 public import ad.math.algebraic;
 public import ad.math.constants;
 public import ad.math.exponential;
-public import ad.math.hardware;
 public import ad.math.operations;
 public import ad.math.remainder;
 public import ad.math.rounding;
