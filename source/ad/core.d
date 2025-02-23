@@ -1,54 +1,50 @@
 /**
-This module implements univariate automatic differentiation of arbitrary order using forward
-accumulation. It supports differentiating functions of the form $(MATH f:ℝ→ℝ).
-*/
+ * This module implements univariate automatic differentiation of arbitrary order using forward
+ * accumulation. It supports differentiating functions of the form $(MATH f:ℝ→ℝ).
+ */
 module ad.core;
 
 import std.format : format;
 import std.math : abs, isFinite, isInfinity, isNaN, LN2, log, signbit;
 import std.traits : fullyQualifiedName, isImplicitlyConvertible, TemplateOf;
 
-//
-// GDN
-//
-
 /**
-This data structure implements a <em>generalized dual number</em>, a generalization of the dual
-number that supports derivatives of arbitrary order. The <em>degree</em> of a generalized dual
-number is the maximum order of derivative that it supports.
-
-`GDN` is intended to be a drop-in replacement for a `real`. When no operation is explicitly defined
-for a `GDN` is will implicitly be converted to a `real`.
-
-In addition to differentiation, it supports basic algebraic operations mostly through operator
-overloading. The `+` and `-` prefix operators are overloaded as well as the `+`, `-`, `*`, `/`, `%`,
-and `^^` binary, infix operators. When two `GDN`s are combined by a binary operation, the degree of
-the resulting `GDN` will be the lesser of the degrees of the two input `GDN`s.
-
-```
-auto x = GDN!2(3);
-auto y = GDN!1(4);
-auto z = x + y;
-assert(typeof(z).DEGREE == 1);
-```
-
-The infix operators are also overloaded to support combining a `GDN` with a `real`. The `real` is
-converted to a constant `GDN` of the same degree as the other input `GDN`. A <em>constant</em>
-generalized dual number is one where the derivative of any order is 0.
-
-```
-auto x = GDN!1(2);
-real y = 3;
-
-auto u = x + y;
-assert(u == 5.0L && u.d == 1);
-
-auto v = y + x;
-assert(v is u);
-```
-
-Params:
-    Degree = the highest order of derivative that can be taken
+ * This data structure implements a <em>generalized dual number</em>, a generalization of the dual
+ * number that supports derivatives of arbitrary order. The <em>degree</em> of a generalized dual
+ * number is the maximum order of derivative that it supports.
+ *
+ * `GDN` is intended to be a drop-in replacement for a `real`. When no operation is explicitly
+ * defined for a `GDN` is will implicitly be converted to a `real`.
+ *
+ * In addition to differentiation, it supports basic algebraic operations mostly through operator
+ * overloading. The `+` and `-` prefix operators are overloaded as well as the `+`, `-`, `*`, `/`,
+ * `%`, and `^^` binary, infix operators. When two `GDN`s are combined by a binary operation, the
+ * degree of the resulting `GDN` will be the lesser of the degrees of the two input `GDN`s.
+ *
+ * ```
+ * auto x = GDN!2(3);
+ * auto y = GDN!1(4);
+ * auto z = x + y;
+ * assert(typeof(z).DEGREE == 1);
+ * ```
+ *
+ * The infix operators are also overloaded to support combining a `GDN` with a `real`. The `real` is
+ * converted to a constant `GDN` of the same degree as the other input `GDN`. A <em>constant</em>
+ * generalized dual number is one where the derivative of any order is 0.
+ *
+ * ```
+ * auto x = GDN!1(2);
+ * real y = 3;
+ *
+ * auto u = x + y;
+ * assert(u == 5.0L && u.d == 1);
+ *
+ * auto v = y + x;
+ * assert(v is u);
+ * ```
+ *
+ * Params:
+ *   Degree = the highest order of derivative that can be taken
 */
 struct GDN(ulong Degree = 1) if (Degree > 0)
 {
@@ -56,11 +52,11 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     enum ulong DEGREE = Degree;
 
     /**
-    This is the type constructor of the derivatives.
-
-    Params:
-        Order = the order of the derivative
-    */
+     * This is the type constructor of the derivatives.
+     *
+     * Params:
+     *   Order = the order of the derivative
+     */
     template DerivType(ulong Order = 1) if (Order <= Degree)
     {
         static if (Order < Degree)
@@ -70,7 +66,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     // Constructs an object that has the same type as the derivative where all elements are NaN.
-    package static DerivType!1 mkNaNDeriv()
+    package static pure nothrow @nogc @safe DerivType!1 mkNaNDeriv()
     {
         static if (Degree == 1)
             return real.nan;
@@ -79,7 +75,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     // Constructs an object that has the same type as the derivative where all elements are 0.
-    package static DerivType!1 mkZeroDeriv()
+    package static pure nothrow @nogc @safe DerivType!1 mkZeroDeriv()
     {
         static if (Degree == 1)
             return 0;
@@ -95,16 +91,16 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     // CONSTRUCTORS
 
     /**
-    This constructs a generalized dual number representing the variable of differentiation. The
-    first derivative, $(MATH dx/dx = 1), and all higher order derivatives are $(MATH 0).
-
-    Params:
-        val = The value of the variable.
-
-    Returns:
-        The representation of the variable.
-    */
-    this(in real val) nothrow pure @nogc @safe
+     * This constructs a generalized dual number representing the variable of differentiation. The
+     * first derivative, $(MATH dx/dx = 1), and all higher order derivatives are $(MATH 0).
+     *
+     * Params:
+     *   val = The value of the variable.
+     *
+     * Returns:
+     *   The representation of the variable.
+     */
+    pure nothrow @nogc @safe this(in real val)
     {
         _x = val;
 
@@ -115,14 +111,14 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /**
-    This creates a generalized dual number from its value and the values of its derivatives.
-
-    Params:
-        derivVals = the array of the derivative values where the index is the order of the
-            derivative, i.e.,
-            `[$(MATH f(x₀)), $(MATH f$(SUP (1))(x₀)), $(MATH f$(SUP (2))(x₀)), $(MATH …)]`.
-    */
-    this(in real[Degree + 1] derivVals...) nothrow pure @nogc @safe
+     * This creates a generalized dual number from its value and the values of its derivatives.
+     *
+     * Params:
+     *   derivVals = the array of the derivative values where the index is the order of the
+     *       derivative, i.e.,
+     *       `[$(MATH f(x₀)), $(MATH f$(SUP (1))(x₀)), $(MATH f$(SUP (2))(x₀)), $(MATH …)]`.
+     */
+    pure nothrow @nogc @safe this(in real[Degree + 1] derivVals...)
     {
         _x = derivVals[0];
 
@@ -133,16 +129,16 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /**
-    This creates a generalized dual number by copying an existing one. If the new one's degree is
-    less than the existing one's degree, the higher order derivatives are truncated. If the new
-    one's degree is greater than the existing one's degree, the higher order derivative are set to
-    zero.
-
-    Params:
-        ThatDegree = the degree of generalized dual number being copied
-        that = the generalized dual number being copied
-    */
-    this(ulong ThatDegree)(in GDN!ThatDegree that) nothrow pure @nogc @safe
+     * This creates a generalized dual number by copying an existing one. If the new one's degree is
+     * less than the existing one's degree, the higher order derivatives are truncated. If the new
+     * one's degree is greater than the existing one's degree, the higher order derivative are set
+     * to zero.
+     *
+     * Params:
+     *   ThatDegree = the degree of generalized dual number being copied
+     *   that = the generalized dual number being copied
+     */
+    pure nothrow @nogc @safe this(ulong ThatDegree)(in GDN!ThatDegree that)
     {
         this._x = that._x;
 
@@ -155,13 +151,13 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     // This constructs a generalized dual number from its value and its first derivative.
-    package this(real val, DerivType!1 derivs) nothrow pure @nogc @safe
+    package pure nothrow @nogc @safe this(in real val, in DerivType!1 derivs)
     {
         _x = val;
         _dx = derivs;
     }
 
-    package static GDN mkConst(in real val) nothrow pure @nogc @safe
+    package static pure nothrow @nogc @safe GDN mkConst(in real val)
     {
         return GDN(val, mkZeroDeriv());
     }
@@ -196,43 +192,43 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     enum int mant_dig = real.mant_dig;
 
     /**
-    This is the maximum `int` value such that $(MATH 10$(SUP max_10_exp)) is representable as a
-    generalized dual number.
-    */
+     * This is the maximum `int` value such that $(MATH 10$(SUP max_10_exp)) is representable as a
+     * generalized dual number.
+     */
     enum int max_10_exp = real.max_10_exp;
 
     /**
-    This is the maximum `int` value such that $(MATH 2$(SUP max_exp - 1)) is representable as a
-    generalized dual number.
-    */
+     * This is the maximum `int` value such that $(MATH 2$(SUP max_exp - 1)) is representable as a
+     * generalized dual number.
+     */
     enum int max_exp = real.max_exp;
 
     /**
-    This is the minimum `int` value such that $(MATH 10$(SUP min_10_exp)) is representable as a
-    generalized dual number.
-    */
+     * This is the minimum `int` value such that $(MATH 10$(SUP min_10_exp)) is representable as a
+     * generalized dual number.
+     */
     enum int min_10_exp = real.min_10_exp;
 
     /**
-    This is the minimum `int` value such that $(MATH 2$(SUP min_exp - 1)) is representable as a
-    generalized dual number.
-    */
+     * This is the minimum `int` value such that $(MATH 2$(SUP min_exp - 1)) is representable as a
+     * generalized dual number.
+     */
     enum int min_exp = real.min_exp;
 
     /**
-    This is the real part. It is identical to the generalized dual number, since `GDN` only supports
-    real numbers.
-    */
-    GDN re() const nothrow pure @safe @nogc
+     * This is the real part. It is identical to the generalized dual number, since `GDN` only
+     * supports real numbers.
+     */
+    pure nothrow @safe @nogc GDN re() const
     {
         return this;
     }
 
     /**
-    This is the imaginary part. It is always has a zero value, since `GDN` only supports real
-    numbers.
-    */
-    GDN im() const nothrow pure @nogc @safe
+     * This is the imaginary part. It is always has a zero value, since `GDN` only supports real
+     * numbers.
+     */
+    pure nothrow @nogc @safe GDN im() const
     {
         return GDN.zero;
     }
@@ -240,28 +236,29 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     // MEMBERS
 
     /// This is the value of the generalized dual number.
-    real val() const nothrow pure @nogc @safe
+    pure nothrow @nogc @safe real val() const
     {
         return _x;
     }
 
     /**
-    This is the derivative of order `Ord` of the generalized dual number. The order must be at least
-    one but no more that the degree of the generalized dual number. If `Ord == Degree`, the
-    derivative will be of type `real`. Otherwise it will be a `GDN` but with degree `Degree - Ord`.
-
-    Params:
-        Ord = the order of the derivate to compute, default `1`
-
-    Examples:
-    ```
-    auto x = GDN!3(2, 3, -1, -2);
-    assert(x.d.val == 3);
-    assert(x.d!3 == -2);
-    assert(x.d!0 is x);
-    ```
-    */
-    DerivType!Ord d(ulong Ord = 1)() const nothrow pure @nogc @safe if (0 < Ord && Ord <= Degree)
+     * This is the derivative of order `Ord` of the generalized dual number. The order must be at
+     * least one but no more that the degree of the generalized dual number. If `Ord == Degree`, the
+     * derivative will be of type `real`. Otherwise it will be a `GDN` but with degree
+     * `Degree - Ord`.
+     *
+     * Params:
+     *   Ord = the order of the derivate to compute, default `1`
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!3(2, 3, -1, -2);
+     *   assert(x.d.val == 3);
+     *   assert(x.d!3 == -2);
+     *   assert(x.d!0 is x);
+     *   ```
+     */
+    pure nothrow @nogc @safe DerivType!Ord d(ulong Ord = 1)() const if (0 < Ord && Ord <= Degree)
     {
         static if (Ord == 1)
             return _dx;
@@ -270,13 +267,13 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /// ditto
-    GDN d(ulong Ord : 0)() const nothrow pure @nogc @safe
+    pure nothrow @nogc @safe GDN d(ulong Ord : 0)() const
     {
         return this;
     }
 
     // This function evaluated the Dirac delta function of the generalized dual number.
-    package GDN dirac() const nothrow pure @nogc @safe
+    pure nothrow @nogc @safe package GDN dirac() const
     {
         static if (Degree == 1)
             const df = _x != 0
@@ -288,23 +285,23 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /**
-    This computes the inverse of a generalized dual number. That is, given a generalized dual number
-    $(MATH g), it computes the generalized dual number $(MATH h) (or $(MATH g$(SUP -1))) where
-    $(MATH gh = 1).
-
-    If $(MATH f(x) = g$(SUP -1)(x)), then $(MATH f' = -g$(SUP -2)g').
-
-    Examples:
-    ```
-    auto x = GDN!1(2, 3);
-    auto y = x.inv;
-    assert(y == 0.5L && y.d == -0.75);
-    ```
-    */
-    GDN inv() const nothrow pure @nogc @safe
+     * This computes the inverse of a generalized dual number. That is, given a generalized dual
+     * number $(MATH g), it computes the generalized dual number $(MATH h) (or $(MATH g$(SUP -1)))
+     * where $(MATH gh = 1).
+     *
+     * If $(MATH f(x) = g$(SUP -1)(x)), then $(MATH f' = -g$(SUP -2)g').
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!1(2, 3);
+     *   auto y = x.inv;
+     *   assert(y == 0.5L && y.d == -0.75);
+     *   ```
+     */
+    pure nothrow @nogc @safe GDN inv() const
     {
         const reduced = reduce();
-        return GDN(1/_x, -_dx/(reduced * reduced));
+        return GDN(1 / _x, -_dx / (reduced * reduced));
     }
 
     /*
@@ -313,46 +310,42 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     It is defined in this module instead of core, because it is required to compute the derivative
     of the ^^ operator.
     */
-    package GDN log() const nothrow pure @nogc @safe
+    package pure nothrow @nogc @safe GDN log() const
     {
         static import std.math;
 
         if (signbit(_x) == 1)
             return nan;
-        return GDN(std.math.log(_x), _dx/reduce());
+        return GDN(std.math.log(_x), _dx / reduce());
     }
 
     /*
     This copies this generalized dual number with the copy have one degree less than the original.
     As a result the highest order derivative is removed.
     */
-    static if (Degree > 1)
-        package GDN!(Degree - 1) reduce() const nothrow pure @nogc @safe
-        {
+    package pure nothrow @nogc @safe auto reduce() const
+    {
+        static if (Degree > 1)
             return GDN!(Degree - 1)(_x, _dx.reduce);
-        }
-    else
-        package real reduce() const nothrow pure @nogc @safe
-        {
+         else
             return _x;
-        }
+    }
 
     // OPERATOR OVERLOADING
 
     /**
-    This provides support for the `cast()` operator. It allows casting from a `GDN` to one with a
-    different degree.
+     * This provides support for the `cast()` operator. It allows casting from a `GDN` to one with a
+     * different degree.
 
-    Examples:
-    ```
-    auto x = GDN!1(2);
-    auto y = cast(GDN!2) x;
-    assert(y == x && typeof(y).DEGREE == 2);
-    ```
-    */
-    pragma(inline, true) T opCast(T)() const nothrow pure @nogc @safe
-    if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN")
-    {
+     * Examples:
+     *   ```
+     *   auto x = GDN!1(2);
+     *   auto y = cast(GDN!2) x;
+     *   assert(y == x && typeof(y).DEGREE == 2);
+     *   ```
+     */
+    pragma(inline, true) pure nothrow @nogc @safe T opCast(T)() const
+    if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN") {
         static if (T.DEGREE == Degree)
             return this;
         else
@@ -360,52 +353,52 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /**
-    This provides support for using the operators `==` and `!=` to compare a generalized dual number
-    to a real or another generalized dual number. Two generalized dual numbers are equal if their
-    values are equal regardless of the values of their derivative terms.
-
-    Examples:
-    ```
-    auto x = GDN!1(2, 3);
-    auto y = GDN!2(2, 1, 0);
-    assert(x == y);
-    assert(x == 2.0L);
-    ```
-    */
-    bool opEquals(ulong D)(in GDN!D that) const nothrow pure @nogc @safe
+     * This provides support for using the operators `==` and `!=` to compare a generalized dual
+     * number to a real or another generalized dual number. Two generalized dual numbers are equal
+     * if their values are equal regardless of the values of their derivative terms.
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!1(2, 3);
+     *   auto y = GDN!2(2, 1, 0);
+     *   assert(x == y);
+     *   assert(x == 2.0L);
+     *   ```
+     */
+    pure nothrow @nogc @safe bool opEquals(ulong D)(in GDN!D that) const
     {
         return this._x == that._x;
     }
 
     /// ditto
-    bool opEquals(in real val) const nothrow pure @nogc @safe
+    pure nothrow @nogc @safe bool opEquals(in real val) const
     {
         return _x == val;
     }
 
     /**
-    This provides support for using the operators `<`, `<=`, `>=`, and `>` to compare a generalized
-    dual number to a `real` or another generalized dual number. If $(MATH x) and $(MATH y) are two
-    generalized dual numbers, $(MATH x < y), if the value of $(MATH x) is less than the value of
-    $(MATH y) regardless of the values of their derivative terms.
-
-    Examples:
-    ```
-    auto x = GDN!1(2, 3);
-    auto y = GDN!2(3, 1, 0);
-    auto z = GDN!1(2, 2);
-    assert(x < y);
-    assert(x <= z);
-    assert(x > 1.0L);
-    ```
-    */
-    int opCmp(ulong D)(in GDN!D that) const nothrow pure @nogc @safe
+     * This provides support for using the operators `<`, `<=`, `>=`, and `>` to compare a
+     * generalized dual number to a `real` or another generalized dual number. If $(MATH x) and
+     * $(MATH y) are two generalized dual numbers, $(MATH x < y), if the value of $(MATH x) is less
+     * than the value of $(MATH y) regardless of the values of their derivative terms.
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!1(2, 3);
+     *   auto y = GDN!2(3, 1, 0);
+     *   auto z = GDN!1(2, 2);
+     *   assert(x < y);
+     *   assert(x <= z);
+     *   assert(x > 1.0L);
+     *   ```
+     */
+    pure nothrow @nogc @safe int opCmp(ulong D)(in GDN!D that) const
     {
         return opCmp(that._x);
     }
 
     /// ditto
-    int opCmp(in real val) const nothrow pure @nogc @safe
+    pure nothrow @nogc @safe int opCmp(in real val) const
     {
         if (_x < val)
             return -1;
@@ -416,36 +409,35 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /** <b>+g</b>
-
-    This defines the identity operator for a generalized dual number.
-
-    If $(MATH f(x) = +g(x)), then $(MATH f' = g').
-    */
-    GDN opUnary(string Op : "+")() const nothrow pure @nogc @safe
+     *
+     * This defines the identity operator for a generalized dual number.
+     *
+     * If $(MATH f(x) = +g(x)), then $(MATH f' = g').
+     */
+    pure nothrow @nogc @safe GDN opUnary(string Op : "+")() const
     {
         return this;
     }
 
     /** <b>-g</b>
-
-    This negates a generalized dual number.
-
-    If $(MATH f(x) = -g(x)), then $(MATH f' = -g').
-    */
-    GDN opUnary(string Op : "-")() const nothrow pure @nogc @safe
+     *
+     * This negates a generalized dual number.
+     *
+     * If $(MATH f(x) = -g(x)), then $(MATH f' = -g').
+     */
+    pure nothrow @nogc @safe GDN opUnary(string Op : "-")() const
     {
         return GDN(-_x, -_dx);
     }
 
     /**
-    This ensures that when two generalized dual numbers are combined, the degree of the resulting
-    generalized dual number is the lesser of the degrees of the two being combined.
-    */
+     * This ensures that when two generalized dual numbers are combined, the degree of the resulting
+     * generalized dual number is the lesser of the degrees of the two being combined.
+     */
+    pure nothrow @nogc @safe
     GDN!(ThatDegree < Degree ? ThatDegree : Degree)
-    opBinary(string Op, ulong ThatDegree)(in GDN!ThatDegree that)
-    const nothrow pure @nogc @safe
-    if (ThatDegree != Degree)
-    {
+    opBinary(string Op, ulong ThatDegree)(in GDN!ThatDegree that) const
+    if (ThatDegree != Degree) {
         static if (ThatDegree < Degree)
             return GDN!ThatDegree(this).opBinary!Op(that);
         else
@@ -453,154 +445,155 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /** <b>g + h</b>
-
-    This adds one generalized dual number to another. If either term has type `real`, that term is
-    converted to a constant generalized dual number with the same degree as the other.
-
-    If $(MATH f(x) = g(x) + h(x)), then $(MATH f' = g' + h').
-
-    Params:
-        that = the addend
-
-    Returns:
-        the sum of the two generalized dual numbers with degree being the lesser of the degree of
-        the augend and the degree of the addend
-
-    Examples:
-    ```
-    auto x = GDN!2(2);
-    auto y = GDN!3(3);
-    auto z = x + y;
-    auto w = 5 + x;
-    assert(z == 5 && z.d == 2 && z.d!2 == 0);
-    assert(w == 7 && w.d == 1 && w.d!2 == 0);
-    ```
-    */
-    GDN opBinary(string Op : "+", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
-    const nothrow pure @nogc @safe
+     *
+     * This adds one generalized dual number to another. If either term has type `real`, that term
+     * is converted to a constant generalized dual number with the same degree as the other.
+     *
+     * If $(MATH f(x) = g(x) + h(x)), then $(MATH f' = g' + h').
+     *
+     * Params:
+     *   that = the addend
+     *
+     * Returns:
+     *   the sum of the two generalized dual numbers with degree being the lesser of the degree of
+     *   the augend and the degree of the addend
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!2(2);
+     *   auto y = GDN!3(3);
+     *   auto z = x + y;
+     *   auto w = 5 + x;
+     *   assert(z == 5 && z.d == 2 && z.d!2 == 0);
+     *   assert(w == 7 && w.d == 1 && w.d!2 == 0);
+     *   ```
+     */
+    pure nothrow @nogc @safe
+    GDN opBinary(string Op : "+", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
     {
-        return GDN(this.val+that.val, this.d+that.d);
+        return GDN(this.val + that.val, this.d + that.d);
     }
 
     /** <b>g - h</b>
-
-    This subtracts one generalized dual number from another. If either term has type `real`, it is
-    converted to a constant generalized dual number with the same degree as the other.
-
-    If $(MATH f(x) = g(x) - h(x)), then $(MATH f' = g' - h').
-
-    Params:
-        that = the subtrahend
-
-    Returns:
-        the difference between the two generalized dual numbers with degree being the lesser of the
-        degree of the minuend and the degree of the subtrahend
-
-    Examples:
-    ```
-    auto x = GDN!1(2);
-    auto y = GDN!1(3);
-    auto z = x - y;
-    auto w = 5 - x;
-    assert(z == -1 && z.d == 0);
-    assert(w == 3 && w.d == -1);
-    ```
-    */
-    GDN opBinary(string Op : "-", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
-    const nothrow pure @nogc @safe
+     *
+     * This subtracts one generalized dual number from another. If either term has type `real`, it
+     * is converted to a constant generalized dual number with the same degree as the other.
+     *
+     * If $(MATH f(x) = g(x) - h(x)), then $(MATH f' = g' - h').
+     *
+     * Params:
+     *   that = the subtrahend
+     *
+     * Returns:
+     *   the difference between the two generalized dual numbers with degree being the lesser of the
+     *   degree of the minuend and the degree of the subtrahend
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!1(2);
+     *   auto y = GDN!1(3);
+     *   auto z = x - y;
+     *   auto w = 5 - x;
+     *   assert(z == -1 && z.d == 0);
+     *   assert(w == 3 && w.d == -1);
+     *   ```
+     */
+    pure nothrow @nogc @safe
+    GDN opBinary(string Op : "-", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
     {
         return this + -that;
     }
 
     /** <b>g * h</b>
-
-    This multiplies one generalized dual number by another. If either factor has type `real`, it is
-    converted to a constant generalized dual number with the same degree as the other.
-
-    If $(MATH f(x) = g(x)h(x)), then $(MATH f' = g'h + gh').
-
-    Params:
-        that = the multiplicand
-
-    Returns:
-        the product of the two generalized dual numbers with degree being the lesser of the degree
-        of the multiplier and the degree of the multiplicand.
-
-    Examples:
-    ```
-    auto x = GDN!1(2);
-    auto y = GDN!1(3);
-    auto z = x * y;
-    auto w = 5 * x;
-    assert(z == 6 && z.d == 5);
-    assert(w == 10 && w.d == 5);
-    ```
-    */
-    GDN opBinary(string Op : "*", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
-    const nothrow pure @nogc @safe
+     *
+     * This multiplies one generalized dual number by another. If either factor has type `real`, it
+     * is converted to a constant generalized dual number with the same degree as the other.
+     *
+     * If $(MATH f(x) = g(x)h(x)), then $(MATH f' = g'h + gh').
+     *
+     * Params:
+     *   that = the multiplicand
+     *
+     * Returns:
+     *   the product of the two generalized dual numbers with degree being the lesser of the degree
+     *   of the multiplier and the degree of the multiplicand.
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!1(2);
+     *   auto y = GDN!1(3);
+     *   auto z = x * y;
+     *   auto w = 5 * x;
+     *   assert(z == 6 && z.d == 5);
+     *   assert(w == 10 && w.d == 5);
+     *   ```
+     */
+    pure nothrow @nogc @safe
+    GDN opBinary(string Op : "*", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
     {
         const prod = this._x * that._x;
 
         if (isNaN(prod))
             return nan;
-        return GDN(prod, this._dx*that.reduce() + this.reduce()*that._dx);
+        return GDN(prod, this._dx * that.reduce() + this.reduce() * that._dx);
     }
 
     /** <b>g / h</b>
-
-    This divides one generalized dual number by another. If either the dividend or the divisor has
-    type `real`, it is converted to a constant generalized dual number with the same degree as the
-    divisor or dividend, respectively.
-
-    If $(MATH f(x) = g(x)/h(x)), then $(MATH f' = (g'h - gh')/h$(SUP 2)).
-
-    Params:
-        that = the divisor
-
-    Returns:
-        the quotient of the two generalized dual numbers with degree being the lesser of the degree
-        of the dividend and the degree of the divisor.
-
-    Examples:
-    ```
-    auto x = GDN!1(2);
-    auto y = GDN!1(-1);
-    auto z = x / y;
-    auto w = 5 / x;
-    assert(z == -2 && z.d == -3);
-    assert(w == 2.5 && w.d == -1.25);
-    */
-    GDN opBinary(string Op : "/", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
-    const nothrow pure @nogc @safe
+     *
+     * This divides one generalized dual number by another. If either the dividend or the divisor
+     * has type `real`, it is converted to a constant generalized dual number with the same degree
+     * as the divisor or dividend, respectively.
+     *
+     * If $(MATH f(x) = g(x)/h(x)), then $(MATH f' = (g'h - gh')/h$(SUP 2)).
+     *
+     * Params:
+     *   that = the divisor
+     *
+     * Returns:
+     *   the quotient of the two generalized dual numbers with degree being the lesser of the degree
+     *   of the dividend and the degree of the divisor.
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!1(2);
+     *   auto y = GDN!1(-1);
+     *   auto z = x / y;
+     *   auto w = 5 / x;
+     *   assert(z == -2 && z.d == -3);
+     *   assert(w == 2.5 && w.d == -1.25);
+     *  ```
+     */
+    pure nothrow @nogc @safe
+    GDN opBinary(string Op : "/", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
     {
         return this * that.inv();
     }
 
-    /**<b>g % h</b>
-
-    This computes the modulus (remainder) of one generalized dual number divided by another. If
-    either the dividend or the divisor has type `real`, it is converted to a constant generalized
-    dual number with the same degree as the divisor or dividend, respectively.
-
-    If $(MATH f(x) = g(x) (mod h(x))), then $(MATH f' = g' - (g - f)h'/h - δ(f)(g'h - gh')/h),
-    where $(MATH δ) is the Dirac Delta function.
-
-    Params:
-        that = the divisor
-
-    Returns:
-        the remainder of the two generalized dual numbers with degree being the lesser of the degree
-        of the dividend and the degree of the divisor.
-
-    Examples:
-    ```
-    auto x = GDN!1(2);
-    auto y = GDN!1(-1);
-    auto z = x % y;
-    auto w = 5 % x;
-    assert(z == 0 && z.d == -real.infinity);
-    assert(w == 1 && w.d == -2);
-    ```
+    /** <b>g % h</b>
+     *
+    * This computes the modulus (remainder) of one generalized dual number divided by another. If
+    * either the dividend or the divisor has type `real`, it is converted to a constant generalized
+    * dual number with the same degree as the divisor or dividend, respectively.
+    *
+    * If $(MATH f(x) = g(x) (mod h(x))), then $(MATH f' = g' - (g - f)h'/h - δ(f)(g'h - gh')/h),
+    * where $(MATH δ) is the Dirac Delta function.
+    *
+    * Params:
+    *   that = the divisor
+    *
+    * Returns:
+    *   the remainder of the two generalized dual numbers with degree being the lesser of the degree
+    *   of the dividend and the degree of the divisor.
+    *
+    * Examples:
+    *   ```
+    *   auto x = GDN!1(2);
+    *   auto y = GDN!1(-1);
+    *   auto z = x % y;
+    *   auto w = 5 % x;
+    *   assert(z == 0 && z.d == -real.infinity);
+    *   assert(w == 1 && w.d == -2);
+    *   ```
     */
     /*
     Derivation:
@@ -610,8 +603,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
            f/g ∈ ℤ when f (mod g) = 0, d⌊f/g⌋ = 𝛿(f (mod g))
        = f' - {f - [f (mod g)]}g'/g - 𝛿(f (mod g))gd(f/g)
     */
-    GDN opBinary(string Op : "%", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
-    const nothrow pure @nogc @safe
+    pure nothrow @nogc @safe
+    GDN opBinary(string Op : "%", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
     {
         const x = this.reduce(), dx = this.d;
         const y = that.reduce(), dy = that.d;
@@ -634,34 +627,34 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /** <b>g ^^ h</b>
-
-    This raises one generalized dual number to the pow of another. If the base or exponent has
-    type `real`, it is converted to a constant generalized dual number with the same degree as the
-    exponent or base, respectively.
-
-    If $(MATH f(x) = g(x)$(SUP h(x))), then $(MATH f' = g$(SUP h)[g'h/g + h'ln(g)]).
-
-    Params:
-        that = the exponent
-
-    Returns:
-        the power of the two generalized dual numbers with degree being the lesser of the degree of
-        the base and the degree of the exponent.
-
-    Examples:
-    ```
-    static import std.math;
-
-    auto x = GDN!1(2, -1);
-    auto y = GDN!1(-2, 3);
-    auto u = x ^^ y;
-    auto w = 3 ^^ x;
-    assert(u == 0.25 && u.d == 0.25 + 0.75*std.math.LN2);
-    assert(w == 9 && std.math.isClose(w.d, -std.math.log(19_683)));
-    ```
-    */
-    GDN opBinary(string Op : "^^", ulong ThatDegree : Degree)(in GDN!ThatDegree that)
-    const nothrow pure @nogc @safe
+     *
+     * This raises one generalized dual number to the pow of another. If the base or exponent has
+     * type `real`, it is converted to a constant generalized dual number with the same degree as
+     * the exponent or base, respectively.
+     *
+     * If $(MATH f(x) = g(x)$(SUP h(x))), then $(MATH f' = g$(SUP h)[g'h/g + h'ln(g)]).
+     *
+     * Params:
+     *   that = the exponent
+     *
+     * Returns:
+     *   the power of the two generalized dual numbers with degree being the lesser of the degree of
+     *   the base and the degree of the exponent.
+     *
+     * Examples:
+     *   ```
+     *   static import std.math;
+     *
+     *   auto x = GDN!1(2, -1);
+     *   auto y = GDN!1(-2, 3);
+     *   auto u = x ^^ y;
+     *   auto w = 3 ^^ x;
+     *   assert(u == 0.25 && u.d == 0.25 + 0.75*std.math.LN2);
+     *   assert(w == 9 && std.math.isClose(w.d, -std.math.log(19_683)));
+     *   ```
+     */
+    pure nothrow @nogc @safe
+    GDN opBinary(string Op : "^^", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
     {
         const g = this.reduce();
         const gp = this._dx;
@@ -673,44 +666,47 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
         else
             const hpNaN = isNaN(hp.val);
 
-        if (this._x == 0 && signbit(this._x) == 0 && that._x > 0 && !hpNaN) {
-            return GDN(this._x^^that._x, g^^(h-1)*gp*h);
+        if (this._x == 0 && signbit(this._x) == 0 && that._x > 0 && !hpNaN)
+        {
+            return GDN(this._x ^^ that._x, g ^^ (h - 1) * gp * h);
         }
 
-        return GDN(this._x^^that._x, g^^h*(gp*h/g + hp*g.log()));
+        return GDN(this._x ^^ that._x, g ^^ h * (gp * h / g + hp * g.log()));
     }
 
-    GDN opBinary(string Op : "^^")(in real c) const nothrow pure @nogc @safe
+    /// ditto
+    pure nothrow @nogc @safe GDN opBinary(string Op : "^^")(in real c) const
     {
-        if (c == 0) {
+        if (c == 0)
+        {
             return GDN.one;
         }
 
-        return GDN(_x^^c, c*reduce()^^(c-1)*_dx);
+        return GDN(_x ^^ c, c * reduce() ^^ (c - 1) * _dx);
     }
 
     /**
-    This allows real numbers to be used on the right-hand side of the  +, -, *, /, %, and ^^
-    operators. The real number is promoted to generalized dual number of the same degree as the
-    left-hand side with all derivatives being zero, a constant.
-    */
-    GDN opBinary(string Op)(in real constant) const nothrow pure @nogc @safe
+     * This allows real numbers to be used on the right-hand side of the  +, -, *, /, %, and ^^
+     * operators. The real number is promoted to generalized dual number of the same degree as the
+     * left-hand side with all derivatives being zero, a constant.
+     */
+    pure nothrow @nogc @safe GDN opBinary(string Op)(in real constant) const
     {
         return mixin("this " ~ Op ~ " GDN(constant, mkZeroDeriv())");
     }
 
     /**
-    This allows real numbers to be used on the left-hand side of the  +, -, *, /, %, and ^^
-    operators. The real number is promoted to generalized dual number of the same degree as the
-    right-hand side with all derivatives being zero, a constant.
-    */
-    GDN opBinaryRight(string Op)(in real constant) const nothrow pure @nogc @safe
+     * This allows real numbers to be used on the left-hand side of the  +, -, *, /, %, and ^^
+     * operators. The real number is promoted to generalized dual number of the same degree as the
+     * right-hand side with all derivatives being zero, a constant.
+     */
+    pure nothrow @nogc @safe GDN opBinaryRight(string Op)(in real constant) const
     {
         return mixin("GDN(constant, mkZeroDeriv()) " ~ Op ~ " this");
     }
 
     /// This generates a hash for a generalized dual number.
-    hash_t toHash() const nothrow pure @nogc @trusted
+    pure nothrow @nogc @trusted hash_t toHash() const
     {
         auto buf = cast(const(ubyte)*)&_x;
 
@@ -729,37 +725,32 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     }
 
     /**
-    This generates a string version of a generalized dual number. The form of the string will be
-    $(MATH f(x₀))` + `$(MATH f⁽¹⁾(x₀))`dx + `$(MATH f⁽²⁾(x₀))`(dx)² + `$(MATH …)` + `$(MATH f⁽ⁿ⁾(x₀))`(dx)`$(MATH ⁿ)
-    for a generalized dual number of degree $(MATH n) with value $(MATH f(x₀)), first derivative
-    $(MATH f⁽¹⁾(x₀)), second derivative $(MATH f⁽²⁾(x₀)), etc.
-
-    Examples:
-    ```
-    const x = GDN!6(1, -1, +0., -0., real.infinity, -real.infinity, -real.nan);
-    assert(x.toString == "1 + -1dx + +0(dx)² + -0(dx)³ + ∞(dx)⁴ + -∞(dx)⁵ + NaN(dx)⁶");
-    ```
-    */
-    string toString() const pure @safe
+     * This generates a string version of a generalized dual number. The form of the string will be
+     * $(MATH f(x₀))` + `$(MATH f⁽¹⁾(x₀))`dx + `$(MATH f⁽²⁾(x₀))`(dx)² + `$(MATH …)` + `$(MATH f⁽ⁿ⁾(x₀))`(dx)`$(MATH ⁿ)
+     * for a generalized dual number of degree $(MATH n) with value $(MATH f(x₀)), first derivative
+     * $(MATH f⁽¹⁾(x₀)), second derivative $(MATH f⁽²⁾(x₀)), etc.
+     *
+     * Examples:
+     *   ```
+     *   const x = GDN!6(1, -1, +0., -0., real.infinity, -real.infinity, -real.nan);
+     *   assert(x.toString == "1 + -1dx + +0(dx)² + -0(dx)³ + ∞(dx)⁴ + -∞(dx)⁵ + NaN(dx)⁶");
+     *   ```
+     */
+    pure @safe string toString() const
     {
         return toString(0);
     }
 
-    private string toString(ulong derivOrd) const pure @safe
+    private pure @safe string toString(ulong derivOrd) const
     {
         static if (Degree == 1)
-        {
             const tail = format("%s%s", fmtNum(_dx), fmtDerivOrd(derivOrd + 1));
-        }
         else
-        {
             const tail = _dx.toString(derivOrd + 1);
-        }
 
         return format("%s%s + %s", fmtNum(_x), fmtDerivOrd(derivOrd), tail);
     }
 }
-
 
 // .init
 unittest
@@ -906,7 +897,7 @@ unittest
     assert(
         e < w,
         "If the value of 1 GDN object is less than another, the GDN object should be less than the"
-        ~ " other.");
+            ~ " other.");
 
     const nz = GDN!1(-0.);
     const pz = GDN!1(+0.);
@@ -1247,72 +1238,6 @@ unittest
     assert(y == "-1 + 1dx + -2(dx)²", format("GDN!2(-1, 1, -2).toString(0) != '%s'", y));
 }
 
-//
-// same
-//
-
-package
-{
-    template same(L, R) if (isImplicitlyConvertible!(L, real) && isImplicitlyConvertible!(R, real))
-    {
-        bool same(in L lhs, in R rhs) nothrow pure @nogc @safe
-        {
-            if (lhs == 0)
-                return rhs == 0 && signbit(lhs) == signbit(rhs);
-            return lhs == rhs || (isNaN(real(lhs)) && isNaN(real(rhs)));
-        }
-    }
-
-    template same(T, ulong Deg) if (isImplicitlyConvertible!(T, real))
-    {
-        bool same(in T, in GDN!Deg) nothrow pure @nogc @safe
-        {
-            return false;
-        }
-
-        bool same(in GDN!Deg, in T) nothrow pure @nogc @safe
-        {
-            return false;
-        }
-    }
-
-    template same(ulong LDeg, ulong RDeg)
-    {
-        bool same(in GDN!LDeg lhs, in GDN!RDeg rhs) nothrow pure @nogc @safe
-        {
-            static if (LDeg != RDeg)
-                return false;
-            else
-                return same(lhs.val, rhs.val) && same(lhs.d, rhs.d);
-        }
-    }
-
-    unittest
-    {
-        const x = GDN!1(0, 1);
-
-        assert(same(x, x), "identity relation fails");
-
-        const z = GDN!1(0, 1);
-        assert(same(x, z), "same is not working");
-
-        const q = GDN!1(real.infinity, -real.infinity);
-        assert(same(q, q), "same doesn't work with infinity");
-
-        const w = GDN!1(-0., 1);
-        const e = GDN!1(+0, 1);
-        assert(!same(w, e), "same doesn't distinguish -0 from +0");
-
-        const r = GDN!1.nan;
-        assert(same(r, r), "same doesn't work with NaN");
-
-        assert(!same(0, x), "0 should not be the same as GDN!1(0, 1)");
-        assert(!same(x, 0), "GDN!1(0, 1) should not be the same as 0");
-
-        const y = GDN!2(0, 1, 0);
-        assert(!same(x, y), "GDN objects of different degree cannot be the same");
-    }
-}
 
 private pure @safe
 {
@@ -1387,7 +1312,7 @@ private pure @safe
     // fmtPow
     //
 
-    string fmtPow(in ulong pow) nothrow
+    nothrow string fmtPow(in ulong pow)
     {
         switch (pow)
         {

@@ -25,15 +25,15 @@ import ad.math.dirac;
 pragma(inline, true)
 {
     /**
-    This function computes $(MATH 2$(SUP c)g).
-
-    If $(MATH f(x) = 2$(SUP c)g(x)), then $(MATH f' = 2$(SUP c)g').
-
-    Params:
-        g = the generalized dual number being scaled.
-        c = the power of $(MATH 2) used to scale `g`,
-    */
-    GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c) nothrow pure @nogc @safe
+     * This function computes $(MATH 2$(SUP c)g).
+     *
+     * If $(MATH f(x) = 2$(SUP c)g(x)), then $(MATH f' = 2$(SUP c)g').
+     *
+     * Params:
+     *   g = the generalized dual number being scaled.
+     *   c = the power of $(MATH 2) used to scale `g`,
+     */
+    pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
     {
         alias ldexp_red = Select!(Deg == 1, core.math.ldexp, ldexp);
         return GDN!Deg(core.math.ldexp(g.val, c), ldexp_red(g.d, c));
@@ -47,13 +47,13 @@ pragma(inline, true)
     }
 
     /**
-    Rounds `g` to the nearest integer value, using the current rounding mode. If the return value is
-    not identical to `g`, the `FE_INEXACT` exception is raised.
-
-    If $(MATH f(g(x)) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
-    $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
-    */
-    GDN!Deg rint(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
+     * Rounds `g` to the nearest integer value, using the current rounding mode. If the return value
+     * is not identical to `g`, the `FE_INEXACT` exception is raised.
+     *
+     * If $(MATH f(g(x)) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
+     * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
+     */
+    pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
     {
         const f = core.math.rint(g.val);
 
@@ -90,29 +90,29 @@ pragma(inline, true)
 
     unittest
     {
-        import std.format;
-
         const q = rint(GDN!1.infinity);
-        assert(q.same(GDN!1(real.infinity, real.nan)), format("rint(inf) != %s", q));
+        assert(q == real.infinity && isNaN(q.d));
 
         resetIeeeFlags();
         const w = rint(GDN!1.one);
         assert(!ieeeFlags.inexact);
-        assert(w.same(GDN!1(1, 0)), format("rint(1) != %s", w));
+        assert(w == 1 && w.d == 0);
 
-        assert(rint(GDN!2(1.5)).same(GDN!2(2, real.infinity, real.nan)));
+        const e = rint(GDN!2(1.5));
+        assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
 
         const r = rint(GDN!1(-0.));
-        assert(r.same(GDN!1(-0., 0)), format("rint(-0) != %s", r));
+        assert(r == 0 && signbit(r.val) == 1 && r.d == 0);
 
-        assert(rint(GDN!1(+0.)).same(GDN!1(+0., 0)));
+        const t = rint(GDN!1(+0.));
+        assert(t == 0 && signbit(t.val) == 0 && t.d == 0);
     }
 
     /**
-    This function rounds `g` to a `long` using the current rounding mode. All of the derivative
-    terms are lost.
-    */
-    long rndtol(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
+     * This function rounds `g` to a `long` using the current rounding mode. All of the derivative
+     * terms are lost.
+     */
+    pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
     {
         return core.math.rndtol(g.val);
     }
@@ -124,13 +124,13 @@ pragma(inline, true)
     }
 
     /**
-    This function rounds `g` to a given floating point type removing all derivative information.
-
-    Params:
-        T = the float point type to be converted to
-        g = the generalized dual number to be converted
-    */
-    T toPrec(T, ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe if (isFloatingPoint!T)
+     * This function rounds `g` to a given floating point type removing all derivative information.
+     *
+     * Params:
+     *   T = the float point type to be converted to
+     *   g = the generalized dual number to be converted
+     */
+    pure nothrow @nogc @safe T toPrec(T, ulong Deg)(in GDN!Deg g) if (isFloatingPoint!T)
     {
         return core.math.toPrec!T(g.val);
     }
@@ -142,35 +142,33 @@ pragma(inline, true)
     }
 
     /**
-    This function computes $(MATH h⋅lg(g)). It either `g` or `h` has type `real`, it is converted to
-    a constant generalized dual number with the same degree as the other parameter.
-
-    If $(MATH f(x) = h(x)lg(g(x))), then $(MATH f' = h'lg(g) + hg'/(ln(2)g))
-
-    Params:
-        g = the argument of logarithm
-        h = the multiplier of the logarithm
-
-    Returns:
-        The resulting generalized dual number will have a degree equal to the lesser of the degrees
-        of `g` and `h`.
-    */
+     * This function computes $(MATH h⋅lg(g)). It either `g` or `h` has type `real`, it is converted
+     * to a constant generalized dual number with the same degree as the other parameter.
+     *
+     * If $(MATH f(x) = h(x)lg(g(x))), then $(MATH f' = h'lg(g) + hg'/(ln(2)g))
+     *
+     * Params:
+     *   g = the argument of logarithm
+     *   h = the multiplier of the logarithm
+     *
+     * Returns:
+     *   The resulting generalized dual number will have a degree equal to the lesser of the degrees
+     *   of `g` and `h`.
+     */
+    pure nothrow @nogc @safe
     GDN!(GDeg < HDeg ? GDeg : HDeg) yl2x(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
-    nothrow pure @nogc @safe
     {
         return yl2x_impl(cast(typeof(return)) g, cast(typeof(return)) h);
     }
 
     /// ditto
-    GDN!Deg yl2x(T, ulong Deg)(in GDN!Deg g, in T c) nothrow pure @nogc @safe
-    if (isImplicitlyConvertible!(T, real))
+    pure nothrow @nogc @safe GDN!Deg yl2x(ulong Deg)(in GDN!Deg g, in real c)
     {
         return yl2x_impl(g, GDN!Deg.mkConst(c));
     }
 
     /// ditto
-    GDN!Deg yl2x(T, ulong Deg)(in T c, in GDN!Deg h) nothrow pure @nogc @safe
-    if (isImplicitlyConvertible!(T, real))
+    pure nothrow @nogc @safe GDN!Deg yl2x(ulong Deg)(in real c, in GDN!Deg h)
     {
         return yl2x_impl(GDN!Deg.mkConst(c), h);
     }
@@ -194,7 +192,8 @@ pragma(inline, true)
 
     unittest
     {
-        assert(yl2x(1, GDN!1(2)).same(GDN!1(0, 0)));
+        const q = yl2x(1, GDN!1(2));
+        assert(q == 0 && q.d == 0);
     }
 
     private GDN!Deg yl2x_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h) nothrow pure @nogc @safe
@@ -214,8 +213,11 @@ pragma(inline, true)
     {
         import std.math : LN2;
 
-        assert(yl2x_impl(GDN!1(-1), GDN!1(1)).same(GDN!1.nan));
-        assert(yl2x_impl(GDN!1(-0.), GDN!1(1)).same(GDN!1(-real.infinity, real.nan)));
+        const q = yl2x_impl(GDN!1(-1), GDN!1(1));
+        assert(isNaN(q.val) && isNaN(q.d));
+
+        const w = yl2x_impl(GDN!1(0), GDN!1(1));
+        assert(w == -real.infinity && isNaN(w.d));
 
         const e = yl2x_impl(GDN!2(1), GDN!2(2));
         // f = 0
@@ -224,40 +226,39 @@ pragma(inline, true)
         //    = <0,0+1/ln(2)> + <2,1>/<1,1>/ln(2)
         //    = <0,1/ln(2)> + <2,-1>/ln(2)
         //    = <2/ln(2),0>
-        assert(e.same(GDN!2(0, 2/LN2, 0)));
+        assert(e.val == 0 && e.d == 2/LN2 && e.d!2 == 0);
     }
 
     /**
-    Computes $(MATH h⋅lg(g + 1)), for $(MATH -(1 - √½) ≤ x ≤ +(1 - √½)). When $(MATH g) is outside
-    of this interval, the results are undefined. It either `g` or `h` has type `real`, it is
-    converted to a constant generalized dual number with the same degree as the other parameter.
-
-    If $(MATH f(x) = h(x)lg(g(x) + 1)), then $(MATH f' = h'lg(g + 1) + hg'/[ln(2)(g + 1)])
-
-    Params:
-        g = the argument of logarithm
-        h = the multiplier of the logarithm
-
-    Returns:
-        The resulting generalized dual number will have a degree equal to the lesser of the degrees
-        of `g` and `h`.
-    */
+     * Computes $(MATH h⋅lg(g + 1)), for $(MATH -(1 - √½) ≤ x ≤ +(1 - √½)). When $(MATH g) is
+     * outside of this interval, the results are undefined. It either `g` or `h` has type `real`, it
+     * is converted to a constant generalized dual number with the same degree as the other
+     * parameter.
+     *
+     * If $(MATH f(x) = h(x)lg(g(x) + 1)), then $(MATH f' = h'lg(g + 1) + hg'/[ln(2)(g + 1)])
+     *
+     * Params:
+     *   g = the argument of logarithm
+     *   h = the multiplier of the logarithm
+     *
+     * Returns:
+     *   The resulting generalized dual number will have a degree equal to the lesser of the degrees
+     *   of `g` and `h`.
+     */
+    pure nothrow @nogc @safe
     GDN!(GDeg < HDeg ? GDeg : HDeg) yl2xp1(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
-        nothrow pure @nogc @safe
     {
         return yl2xp1_impl(cast(typeof(return)) g, cast(typeof(return)) h);
     }
 
     /// ditto
-    GDN!Deg yl2xp1(T, ulong Deg)(in GDN!Deg g, in T c) nothrow pure @nogc @safe
-    if (isImplicitlyConvertible!(T, real))
+    pure nothrow @nogc @safe GDN!Deg yl2xp1(ulong Deg)(in GDN!Deg g, in real c)
     {
         return yl2xp1_impl(g, GDN!Deg.mkConst(c));
     }
 
     /// ditto
-    GDN!Deg yl2xp1(T, ulong Deg)(in T c, in GDN!Deg h) nothrow pure @nogc @safe
-    if (isImplicitlyConvertible!(T, real))
+    pure nothrow @nogc @safe GDN!Deg yl2xp1(ulong Deg)(in real c, in GDN!Deg h)
     {
         return yl2xp1_impl(GDN!Deg.mkConst(c), h);
     }
@@ -278,7 +279,8 @@ pragma(inline, true)
 
     unittest
     {
-        assert(yl2xp1(0, GDN!1(1)).same(GDN!1(0, 0)));
+        const q = yl2xp1(0, GDN!1(1));
+        assert(q == 0 && q.d == 0);
     }
 
     private GDN!Deg yl2xp1_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h) nothrow pure @nogc @safe
@@ -305,7 +307,7 @@ pragma(inline, true)
         //    = <1,0>lg<1,1> + <1,1>/[ln(2)<1,1>]
         //    = <0,1/ln(2)> + <1,0>/ln(2)
         //    = <1/ln(2),1/ln(2)>
-        assert(e.same(GDN!2(0, 1/LN2, 1/LN2)));
+        assert(e == 0 && e.d == 1/LN2 && e.d!2 == 1/LN2);
 
         assert(isNaN(yl2xp1_impl(GDN!1(-1), GDN!1(0)).d));
 
