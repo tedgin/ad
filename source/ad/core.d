@@ -96,9 +96,6 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *
      * Params:
      *   val = The value of the variable.
-     *
-     * Returns:
-     *   The representation of the variable.
      */
     pure nothrow @nogc @safe this(in real val)
     {
@@ -157,6 +154,10 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
         _dx = derivs;
     }
 
+    /*
+    This constructs a generalized dual number that has all of its derivative of each order set to
+    zero.
+    */
     package static pure nothrow @nogc @safe GDN mkConst(in real val)
     {
         return GDN(val, mkZeroDeriv());
@@ -250,6 +251,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * Params:
      *   Ord = the order of the derivate to compute, default `1`
      *
+     * Returns:
+     *   The derivative of order `Ord` of the generalized dual number.
+     *
      * Examples:
      *   ```
      *   auto x = GDN!3(2, 3, -1, -2);
@@ -290,6 +294,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * where $(MATH gh = 1).
      *
      * If $(MATH f(x) = g$(SUP -1)(x)), then $(MATH f' = -g$(SUP -2)g').
+     *
+     * Returns:
+     *   the inverse of the generalized dual number
      *
      * Examples:
      *   ```
@@ -336,7 +343,13 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     /**
      * This provides support for the `cast()` operator. It allows casting from a `GDN` to one with a
      * different degree.
-
+     *
+     * Params:
+     *   T = the type of GDN to cast to
+     *
+     * Returns:
+     *   a generalized dual number with the same value as the original but with a different degree
+     *
      * Examples:
      *   ```
      *   auto x = GDN!1(2);
@@ -357,6 +370,13 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * number to a real or another generalized dual number. Two generalized dual numbers are equal
      * if their values are equal regardless of the values of their derivative terms.
      *
+     * Params:
+     *   ThatDeg = the degree of the generalized dual number being compared
+     *   that = the generalized dual number or `real` being compared
+     *
+     * Returns:
+     *   `true` if the values are equal, `false` otherwise
+     *
      * Examples:
      *   ```
      *   auto x = GDN!1(2, 3);
@@ -365,7 +385,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   assert(x == 2.0L);
      *   ```
      */
-    pure nothrow @nogc @safe bool opEquals(ulong D)(in GDN!D that) const
+    pure nothrow @nogc @safe bool opEquals(ulong ThatDeg)(in GDN!ThatDeg that) const
     {
         return this._x == that._x;
     }
@@ -382,6 +402,10 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * $(MATH y) are two generalized dual numbers, $(MATH x < y), if the value of $(MATH x) is less
      * than the value of $(MATH y) regardless of the values of their derivative terms.
      *
+     * Params:
+     *   ThatDeg = the degree of the generalized dual number being compared
+     *   that = the generalized dual number or `real` being compared
+     *
      * Examples:
      *   ```
      *   auto x = GDN!1(2, 3);
@@ -392,7 +416,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   assert(x > 1.0L);
      *   ```
      */
-    pure nothrow @nogc @safe int opCmp(ulong D)(in GDN!D that) const
+    pure nothrow @nogc @safe int opCmp(ulong ThatDeg)(in GDN!ThatDeg that) const
     {
         return opCmp(that._x);
     }
@@ -413,6 +437,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * This defines the identity operator for a generalized dual number.
      *
      * If $(MATH f(x) = +g(x)), then $(MATH f' = g').
+     *
+     * Returns:
+     *   the generalized dual number
      */
     pure nothrow @nogc @safe GDN opUnary(string Op : "+")() const
     {
@@ -424,6 +451,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * This negates a generalized dual number.
      *
      * If $(MATH f(x) = -g(x)), then $(MATH f' = -g').
+     *
+     * Returns:
+     *  the negated generalized dual number
      */
     pure nothrow @nogc @safe GDN opUnary(string Op : "-")() const
     {
@@ -433,6 +463,14 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     /**
      * This ensures that when two generalized dual numbers are combined, the degree of the resulting
      * generalized dual number is the lesser of the degrees of the two being combined.
+     *
+     * Params:
+     *   Op = the operator being applied
+     *   ThatDegree = the degree of the generalized dual number being combined
+     *   that = the generalized dual number being combined
+     *
+     * Returns:
+     *   the GDN resulting from the of the operation
      */
     pure nothrow @nogc @safe
     GDN!(ThatDegree < Degree ? ThatDegree : Degree)
@@ -689,23 +727,42 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * This allows real numbers to be used on the right-hand side of the  +, -, *, /, %, and ^^
      * operators. The real number is promoted to generalized dual number of the same degree as the
      * left-hand side with all derivatives being zero, a constant.
+     *
+     * Params:
+     *   Op = the operator being applied
+     *   val = the real number being combined on the right-hand side
+     *
+     * Returns:
+     *   the GDN resulting from the of the operation
      */
-    pure nothrow @nogc @safe GDN opBinary(string Op)(in real constant) const
+    pure nothrow @nogc @safe GDN opBinary(string Op)(in real val) const
     {
-        return mixin("this " ~ Op ~ " GDN(constant, mkZeroDeriv())");
+        return mixin("this " ~ Op ~ " GDN(val, mkZeroDeriv())");
     }
 
     /**
      * This allows real numbers to be used on the left-hand side of the  +, -, *, /, %, and ^^
      * operators. The real number is promoted to generalized dual number of the same degree as the
      * right-hand side with all derivatives being zero, a constant.
+     *
+     * Params:
+     *   Op = the operator being applied
+     *   val = the real number being combined on the left-hand side
+     *
+     * Returns:
+     *   the GDN resulting from the of the operation
      */
-    pure nothrow @nogc @safe GDN opBinaryRight(string Op)(in real constant) const
+    pure nothrow @nogc @safe GDN opBinaryRight(string Op)(in real val) const
     {
-        return mixin("GDN(constant, mkZeroDeriv()) " ~ Op ~ " this");
+        return mixin("GDN(val, mkZeroDeriv()) " ~ Op ~ " this");
     }
 
-    /// This generates a hash for a generalized dual number.
+    /**
+     * This generates a hash for a generalized dual number.
+     *
+     * Returns:
+     *   the hash of the generalized dual number
+     */
     pure nothrow @nogc @trusted hash_t toHash() const
     {
         auto buf = cast(const(ubyte)*)&_x;
@@ -730,6 +787,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * for a generalized dual number of degree $(MATH n) with value $(MATH f(x₀)), first derivative
      * $(MATH f⁽¹⁾(x₀)), second derivative $(MATH f⁽²⁾(x₀)), etc.
      *
+     * Returns:
+     *   the string representation of the generalized dual number
+     *
      * Examples:
      *   ```
      *   const x = GDN!6(1, -1, +0., -0., real.infinity, -real.infinity, -real.nan);
@@ -744,11 +804,11 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     private pure @safe string toString(ulong derivOrd) const
     {
         static if (Degree == 1)
-            const tail = format("%s%s", fmtNum(_dx), fmtDerivOrd(derivOrd + 1));
+            const tail = format("%s%s", fmtNum(_dx), fmtDerivSuffix(derivOrd + 1));
         else
             const tail = _dx.toString(derivOrd + 1);
 
-        return format("%s%s + %s", fmtNum(_x), fmtDerivOrd(derivOrd), tail);
+        return format("%s%s + %s", fmtNum(_x), fmtDerivSuffix(derivOrd), tail);
     }
 }
 
@@ -1241,9 +1301,7 @@ unittest
 
 private pure @safe
 {
-    //
-    // fmtNum
-    //
+    // Formats a number, either the value or the value of a derivative, into a string
     string fmtNum(in real num)
     {
         if (isNaN(num))
@@ -1284,11 +1342,8 @@ private pure @safe
         assert(num == "NaN", "formatted -NaN incorrectly");
     }
 
-    //
-    // fmtDerivOrd
-    //
-
-    string fmtDerivOrd(in ulong ord)
+    // Formats the derivative identifier of a given order
+    string fmtDerivSuffix(in ulong ord)
     {
         switch (ord)
         {
@@ -1297,24 +1352,21 @@ private pure @safe
         case 1:
             return "dx";
         default:
-            return format("(dx)%s", fmtPow(ord));
+            return format("(dx)%s", fmtDerivOrd(ord));
         }
     }
 
     unittest
     {
-        assert(fmtDerivOrd(0) == "", "fmtDerivOrd(0) is incorrect");
-        assert(fmtDerivOrd(1) == "dx", "fmtDerivOrd(1) is incorrect");
-        assert(fmtDerivOrd(3) == "(dx)³", "fmtDerivOrd(3) is incorrect");
+        assert(fmtDerivSuffix(0) == "", "fmtDerivSuffix(0) is incorrect");
+        assert(fmtDerivSuffix(1) == "dx", "fmtDerivSuffix(1) is incorrect");
+        assert(fmtDerivSuffix(3) == "(dx)³", "fmtDerivSuffix(3) is incorrect");
     }
 
-    //
-    // fmtPow
-    //
-
-    nothrow string fmtPow(in ulong pow)
+    // Formats the order of a derivative into a string
+    nothrow string fmtDerivOrd(in ulong ord)
     {
-        switch (pow)
+        switch (ord)
         {
         case 0:
             return "\u2070";
@@ -1337,24 +1389,24 @@ private pure @safe
         case 9:
             return "\u2079";
         default:
-            return fmtPow(pow / 10) ~ fmtPow(pow % 10);
+            return fmtDerivOrd(ord / 10) ~ fmtDerivOrd(ord % 10);
         }
     }
 
     unittest
     {
-        assert(fmtPow(0) == "⁰", "fmtPow(0) should be ⁰");
-        assert(fmtPow(1) == "¹", "fmtPow(1) should be ¹");
-        assert(fmtPow(2) == "²", "fmtPow(2) should be ²");
-        assert(fmtPow(3) == "³", "fmtPow(3) should be ³");
-        assert(fmtPow(4) == "⁴", "fmtPow(4) should be ⁴");
-        assert(fmtPow(5) == "⁵", "fmtPow(5) should be ⁵");
-        assert(fmtPow(6) == "⁶", "fmtPow(6) should be ⁶");
-        assert(fmtPow(7) == "⁷", "fmtPow(7) should be ⁷");
-        assert(fmtPow(8) == "⁸", "fmtPow(8) should be ⁸");
-        assert(fmtPow(9) == "⁹", "fmtPow(9) should be ⁹");
-        assert(fmtPow(10) == "¹⁰", "fmtPow(10) should be ¹⁰");
-        assert(fmtPow(25) == "²⁵", "fmtPow(25) should be ²⁵");
-        assert(fmtPow(3000) == "³⁰⁰⁰", "fmtPow(3000) should be ³⁰⁰⁰");
+        assert(fmtDerivOrd(0) == "⁰", "fmtDerivOrd(0) should be ⁰");
+        assert(fmtDerivOrd(1) == "¹", "fmtDerivOrd(1) should be ¹");
+        assert(fmtDerivOrd(2) == "²", "fmtDerivOrd(2) should be ²");
+        assert(fmtDerivOrd(3) == "³", "fmtDerivOrd(3) should be ³");
+        assert(fmtDerivOrd(4) == "⁴", "fmtDerivOrd(4) should be ⁴");
+        assert(fmtDerivOrd(5) == "⁵", "fmtDerivOrd(5) should be ⁵");
+        assert(fmtDerivOrd(6) == "⁶", "fmtDerivOrd(6) should be ⁶");
+        assert(fmtDerivOrd(7) == "⁷", "fmtDerivOrd(7) should be ⁷");
+        assert(fmtDerivOrd(8) == "⁸", "fmtDerivOrd(8) should be ⁸");
+        assert(fmtDerivOrd(9) == "⁹", "fmtDerivOrd(9) should be ⁹");
+        assert(fmtDerivOrd(10) == "¹⁰", "fmtDerivOrd(10) should be ¹⁰");
+        assert(fmtDerivOrd(25) == "²⁵", "fmtDerivOrd(25) should be ²⁵");
+        assert(fmtDerivOrd(3000) == "³⁰⁰⁰", "fmtDerivOrd(3000) should be ³⁰⁰⁰");
     }
 }
