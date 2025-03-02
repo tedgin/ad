@@ -4,9 +4,10 @@
  */
 module ad.core;
 
-import std.format : format;
-import std.math : abs, isFinite, isInfinity, isNaN, LN2, log, signbit;
-import std.traits : fullyQualifiedName, isImplicitlyConvertible, TemplateOf;
+import std.algorithm: min;
+import std.format: format;
+import std.math: abs, isFinite, isInfinity, isNaN, LN2, log, signbit;
+import std.traits: fullyQualifiedName, isImplicitlyConvertible, TemplateOf;
 
 /**
  * This data structure implements a <em>generalized dual number</em>, a generalization of the dual
@@ -85,7 +86,10 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
 
     // FIELDS
 
+    // The value of the generalized dual number.
     private real _x;
+
+    // The derivative of the generalized dual number.
     private DerivType!1 _dx;
 
     // CONSTRUCTORS
@@ -473,13 +477,11 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   the GDN resulting from the of the operation
      */
     pure nothrow @nogc @safe
-    GDN!(ThatDegree < Degree ? ThatDegree : Degree)
-    opBinary(string Op, ulong ThatDegree)(in GDN!ThatDegree that) const
+    GDN!(min(ThatDegree, Degree)) opBinary(string Op, ulong ThatDegree)(in GDN!ThatDegree that)
+    const
     if (ThatDegree != Degree) {
-        static if (ThatDegree < Degree)
-            return GDN!ThatDegree(this).opBinary!Op(that);
-        else
-            return this.opBinary!Op(GDN!Degree(that));
+        alias Res = typeof(return);
+        return (cast(Res) this).opBinary!Op(cast(Res) that);
     }
 
     /** <b>g + h</b>
@@ -801,6 +803,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
         return toString(0);
     }
 
+    // Generates the string representation of the generalized dual number with a given derivative
+    // order and higher.
     private pure @safe string toString(ulong derivOrd) const
     {
         static if (Degree == 1)

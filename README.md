@@ -28,7 +28,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * `std.math.remainder` (not implemented yet)
   * `std.math.rounding`
     * `ceil`
-    * `floor` (not implemented yet)
+    * `floor`
     * `lrint` (not implemented yet)
     * `lround` (not implemented yet)
     * `nearbyint` (not implemented yet)
@@ -52,16 +52,6 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `tan`
     * `tanh` (not implemented yet)
   * `std.math.traits`
-    * `copysign` (not implemented yet)
-    * `isFinite` (not implemented yet)
-    * `isIdentical` (not implemented yet)
-    * `isInfinity` (not implemented yet)
-    * `isNaN` (not implemented yet)
-    * `isNormal` (not implemented yet)
-    * `isPowerOf2` (not implemented yet)
-    * `isSubnormal` (not implemented yet)
-    * `sgn`
-    * `signbit` (not implemented yet)
 * supports arbitrary order differentiation, must be fixed at compile time
 
 ## Examples

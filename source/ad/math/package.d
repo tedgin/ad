@@ -1,7 +1,12 @@
-/// This module extends the `core.math` and `std.math` libraries to support `GDN` objects.
+/** TODO: finish documentation after all of the submodules are completed.
+ * This module extends the `core.math` and `std.math` libraries to support `GDN` objects. It is
+ * decomposed into submodules in the same way that std.math is. It also exports all of the symbols
+ * from `ad.math`, `core.math` and `std.math` to make it easier to work with real and generalized
+ * dual numbers together.
+ */
 module ad.math;
 
-public import core.math : toPrec, yl2x, yl2xp1;
+public import core.math: toPrec, yl2x, yl2xp1;
 public import std.math;
 public import ad.core;
 public import ad.math.algebraic;
@@ -15,11 +20,11 @@ public import ad.math.trigonometry;
 
 static import core.math;
 
-import std.algorithm.iteration : map;
-import std.array : array;
-import std.traits : isFloatingPoint, isImplicitlyConvertible, Select;
+import std.algorithm: min;
+import std.math.constants: LN2;
+import std.traits: isFloatingPoint, Select;
 
-import ad.math.dirac;
+import ad.math.internal: dirac;
 
 // core.math implementations
 pragma(inline, true)
@@ -30,8 +35,12 @@ pragma(inline, true)
      * If $(MATH f(x) = 2$(SUP c)g(x)), then $(MATH f' = 2$(SUP c)g').
      *
      * Params:
+     *   Deg = the degree of `g`
      *   g = the generalized dual number being scaled.
      *   c = the power of $(MATH 2) used to scale `g`,
+     *
+     * Returns:
+     *   A `GDN` object resulting from the computation.
      */
     pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
     {
@@ -42,8 +51,7 @@ pragma(inline, true)
     ///
     unittest
     {
-        const f = ldexp(GDN!2(1), 2);
-        assert(f == 4 && f.d == 4 && f.d!2 == 0);
+        assert(ldexp(GDN!2(1), 2) is GDN!2(4, 4, 0));
     }
 
     /**
@@ -52,36 +60,46 @@ pragma(inline, true)
      *
      * If $(MATH f(g(x)) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
      * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
+     *
+     * Params:
+     *   Deg = the degree of `g`
+     *   g = the `GDN` object to be rounded.
+     *
+     * Returns:
+     *   A `GDN` object representing the rounded value of `g`.
      */
     pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
     {
         const f = core.math.rint(g.val);
 
-        auto df = GDN!Deg.mkZeroDeriv();
-        if (isInfinity(g.val)) {
-            df = GDN!Deg.mkNaNDeriv();
+        auto dfdg = GDN!Deg.mkZeroDeriv();
+        if (isInfinity(g)) {
+            dfdg = GDN!Deg.mkNaNDeriv();
         } else {
             auto fn = nearbyint(nextDown(g.val));
             auto fp = nearbyint(nextUp(g.val));
 
             if (f == 0) {
-                if (signbit(f) == 1)
+                if (signbit(f) == 1) {
                     fp = f;
-                else
+                } else {
                     fn = f;
+                }
             }
 
             if (fn != fp) {
-                df = dirac(g.reduce() - g.val);
+                dfdg = dirac(g.reduce() - g.val);
             }
         }
 
-        return GDN!Deg(f, df*g.d);
+        return GDN!Deg(f, dfdg*g.d);
     }
 
     ///
     unittest
     {
+        import std.math: ieeeFlags, resetIeeeFlags;
+
         resetIeeeFlags();
         const e = rint(GDN!2(1.5));
         assert(ieeeFlags.inexact);
@@ -90,27 +108,33 @@ pragma(inline, true)
 
     unittest
     {
-        const q = rint(GDN!1.infinity);
-        assert(q == real.infinity && isNaN(q.d));
+        import std.math: ieeeFlags, resetIeeeFlags;
+
+        assert(rint(GDN!1.infinity) is GDN!1(real.infinity, real.nan));
 
         resetIeeeFlags();
         const w = rint(GDN!1.one);
         assert(!ieeeFlags.inexact);
-        assert(w == 1 && w.d == 0);
+        assert(w is GDN!1.one);
 
-        const e = rint(GDN!2(1.5));
-        assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
+        const f = rint(GDN!2(1.5));
+        assert(f == 2 && f.d == real.infinity && isNaN(f.d!2));
 
-        const r = rint(GDN!1(-0.));
-        assert(r == 0 && signbit(r.val) == 1 && r.d == 0);
-
-        const t = rint(GDN!1(+0.));
-        assert(t == 0 && signbit(t.val) == 0 && t.d == 0);
+        assert(rint(GDN!1(-0.)) is GDN!1(-0., 0));
+        assert(rint(GDN!1(+0.)) is GDN!1(+0., 0));
     }
+
 
     /**
      * This function rounds `g` to a `long` using the current rounding mode. All of the derivative
      * terms are lost.
+     *
+     * Params:
+     *   Deg = the degree of `g`
+     *   g = the `GDN` object to be rounded.
+     *
+     * Returns:
+     *   the rounded value of `g`.
      */
     pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
     {
@@ -123,16 +147,23 @@ pragma(inline, true)
         assert(rndtol(GDN!1(1.1)) == 1L);
     }
 
+
     /**
-     * This function rounds `g` to a given floating point type removing all derivative information.
+     * This function rounds the value of a `GDN` to a given floating point type removing all
+     * derivative information.
      *
      * Params:
-     *   T = the float point type to be converted to
+     *   F = the float point type to be converted to
+     *   Deg = the degree of `g`
      *   g = the generalized dual number to be converted
+     *
+     * Returns:
+     *  the rounded valued with precision determined by `F`.
+     *
      */
-    pure nothrow @nogc @safe T toPrec(T, ulong Deg)(in GDN!Deg g) if (isFloatingPoint!T)
+    pure nothrow @nogc @safe F toPrec(F, ulong Deg)(in GDN!Deg g) if (isFloatingPoint!F)
     {
-        return core.math.toPrec!T(g.val);
+        return core.math.toPrec!F(g.val);
     }
 
     ///
@@ -141,6 +172,7 @@ pragma(inline, true)
         assert(typeid(toPrec!float(GDN!1.zero)) == typeid(float));
     }
 
+
     /**
      * This function computes $(MATH h⋅lg(g)). It either `g` or `h` has type `real`, it is converted
      * to a constant generalized dual number with the same degree as the other parameter.
@@ -148,6 +180,8 @@ pragma(inline, true)
      * If $(MATH f(x) = h(x)lg(g(x))), then $(MATH f' = h'lg(g) + hg'/(ln(2)g))
      *
      * Params:
+     *   GDeg = the degree of `g`
+     *   HDeg = the degree of `h`
      *   g = the argument of logarithm
      *   h = the multiplier of the logarithm
      *
@@ -156,21 +190,21 @@ pragma(inline, true)
      *   of `g` and `h`.
      */
     pure nothrow @nogc @safe
-    GDN!(GDeg < HDeg ? GDeg : HDeg) yl2x(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
+    GDN!(min(GDeg, HDeg)) yl2x(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
     {
         return yl2x_impl(cast(typeof(return)) g, cast(typeof(return)) h);
     }
 
     /// ditto
-    pure nothrow @nogc @safe GDN!Deg yl2x(ulong Deg)(in GDN!Deg g, in real c)
+    pure nothrow @nogc @safe GDN!GDeg yl2x(ulong GDeg)(in GDN!GDeg g, in real h)
     {
-        return yl2x_impl(g, GDN!Deg.mkConst(c));
+        return yl2x_impl(g, GDN!GDeg.mkConst(h));
     }
 
     /// ditto
-    pure nothrow @nogc @safe GDN!Deg yl2x(ulong Deg)(in real c, in GDN!Deg h)
+    pure nothrow @nogc @safe GDN!HDeg yl2x(ulong HDeg)(in real g, in GDN!HDeg h)
     {
-        return yl2x_impl(GDN!Deg.mkConst(c), h);
+        return yl2x_impl(GDN!HDeg.mkConst(g), h);
     }
 
     ///
@@ -178,32 +212,25 @@ pragma(inline, true)
     {
         import std.math: LN2;
 
-        const f = yl2x(GDN!1(2), GDN!1(3));
-        assert(f == 3 && f.d == 1 + 1.5/LN2);
-
-        const x = yl2x(GDN!1(+0., -1), GDN!1(1));
-        assert(x == -real.infinity && x.d == -real.infinity);
-
+        assert(yl2x(GDN!1(2), GDN!1(3)) is GDN!1(3, 1 + 1.5/LN2));
+        assert(yl2x(GDN!1(+0., -1), GDN!1(1)) is GDN!1(-real.infinity,  -real.infinity));
         assert(typeof(yl2x(GDN!2(1), GDN!1(2))).DEGREE == 1);
-
-        const z = yl2x(GDN!1(1), 2.);
-        assert(z == 0 && z.d == 2/LN2);
+        assert(yl2x(GDN!1(1), 2.) is GDN!1(0, 2/LN2));
     }
 
     unittest
     {
-        const q = yl2x(1, GDN!1(2));
-        assert(q == 0 && q.d == 0);
+        assert(yl2x(1, GDN!1(2)) is GDN!1(0, 0));
     }
 
-    private GDN!Deg yl2x_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h) nothrow pure @nogc @safe
+    private pure nothrow @nogc @safe GDN!Deg yl2x_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h)
     {
         alias yl2x_red = Select!(Deg == 1, core.math.yl2x, yl2x_impl);
 
         GDN!Deg.DerivType!1 df;
-        if (std.math.signbit(g.val) == 0) {
+        if (signbit!Deg(g) == 0) {
             const g_red = g.reduce();
-            df = yl2x_red(g_red, h.d) + h.reduce() * g.d / (std.math.LN2 * g_red);
+            df = yl2x_red(g_red, h.d) + h.reduce()*g.d/(LN2 * g_red);
         }
 
         return GDN!Deg(yl2x(g.val, h.val), df);
@@ -211,22 +238,18 @@ pragma(inline, true)
 
     unittest
     {
-        import std.math : LN2;
+        assert(isNaN(yl2x_impl(GDN!1(-1), GDN!1(1))));
 
-        const q = yl2x_impl(GDN!1(-1), GDN!1(1));
-        assert(isNaN(q.val) && isNaN(q.d));
+        const f = yl2x_impl(GDN!1(0), GDN!1(1));
+        assert(f == -real.infinity && isNaN(f.d));
 
-        const w = yl2x_impl(GDN!1(0), GDN!1(1));
-        assert(w == -real.infinity && isNaN(w.d));
-
-        const e = yl2x_impl(GDN!2(1), GDN!2(2));
+        assert(yl2x_impl(GDN!2(1), GDN!2(2)) is GDN!2(0, 2/LN2, 0));
         // f = 0
         // <f',f"> = h'lg(g) + hg'/(ln(2)g)
         //    = <1,0>lg(<1,1>) + <2,1><1,0>/ln(2)<1,1>
         //    = <0,0+1/ln(2)> + <2,1>/<1,1>/ln(2)
         //    = <0,1/ln(2)> + <2,-1>/ln(2)
         //    = <2/ln(2),0>
-        assert(e.val == 0 && e.d == 2/LN2 && e.d!2 == 0);
     }
 
     /**
@@ -238,6 +261,8 @@ pragma(inline, true)
      * If $(MATH f(x) = h(x)lg(g(x) + 1)), then $(MATH f' = h'lg(g + 1) + hg'/[ln(2)(g + 1)])
      *
      * Params:
+     *   GDeg = the degree of `g`
+     *   HDeg = the degree of `h`
      *   g = the argument of logarithm
      *   h = the multiplier of the logarithm
      *
@@ -246,21 +271,21 @@ pragma(inline, true)
      *   of `g` and `h`.
      */
     pure nothrow @nogc @safe
-    GDN!(GDeg < HDeg ? GDeg : HDeg) yl2xp1(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
+    GDN!(min(GDeg, HDeg)) yl2xp1(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
     {
         return yl2xp1_impl(cast(typeof(return)) g, cast(typeof(return)) h);
     }
 
     /// ditto
-    pure nothrow @nogc @safe GDN!Deg yl2xp1(ulong Deg)(in GDN!Deg g, in real c)
+    pure nothrow @nogc @safe GDN!GDeg yl2xp1(ulong GDeg)(in GDN!GDeg g, in real h)
     {
-        return yl2xp1_impl(g, GDN!Deg.mkConst(c));
+        return yl2xp1_impl(g, GDN!GDeg.mkConst(h));
     }
 
     /// ditto
-    pure nothrow @nogc @safe GDN!Deg yl2xp1(ulong Deg)(in real c, in GDN!Deg h)
+    pure nothrow @nogc @safe GDN!HDeg yl2xp1(ulong HDeg)(in real g, in GDN!HDeg h)
     {
-        return yl2xp1_impl(GDN!Deg.mkConst(c), h);
+        return yl2xp1_impl(GDN!HDeg.mkConst(g), h);
     }
 
     ///
@@ -268,29 +293,24 @@ pragma(inline, true)
     {
         import std.math: LN2;
 
-        const f = yl2xp1(GDN!1(0), GDN!1(3));
-        assert(f == 0 && f.d == 3/LN2);
-
+        assert(yl2xp1(GDN!1(0), GDN!1(3)) is GDN!1(0, 3/LN2));
         assert(typeof(yl2xp1(GDN!2(0), GDN!1(1))).DEGREE == 1);
-
-        const y = yl2xp1(GDN!1(0), 1);
-        assert(y == 0 && y.d == 1/LN2);
+        assert(yl2xp1(GDN!1(0), 1) is GDN!1(0, 1/LN2));
     }
 
     unittest
     {
-        const q = yl2xp1(0, GDN!1(1));
-        assert(q == 0 && q.d == 0);
+        assert(yl2xp1(0, GDN!1(1)) is GDN!1(0, 0));
     }
 
-    private GDN!Deg yl2xp1_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h) nothrow pure @nogc @safe
+    private pure nothrow @nogc @safe GDN!Deg yl2xp1_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h)
     {
         alias yl2xp1_red = Select!(Deg == 1, core.math.yl2xp1, yl2xp1_impl);
 
         GDN!Deg.DerivType!1 df;
         if (g > -1) {
             const g_red = g.reduce();
-            df = yl2xp1_red(g_red, h.d) + h.reduce() * g.d / (std.math.LN2 * (g_red + 1));
+            df = yl2xp1_red(g_red, h.d) + h.reduce()*g.d/(LN2 * (g_red + 1));
         }
 
         return GDN!Deg(core.math.yl2xp1(g.val, h.val), df);
@@ -298,16 +318,15 @@ pragma(inline, true)
 
     unittest
     {
-        import std.math : isNaN, LN2;
+        import std.math: isNaN, LN2;
 
-        const e = yl2xp1_impl(GDN!2(0), GDN!2(1));
+        assert(yl2xp1_impl(GDN!2(0), GDN!2(1)) is GDN!2(0, 1/LN2, 1/LN2));
         // f = 0
         // <f',f"> = h'lg(g+1) + hg'/[ln(2)(g+1)]
         //    = <1,0>lg(<0,1>+1) + <1,1><1,0>/[ln(2)(<0,1>+1)]
         //    = <1,0>lg<1,1> + <1,1>/[ln(2)<1,1>]
         //    = <0,1/ln(2)> + <1,0>/ln(2)
         //    = <1/ln(2),1/ln(2)>
-        assert(e == 0 && e.d == 1/LN2 && e.d!2 == 1/LN2);
 
         assert(isNaN(yl2xp1_impl(GDN!1(-1), GDN!1(0)).d));
 

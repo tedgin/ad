@@ -1,26 +1,33 @@
 /// It extends `std.math.rounding` to support `GDN` objects.
 module ad.math.rounding;
 
-public import std.math.rounding;
+static import std.math.rounding;
 
-import std.math : isFinite;
-static import std.math;
+import std.math: isFinite;
 
 import ad.core;
-import ad.math.dirac;
-
+import ad.math.internal: dirac;
+import ad.math.traits: isFinite;
 
 // TODO: finish implement this module.
 
-/**
-Returns the value of `g` rounded upward to the nearest integer.
 
-If $(MATH f(x) = ⌈g(x)⌉), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
-*/
-GDN!Deg ceil(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
+/**
+ * Returns the value of `g` rounded upward to the nearest integer.
+ *
+ * If $(MATH f(x) = ⌈g(x)⌉), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` to round
+ *
+ * Returns:
+ *   the rounded `GDN`
+ */
+pure nothrow @nogc @safe GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
 {
     static if (Deg == 1) {
-        const f_red = std.math.ceil(g.reduce());
+        const f_red = std.math.rounding.ceil(g.reduce());
         const f_val = f_red;
     } else {
         const f_red = ceil(g.reduce());
@@ -28,7 +35,7 @@ GDN!Deg ceil(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
     }
 
     GDN!Deg.DerivType!1 df;
-    if (isFinite(g.val)) {
+    if (isFinite(g)) {
         df = g.d * dirac(g.reduce() - f_red);
     }
 
@@ -38,33 +45,37 @@ GDN!Deg ceil(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 ///
 unittest
 {
-    const q = ceil(GDN!1(1));
-    assert(q == 1 && q.d == real.infinity);
-
-    const w = ceil(GDN!1(-1.4));
-    assert(w == -1 && w.d == 0);
+    assert(ceil(GDN!1(1)) is GDN!1(1, real.infinity));
+    assert(ceil(GDN!1(-1.4)) is GDN!1(-1, 0));
 }
 
 unittest
 {
-    import std.math : LN2;
+    import std.math: LN2;
 
-    assert(ceil(GDN!1.nan).same(GDN!1.nan));
-    assert(ceil(GDN!1(real.infinity)).same(GDN!1(real.infinity, real.nan)));
-    assert(ceil(GDN!1(-real.infinity)).same(GDN!1(-real.infinity, real.nan)));
-    assert(ceil(GDN!2(2.3)).same(GDN!2(3, 0, 0)));
-    assert(ceil(GDN!1(0, -1/LN2)).same(GDN!1(0, -real.infinity)));
+    assert(ceil(GDN!1.nan) is GDN!1.nan);
+    assert(ceil(GDN!1(real.infinity)) is GDN!1(real.infinity, real.nan));
+    assert(ceil(GDN!1(-real.infinity)) is GDN!1(-real.infinity, real.nan));
+    assert(ceil(GDN!2(2.3)) is GDN!2(3, 0, 0));
+    assert(ceil(GDN!1(0, -1/LN2)) is GDN!1(0, -real.infinity));
 }
 
 /**
-Returns the value of `g` rounded downward to the nearest integer.
-
-If $(MATH f(x) = ⌊g(x)⌋), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
-*/
-GDN!Deg floor(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
+ * Returns the value of `g` rounded downward to the nearest integer.
+ *
+ * If $(MATH f(x) = ⌊g(x)⌋), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` to round
+ *
+ * Returns:
+ *   the rounded `GDN`
+ */
+pure nothrow @nogc @safe GDN!Deg floor(ulong Deg)(in GDN!Deg g)
 {
     static if (Deg == 1) {
-        const f_red = std.math.floor(g.reduce());
+        const f_red = std.math.rounding.floor(g.reduce());
         const f_val = f_red;
      } else {
         const f_red = floor(g.reduce());
@@ -72,7 +83,7 @@ GDN!Deg floor(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
      }
 
     GDN!Deg.DerivType!1 df;
-    if (std.math.isFinite(g.val)) {
+    if (isFinite(g)) {
         df = g.d * dirac(g.reduce() - f_red);
     }
 
@@ -82,20 +93,17 @@ GDN!Deg floor(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
 ///
 unittest
 {
-    const q = floor(GDN!1(1));
-    assert(q == 1 && q.d == real.infinity);
-
-    const w = floor(GDN!1(-1.4));
-    assert(w == -2 && w.d == 0);
+    assert(floor(GDN!1(1)) is GDN!1(1, real.infinity));
+    assert(floor(GDN!1(-1.4)) is GDN!1(-2, 0));
 }
 
 unittest
 {
-    import std.math : LN2;
+    import std.math: LN2;
 
-    assert(floor(GDN!1.nan).same(GDN!1.nan));
-    assert(floor(GDN!1(real.infinity)).same(GDN!1(real.infinity, real.nan)));
-    assert(floor(GDN!1(-real.infinity)).same(GDN!1(-real.infinity, real.nan)));
-    assert(floor(GDN!2(2.3)).same(GDN!2(2, 0, 0)));
-    assert(floor(GDN!1(0, -1/LN2)).same(GDN!1(0, -real.infinity)));
+    assert(floor(GDN!1.nan) is GDN!1.nan);
+    assert(floor(GDN!1(real.infinity)) is GDN!1(real.infinity, real.nan));
+    assert(floor(GDN!1(-real.infinity)) is GDN!1(-real.infinity, real.nan));
+    assert(floor(GDN!2(2.3)) is GDN!2(2, 0, 0));
+    assert(floor(GDN!1(0, -1/LN2)) is GDN!1(0, -real.infinity));
 }

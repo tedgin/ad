@@ -1,11 +1,48 @@
 /// It extends `std.math.exponential` to support `GDN` objects.
 module ad.math.exponential;
 
-public import std.math.exponential;
+static import std.math.exponential;
 
-import std.math : LN2, signbit;
+import std.math: LN2;
 
 import ad.core;
+import ad.math.traits: signbit;
+
+
+/**
+ * This function computes the base-2 logarithm of the given `GDN` object `g`. It is analogous to
+ * `std.math.exponential.log2()`.
+ *
+ * If $(MATH f(x) = lg(g(x))), then $(MATH f' = g'/[g⋅ln(2)])
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object for which the base-2 logarithm is to be calculated.
+ *
+ * Returns:
+ *   A `GDN` object representing the base-2 logarithm of `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg log2(ulong Deg)(in GDN!Deg g)
+{
+    const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : g.d/(LN2 * g.reduce());
+    return GDN!Deg(std.math.exponential.log2(g.val), df);
+}
+
+///
+unittest
+{
+    import std.math: LN2;
+
+    assert(log2(GDN!1(2)) is GDN!1(1, 1/(2 * LN2)));
+    assert(log2(GDN!1(-0.)) is GDN!1(-real.infinity, real.nan));
+    assert(log2(GDN!1(+0.)) is GDN!1(-real.infinity, real.infinity));
+}
+
+unittest
+{
+    assert(log2(GDN!2(1)) is GDN!2(0, 1/LN2, -1/LN2));
+    assert(log2(GDN!1(1, -1)) is GDN!1(0, -1/LN2));
+}
 
 
 /+ TODO: Implement std.math.exponential support
@@ -91,37 +128,3 @@ nothrow pure @safe GDN!Deg log(ulong Deg)(in GDN!Deg x)
     return x.log();
 }
 +/
-
-/**
-Calculates the base-2 logarithm of `g`.
-
-If $(MATH f(x) = lg(g(x))), then $(MATH f' = g'/[g⋅ln(2)])
-*/
-GDN!Deg log2(ulong Deg)(in GDN!Deg g) nothrow pure @nogc @safe
-{
-    const df = signbit(g.val) == 1 ? GDN!Deg.mkNaNDeriv : g.d / (LN2 * g.reduce());
-    return GDN!Deg(std.math.log2(g.val), df);
-}
-
-///
-unittest
-{
-    import std.math : isNaN, LN2;
-
-    const q = log2(GDN!1(2));
-    assert(q == 1 && q.d == 1 / (2 * LN2));
-
-    const w = log2(GDN!1(-0.));
-    assert(w == -real.infinity && isNaN(w.d));
-
-    const e = log2(GDN!1(+0.));
-    assert(e == -real.infinity && e.d == real.infinity);
-}
-
-unittest
-{
-    const q = log2(GDN!2(1));
-    assert(q.same(GDN!2(0, 1/LN2, -1/LN2)));
-
-    assert(log2(GDN!1(1, -1)).same(GDN!1(0, -1/LN2)));
-}
