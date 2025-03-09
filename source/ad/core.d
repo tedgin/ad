@@ -49,6 +49,12 @@ import std.traits: fullyQualifiedName, isImplicitlyConvertible, TemplateOf;
 */
 struct GDN(ulong Degree = 1) if (Degree > 0)
 {
+    /* NB:
+     * Implicit conversion isn't supported, because std.math functions have been overloaded to
+     * support GDN objects. As of D 2.098.0, implicit conversion interferes with the compiler's
+     * ability to resolve the correct overload of these functions.
+     */
+
     /// The degree of the Generalized dual number
     enum ulong DEGREE = Degree;
 
