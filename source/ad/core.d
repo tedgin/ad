@@ -7,7 +7,7 @@ module ad.core;
 import std.algorithm: min;
 import std.format: format;
 import std.math: abs, isFinite, isInfinity, isNaN, LN2, log, signbit;
-import std.traits: fullyQualifiedName, isImplicitlyConvertible, TemplateOf;
+import std.traits: fullyQualifiedName, TemplateOf;
 
 /**
  * This data structure implements a <em>generalized dual number</em>, a generalization of the dual
