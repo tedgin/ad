@@ -3,10 +3,67 @@ module ad.math.traits;
 
 static import std.math.traits;
 
-import std.traits: isFloatingPoint, isIntegral;
+import std.traits:
+    fullyQualifiedName, isFloatingPoint, isImplicitlyConvertible, isIntegral, TemplateOf;
 
 import ad.core;
 import ad.math.internal: dirac;
+
+
+/**
+ * Determines if a Given type is a `GDN`.
+ *
+ * Params:
+ *   T = the type to test
+ *
+ * Returns:
+ *   `true` if `T` is a `GDN`, otherwise `false`.
+ */
+enum bool isGDN(T) = fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN";
+
+
+///
+unittest
+{
+    static assert(isGDN!(GDN!1));
+    static assert(!isGDN!real);
+}
+
+
+/**
+ * Determines if a Given type is a `GDN` or implicitly convertible to `real`.
+ *
+ * Params:
+ *   T = the type to test
+ *
+ * Returns:
+ *   `true` if `T` is a `GDN` or implicitly convertible to `real`, otherwise `false`.
+ */
+enum bool isGDNOrReal(T) = isGDN!T || isImplicitlyConvertible!(T, real);
+
+
+///
+unittest
+{
+    static assert(isGDNOrReal!(GDN!2));
+    static assert(isGDNOrReal!double);
+}
+
+
+// Converts a GDN or something implicitly convertible to a real to a real.
+package pragma(inline, true) pure nothrow @nogc @safe real asReal(F)(in F f) if (isGDNOrReal!F)
+{
+    static if (isGDN!F)
+        return f.val;
+    else
+        return f;
+}
+
+unittest
+{
+    assert(asReal(GDN!2(3)) is 3.0L);
+    assert(asReal(1) is 1.0L);
+}
 
 
 /**
@@ -210,6 +267,7 @@ unittest
  * This function makes `to` have the same sign as `from`.
  *
  * Params:
+ *   G = GDN or implicitly convertible to real
  *   F = a floating-point type
  *   I = an integral type
  *   TDeg = the degree of the `GDN` object to change the sign of
@@ -220,15 +278,9 @@ unittest
  * Returns:
  *   `to` with the same sign as `from`
  */
-pure nothrow @nogc @safe GDN!TDeg copysign(ulong TDeg, ulong FDeg)(in GDN!TDeg to, in GDN!FDeg from)
-{
-    return GDN!TDeg(std.math.traits.copysign(to.val, from.val), to.d);
-}
-
-/// ditto
-pure nothrow @nogc @safe GDN!TDeg copysign(F, ulong TDeg)(in GDN!TDeg to, in F from)
-if (isFloatingPoint!F) {
-    return GDN!TDeg(std.math.traits.copysign(to.val, from), to.d);
+pure nothrow @nogc @safe GDN!TDeg copysign(G, ulong TDeg)(in GDN!TDeg to, in G from)
+if (isGDNOrReal!G) {
+    return GDN!TDeg(std.math.traits.copysign(to.val, asReal(from)), to.d);
 }
 
 /// ditto
