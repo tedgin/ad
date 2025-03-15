@@ -26,14 +26,14 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `scalebn` (not implemented yet)
   * `std.math.operations`
     * `cmp`
-    * `fdim` (not implemented yet)
+    * `fdim`
     * `feqrel`
     * `fma` (not implemented yet)
     * `fmax` (not implemented yet)
     * `fmin` (not implemented yet)
     * `getNaNPayload`
     * `isClose`
-    * `NaN` (not implemented yet)
+    * `NaN`
     * `nextafter` (not implemented yet)
     * `nextDown` (not implemented yet)
     * `nextUp` (not implemented yet)

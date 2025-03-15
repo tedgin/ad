@@ -3,11 +3,13 @@ module ad.math.operations;
 
 static import std.math.operations;
 
+import std.algorithm: min;
+import std.math.hardware: ieeeFlags, resetIeeeFlags;
 import std.range: ElementType, empty, front, isInputRange, popFront;
 import std.traits: isImplicitlyConvertible, Select;
 
 import ad.core;
-import ad.math.traits: asReal, isGDN, isGDNOrReal;
+import ad.math.traits: asReal, signbit, isGDN, isGDNOrReal, isNaN;
 
 
 /// The default relative difference for operations
@@ -122,30 +124,6 @@ unittest
 
 
 /**
- * Extract an integral payload from a NaN-valued `GDN` object.
- *
- * Params:
- *   Deg = the degree of `f`
- *   f = the `GDN` object carrying the NaN payload
- *
- * Returns:
- *   the payload
- */
-pure nothrow @nogc @safe ulong getNaNPayload(ulong Deg)(in GDN!Deg f)
-{
-    return std.math.operations.getNaNPayload(f.val);
-}
-
-///
-unittest
-{
-    import std.math: NaN;
-
-    assert(getNaNPayload(GDN!1(NaN(1))) == 1);
-}
-
-
-/**
  * Determines whether the values of two `GDN` objects or a `GDN` object and a `real` are
  * approximately equal, i.e., with a given maximum relative difference and a maximum absolute
  * difference.
@@ -249,12 +227,126 @@ unittest
 }
 
 
-// TODO: implement NaN
-// TODO: implement nextafter
-// TODO: implement nextDown
-// TODO: implement nextUp
+/**
+ * Create a quiet NaN GDN, storing an integer as payload.
+ *
+ * Params:
+ *   Deg = the degree of the `GDN` to create
+ *   payload = the integral payload
+ *
+ * Returns:
+ *   It returns a `GDN` object whose value is a NaN with the given payload.
+ */
+pure nothrow @nogc @safe GDN!Deg NaN(ulong Deg)(in ulong payload)
+{
+    return GDN!Deg(std.math.operations.NaN(payload));
+}
 
-// TODO: implement fdim
+///
+unittest
+{
+    import std.math: getNaNPayload;
+
+    assert(getNaNPayload(NaN!2(3).val) == 3);
+}
+
+
+/**
+ * Extract an integral payload from a NaN-valued `GDN` object.
+ *
+ * Params:
+ *   Deg = the degree of `f`
+ *   f = the `GDN` object carrying the NaN payload
+ *
+ * Returns:
+ *   the payload
+ */
+pure nothrow @nogc @safe ulong getNaNPayload(ulong Deg)(in GDN!Deg f)
+{
+    return std.math.operations.getNaNPayload(f.val);
+}
+
+///
+unittest
+{
+    assert(getNaNPayload(NaN!1(1)) == 1);
+}
+
+
+// TODO: finish
+/**
+ * Returns the positive difference between `g` and `h`, i.e. $(MATH max{g-h, 0}). The degree of the
+ * result with will be the lesser of `GDeg` and `HDeg`. If either input is a real number, it will be
+ * converted to a constant `GDN` with the same degree as the other input.
+ *
+ * If $(MATH f(x) = 0) when $(MATH g(x) < h(x)), and $(MATH f(x) = g(x) - h(x)) when
+ * $(MATH g(x) > h(x)), then $(MATH f' = 0) when $(MATH g < h), and $(MATH f' = g' - h') when
+ * $(MATH g > h).
+ *
+ * Params:
+ *   GDeg = the degree of `g`
+ *   HDeg = the degree of `h`
+ *   g = the minuend
+ *   h = the subtrahend
+ *
+ * Returns:
+ *   the resulting generalized dual number
+ *
+ * Bug:
+ *   The $(MATH f') may not be correct when $(MATH g = h).
+ */
+pure nothrow @nogc @safe
+GDN!(min(GDeg, HDeg)) fdim(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
+{
+    return fdim_impl(cast(typeof(return)) g, cast(typeof(return)) h);
+}
+
+/// ditto
+pure nothrow @nogc @safe GDN!GDeg fdim(ulong GDeg)(in GDN!GDeg g, in real h)
+{
+    return fdim_impl(g, GDN!GDeg.mkConst(h));
+}
+
+/// ditto
+pure nothrow @nogc @safe GDN!HDeg fdim(ulong HDeg)(in real g, in GDN!HDeg h)
+{
+    return fdim_impl(GDN!HDeg.mkConst(g), h);
+}
+
+///
+unittest
+{
+    assert(fdim(GDN!1(2), GDN!2(2)) is GDN!1(0, 0));
+}
+
+unittest
+{
+    const g = fdim(GDN!1(0), -2);
+    assert(g is GDN!1(2));
+
+    const f = fdim(0, GDN!2(real.infinity));
+    assert(f is GDN!2.zero,);
+}
+
+private pragma(inline, true) pure nothrow @nogc @safe
+GDN!Deg fdim_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h)
+{
+    const gmh = g - h;
+    if (signbit(gmh) == 1 && !isNaN(gmh)) return GDN!Deg.zero;
+    return gmh;
+}
+
+unittest
+{
+    assert(fdim_impl(GDN!1(2) ,GDN!1(0)) is GDN!1(2, 0));
+    assert(fdim_impl(GDN!2(-2), GDN!2(0)) is GDN!2.zero);
+    assert(isNaN(fdim_impl(GDN!1.nan, GDN!1(2))));
+}
+
+
 // TODO: implement fma
 // TODO: implement fmax
 // TODO: implement fmin
+// TODO: implement nextafter
+// TODO: implement nextDown
+// TODO: implement nextUp
