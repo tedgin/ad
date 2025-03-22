@@ -284,7 +284,7 @@ unittest
  *   the resulting generalized dual number
  *
  * Bug:
- *   The $(MATH f') may not be correct when $(MATH g = h).
+ *   $(MATH f') may not be correct when $(MATH g = h).
  */
 pure nothrow @nogc @safe
 CommonGDN!(G, H) fdim(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
@@ -320,24 +320,23 @@ unittest
 /**
  * Computes $(MATH gh + i). The degree of the result will be the least of the degrees of `G`, `H`,
  * and `I`. If any of the inputs is a real number, it will be converted to a constant `GDN` with the
- * same degree as the other inputs.
+ * same degree as the common degree of the other inputs.
  *
  * If $(MATH f(x) = g(x)h(x) + i(x)), then $(MATH f' = g'h + gh' + i').
  *
  * Params:
- *  G = the type of `g`, either a `GDN` or a `real`
- *  H = the type of `h`, either a `GDN` or a `real`
- *  I = the type of `i`, either a `GDN` or a `real`
- *  g = the multiplicand
- *  h = the multiplier
- *  i = the addend
+ *   G = the type of `g`, either a `GDN` or a `real`
+ *   H = the type of `h`, either a `GDN` or a `real`
+ *   I = the type of `i`, either a `GDN` or a `real`
+ *   g = the multiplicand
+ *   h = the multiplier
+ *   i = the addend
  *
  * Returns:
- *  the resulting generalized dual number
+ *   the resulting generalized dual number
  */
 pure nothrow @nogc @safe CommonGDN!(G, H, I) fma(G, H, I)(in G g, in H h, in I i)
-if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
-{
+if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I)) {
     alias Deg = typeof(return).DEGREE;
 
     const gg = asGDN!Deg(g);
@@ -355,7 +354,55 @@ unittest
 }
 
 
-// TODO: implement fmax
+/**
+ * Computes $(MATH max{g, h}). The degree of the result will be the least of the degrees of `G` and
+ * `H`. If either input is a real number, it will be converted to a constant `GDN` with the same
+ * degree as the other input.
+ *
+ * If $(MATH f(x) = max{g(x), h(x)}), then $(MATH f' = g')$ when $(MATH g > h)$, and
+ * $(MATH f' = h') when $(MATH g < h).
+ *
+ * Params:
+ *   G = the type of `g`, either a `GDN` or a `real`
+ *   H = the type of `h`, either a `GDN` or a `real`
+ *   g = the first argument
+ *   h = the second argument
+ *
+ * Returns:
+ *   the resulting generalized dual number
+ *
+ * Bug:
+ *   $(MATH f') may not be correct when $(MATH g = h).
+ */
+pure nothrow @nogc @safe
+CommonGDN!(G, H) fmax(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+{
+    alias Deg = typeof(return).DEGREE;
+
+    const gg = asGDN!Deg(g);
+    const hh = asGDN!Deg(h);
+
+    if (isNaN(gg) || hh > gg) {
+        return hh;
+    } else {
+        return gg;
+    }
+}
+
+///
+unittest
+{
+    assert(fmax(GDN!1(2), GDN!2(3)) is GDN!1(3));
+}
+
+unittest
+{
+    assert(fmax(GDN!1(2), GDN!1(3)) is GDN!1(3));
+    assert(fmax(GDN!1(2), 3) is GDN!1(3, 0));
+    assert(fmax(2, GDN!1(3)) is GDN!1(3));
+}
+
+
 // TODO: implement fmin
 // TODO: implement nextafter
 // TODO: implement nextDown
