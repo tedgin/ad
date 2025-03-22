@@ -142,7 +142,7 @@ unittest
  * Returns:
  *   The GDN type of least degree.
  */
-package template CommonGDN(G...) if (isOne!(isGDN, G) && areAll!(isGDNOrReal, G)) {
+template CommonGDN(G...) if (isOne!(isGDN, G) && areAll!(isGDNOrReal, G)) {
     alias CommonGDN = GDN!(minDeg!G);
 }
 

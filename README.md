@@ -29,8 +29,8 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `fdim`
     * `feqrel`
     * `fma`
-    * `fmax` (not implemented yet)
-    * `fmin` (not implemented yet)
+    * `fmax`
+    * `fmin`
     * `getNaNPayload`
     * `isClose`
     * `NaN`

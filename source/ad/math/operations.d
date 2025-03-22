@@ -404,6 +404,55 @@ unittest
 
 
 // TODO: implement fmin
+/**
+ * Computes $(MATH min{g, h}). The degree of the result will be the least of the degrees of `G` and
+ * `H`. If either input is a real number, it will be converted to a constant `GDN` with the same
+ * degree as the other input.
+ *
+ * If $(MATH f(x) = min{g(x), h(x)}), then $(MATH f' = g')$ when $(MATH g < h)$, and
+ * $(MATH f' = h') when $(MATH g > h).
+ *
+ * Params:
+ *   G = the type of `g`, either a `GDN` or a `real`
+ *   H = the type of `h`, either a `GDN` or a `real`
+ *   g = the first argument
+ *   h = the second argument
+ *
+ * Returns:
+ *   the resulting generalized dual number
+ *
+ * Bug:
+ *   $(MATH f') may not be correct when $(MATH g = h).
+ */
+pure nothrow @nogc @safe
+CommonGDN!(G, H) fmin(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+{
+    alias Deg = typeof(return).DEGREE;
+
+    const gg = asGDN!Deg(g);
+    const hh = asGDN!Deg(h);
+
+    if (isNaN(gg) || hh < gg) {
+        return hh;
+    } else {
+        return gg;
+    }
+}
+
+///
+unittest
+{
+    assert(fmin(GDN!1(2), GDN!2(3)) is GDN!1(2));
+}
+
+unittest
+{
+    assert(fmin(GDN!1(2), GDN!1(3)) is GDN!1(2));
+    assert(fmin(GDN!1(2), 3) is GDN!1(2));
+    assert(fmin(2, GDN!1(3)) is GDN!1(2, 0));
+}
+
+
 // TODO: implement nextafter
 // TODO: implement nextDown
 // TODO: implement nextUp
