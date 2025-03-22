@@ -3,11 +3,73 @@ module ad.math.traits;
 
 static import std.math.traits;
 
+import std.algorithm: min;
 import std.traits:
     fullyQualifiedName, isFloatingPoint, isImplicitlyConvertible, isIntegral, TemplateOf;
 
 import ad.core;
 import ad.math.internal: dirac;
+
+
+/**
+ * Checks to see if a sequence of types all satisfy a given criteria
+ *
+ * Params:
+ *   Test = the condition. It must take a single template argument and evaluate to a bool at compile
+ *       time.
+ *   TS = a sequence of types to test
+ *
+ * Returns:
+ *   It returns `true` if every member of `TS` satisfies `Test`.
+ */
+enum bool areAll(alias Test, TS...) = {
+    auto res = true;
+    static foreach(T; TS)
+        static if (!Test!T) res = false;
+    return res;
+}();
+
+///
+unittest
+{
+    import std.traits: isCopyable, isFinal;
+
+    class C {}
+    final class FC {}
+
+    static assert(areAll!(isCopyable, C, FC));
+    static assert(!areAll!(isFinal, C, FC));
+}
+
+/**
+ * Determines if at least one type in a sequence of types satisfies a certain condition.
+ *
+ * Params:
+ *   Test = the condition. It must take a single template argument and evaluate to a bool at compile
+ *       time.
+ *   TS = a sequence of types to test
+ *
+ * Returns:
+ *   It returns `true` if at least one member of `TS` satisfies `Test`.
+ */
+enum bool isOne(alias Test, TS...) = {
+    auto res = false;
+    static foreach(T; TS)
+        static if (Test!T) res = true;
+    return res;
+}();
+
+///
+unittest
+{
+    import std.traits: isFunction, isSafe;
+
+    static void f() {}
+    static @safe void sf() {}
+
+    static assert(isOne!(isFunction, f, string));
+    static assert(isOne!(isSafe, f, sf));
+}
 
 
 /**
@@ -20,7 +82,6 @@ import ad.math.internal: dirac;
  *   `true` if `T` is a `GDN`, otherwise `false`.
  */
 enum bool isGDN(T) = fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN";
-
 
 ///
 unittest
@@ -41,12 +102,80 @@ unittest
  */
 enum bool isGDNOrReal(T) = isGDN!T || isImplicitlyConvertible!(T, real);
 
-
 ///
 unittest
 {
     static assert(isGDNOrReal!(GDN!2));
     static assert(isGDNOrReal!double);
+}
+
+
+// Determines the minimum GDN degree for a sequence of types. Only GDN types are considered. If no
+// GDN types are present, the result is 0.
+private enum minDeg(T...) = {
+    bool foundGDN = false;
+    ulong commonDeg = ulong.max;
+    static foreach (U; T) {
+        static if (isGDN!U) {
+            foundGDN = true;
+            commonDeg = min(commonDeg, U.DEGREE);
+        }
+    }
+    return foundGDN ? commonDeg : 0;
+}();
+
+unittest
+{
+    static assert(minDeg!(GDN!2) == 2);
+    static assert(minDeg!char == 0);
+    static assert(minDeg!(GDN!32, GDN!2, real) == 2);
+}
+
+
+/**
+ * Given a sequence of GDN types or types implicitly convertible to `real`, this finds the one with
+ * the least degree. There must be at least one GDN type
+ *
+ * Params:
+ *   G = a sequence of GDN or real types
+ *
+ * Returns:
+ *   The GDN type of least degree.
+ */
+package template CommonGDN(G...) if (isOne!(isGDN, G) && areAll!(isGDNOrReal, G)) {
+    alias CommonGDN = GDN!(minDeg!G);
+}
+
+///
+unittest
+{
+    static assert(is(CommonGDN!(GDN!2, GDN!3, real) == GDN!2));
+}
+
+
+// Converts a GDN to a GDN of the specified degree.
+package pragma(inline, true) pure nothrow @nogc @safe
+GDN!Deg asGDN(ulong Deg, T)(in T t) if (isGDN!T)
+{
+    return cast(GDN!Deg)(t);
+}
+
+unittest
+{
+    assert(asGDN!1(GDN!2(3)) is GDN!1(3));
+    assert(asGDN!2(GDN!2(3)) is GDN!2(3));
+    assert(asGDN!3(GDN!2(3)) is GDN!3(3));
+}
+
+// Converts a real to a constant GDN of the specified degree.
+package pragma(inline, true) pure nothrow @nogc @safe
+GDN!Deg asGDN(ulong Deg)(in real t) {
+    return GDN!Deg.mkConst(t);
+}
+
+unittest
+{
+    assert(asGDN!2(3) is GDN!2(3, 0, 0));
 }
 
 

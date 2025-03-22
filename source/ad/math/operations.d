@@ -9,7 +9,7 @@ import std.range: ElementType, empty, front, isInputRange, popFront;
 import std.traits: isImplicitlyConvertible, Select;
 
 import ad.core;
-import ad.math.traits: asReal, signbit, isGDN, isGDNOrReal, isNaN;
+import ad.math.traits: areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isNaN, isOne, signbit;
 
 
 /// The default relative difference for operations
@@ -17,7 +17,7 @@ enum real DEFAULT_REL_DIFF = 10.0L ^^ -((real.dig + 1)/2 + 1);
 
 
 /**
- * Defines a total order on all GDN objects. The one of the objects has a lower degree than the
+ * Defines a total order on all GDN objects. Id one of the objects has a lower degree than the
  * other, it is promoted a GDN of the higher degree with all added derivatives being `0`. If one of
  * the arguments is a floating point number, it is promoted to a constant GDN with the same degree
  * as the other term. The result is `cmp(x.val, y.val)` unless it is `0`. Otherwise, the result is
@@ -25,32 +25,25 @@ enum real DEFAULT_REL_DIFF = 10.0L ^^ -((real.dig + 1)/2 + 1);
  * derivatives are the same, the result is `0`.
  *
  * Params:
- *   F = a floating point type
- *   XDeg = the degree of `x`
- *   YDeg = the degree of `y`
- *   x = the `GDN` object being compared
- *   y = the `GDN` object being compared to
+ *   X = GDN or real
+ *   Y = GDN or real
+ *   x = the object being compared
+ *   y = the object being compared to
  *
  * Returns:
  *   a negative value if `x` precedes `y`, `0` if `x` and `y` are identical, and a positive value
  *   otherwise.
  */
-pure nothrow @nogc @safe int cmp(ulong XDeg, ulong YDeg)(const GDN!XDeg x, const GDN!YDeg y)
-{
-    alias Deg = Select!(XDeg > YDeg, XDeg, YDeg);
-    return cmp_impl(cast(GDN!Deg) x, cast(GDN!Deg) y);
-}
+pure nothrow @nogc @safe int cmp(X, Y)(in X x, in Y y)
+if (isOne!(isGDN, X, Y) && areAll!(isGDNOrReal, X, Y)) {
+    static if (isImplicitlyConvertible!(X, real))
+        alias Deg = Y.DEGREE;
+    else static if (isImplicitlyConvertible!(Y, real))
+        alias Deg = X.DEGREE;
+    else
+        alias Deg = Select!(X.DEGREE > Y.DEGREE, X.DEGREE, Y.DEGREE);
 
-/// ditto
-pure nothrow @nogc @safe int cmp(F, ulong XDeg)(const GDN!XDeg x, const(F) y)
-if (isImplicitlyConvertible!(F, real)) {
-    return cmp_impl(x, GDN!XDeg.mkConst(y));
-}
-
-/// ditto
-pure nothrow @nogc @safe int cmp(F, ulong YDeg)(const(F) x, const GDN!YDeg y)
-if (isImplicitlyConvertible!(F, real)) {
-    return cmp_impl(GDN!YDeg.mkConst(x), y);
+    return cmp_impl(asGDN!Deg(x), asGDN!Deg(y));
 }
 
 ///
@@ -147,7 +140,7 @@ unittest
  */
 pure nothrow @nogc @safe
 bool isClose(T, U)(in T lhs, in U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
-if (isGDNOrReal!T && isGDNOrReal!U && (isGDN!T || isGDN!U)) {
+if (areAll!(isGDNOrReal, T, U) && isOne!(isGDN, T, U)) {
     return std.math.operations.isClose(asReal(lhs), asReal(rhs), maxRelDiff, maxAbsDiff);
 }
 
@@ -180,8 +173,7 @@ if (isInputRange!T && isGDNOrReal!(ElementType!T) && isGDNOrReal!U) {
 /// ditto
 pure nothrow @nogc @safe
 bool isClose(T, U)(T lhs, U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
-if (isInputRange!T && isGDNOrReal!(ElementType!T) && isInputRange!U && isGDNOrReal!(ElementType!U))
-{
+if (areAll!(isInputRange, T, U) && areAll!(isGDNOrReal, ElementType!T, ElementType!U)) {
     for(;; lhs.popFront(), rhs.popFront()) {
         if (lhs.empty) return rhs.empty;
         if (rhs.empty) return lhs.empty;
@@ -273,7 +265,6 @@ unittest
 }
 
 
-// TODO: finish
 /**
  * Returns the positive difference between `g` and `h`, i.e. $(MATH max{g-h, 0}). The degree of the
  * result with will be the lesser of `GDeg` and `HDeg`. If either input is a real number, it will be
@@ -284,8 +275,8 @@ unittest
  * $(MATH g > h).
  *
  * Params:
- *   GDeg = the degree of `g`
- *   HDeg = the degree of `h`
+ *   G = the type of `g` either a `GDN` or a `real`
+ *   H = the type of `h` either a `GDN` or a `real`
  *   g = the minuend
  *   h = the subtrahend
  *
@@ -296,21 +287,13 @@ unittest
  *   The $(MATH f') may not be correct when $(MATH g = h).
  */
 pure nothrow @nogc @safe
-GDN!(min(GDeg, HDeg)) fdim(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
+CommonGDN!(G, H) fdim(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 {
-    return fdim_impl(cast(typeof(return)) g, cast(typeof(return)) h);
-}
+    alias Deg = typeof(return).DEGREE;
 
-/// ditto
-pure nothrow @nogc @safe GDN!GDeg fdim(ulong GDeg)(in GDN!GDeg g, in real h)
-{
-    return fdim_impl(g, GDN!GDeg.mkConst(h));
-}
-
-/// ditto
-pure nothrow @nogc @safe GDN!HDeg fdim(ulong HDeg)(in real g, in GDN!HDeg h)
-{
-    return fdim_impl(GDN!HDeg.mkConst(g), h);
+    const gmh = asGDN!Deg(g) - asGDN!Deg(h);
+    if (signbit(gmh) == 1 && !isNaN(gmh)) return GDN!Deg.zero;
+    return gmh;
 }
 
 ///
@@ -326,25 +309,52 @@ unittest
 
     const f = fdim(0, GDN!2(real.infinity));
     assert(f is GDN!2.zero,);
-}
 
-private pragma(inline, true) pure nothrow @nogc @safe
-GDN!Deg fdim_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h)
-{
-    const gmh = g - h;
-    if (signbit(gmh) == 1 && !isNaN(gmh)) return GDN!Deg.zero;
-    return gmh;
-}
-
-unittest
-{
-    assert(fdim_impl(GDN!1(2) ,GDN!1(0)) is GDN!1(2, 0));
-    assert(fdim_impl(GDN!2(-2), GDN!2(0)) is GDN!2.zero);
-    assert(isNaN(fdim_impl(GDN!1.nan, GDN!1(2))));
+    assert(fdim(GDN!1(2) ,GDN!1(0)) is GDN!1(2, 0));
+    assert(fdim(GDN!2(-2), GDN!2(0)) is GDN!2.zero);
+    assert(isNaN(fdim(GDN!1.nan, GDN!1(2))));
 }
 
 
 // TODO: implement fma
+/**
+ * Computes $(MATH gh + i). The degree of the result will be the least of the degrees of `G`, `H`,
+ * and `I`. If any of the inputs is a real number, it will be converted to a constant `GDN` with the
+ * same degree as the other inputs.
+ *
+ * If $(MATH f(x) = g(x)h(x) + i(x)), then $(MATH f' = g'h + gh' + i').
+ *
+ * Params:
+ *  G = the type of `g`, either a `GDN` or a `real`
+ *  H = the type of `h`, either a `GDN` or a `real`
+ *  I = the type of `i`, either a `GDN` or a `real`
+ *  g = the multiplicand
+ *  h = the multiplier
+ *  i = the addend
+ *
+ * Returns:
+ *  the resulting generalized dual number
+ */
+pure nothrow @nogc @safe CommonGDN!(G, H, I) fma(G, H, I)(in G g, in H h, in I i)
+if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
+{
+    alias Deg = typeof(return).DEGREE;
+
+    const gg = asGDN!Deg(g);
+    const hh = asGDN!Deg(h);
+    const ii = asGDN!Deg(i);
+
+    return GDN!Deg(
+        std.math.operations.fma(gg.val, hh.val, ii.val), gg.d*hh.val + gg.val*hh.d + ii.d);
+}
+
+///
+unittest
+{
+    assert(fma(GDN!1(2), GDN!2(3), 4) is GDN!1(10, 5));
+}
+
+
 // TODO: implement fmax
 // TODO: implement fmin
 // TODO: implement nextafter
