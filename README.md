@@ -25,18 +25,6 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `powmod` (not implemented yet)
     * `scalebn` (not implemented yet)
   * `std.math.operations`
-    * `cmp`
-    * `fdim`
-    * `feqrel`
-    * `fma`
-    * `fmax`
-    * `fmin`
-    * `getNaNPayload`
-    * `isClose`
-    * `NaN`
-    * `nextafter`
-    * `nextDown`
-    * `nextUp` (not implemented yet)
   * `std.math.remainder` (not implemented yet)
   * `std.math.rounding`
     * `ceil`

@@ -468,14 +468,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg nextafter(H, ulong Deg)(in GDN!Deg g, in H h) if (isGDNOrReal!H)
 {
-    const hh = asGDN!Deg(h);
-    const f = std.math.operations.nextafter(g.val, hh.val);
-
-    if (std.math.isNaN(f)) {
-        return GDN!Deg.nan;
-    }
-
-    return GDN!Deg(f, g.d);
+    const f = std.math.operations.nextafter(g.val, asGDN!Deg(h).val);
+    return GDN!Deg(f, std.math.isNaN(f) ? GDN!Deg.mkNaNDeriv() : g.d);
 }
 
 /// ditto
@@ -498,7 +492,6 @@ unittest
 }
 
 
-// TODO: implement nextDown
 /**
  * Computes the largest representable GDN smaller than `g` having the same degree as `g`.
  *
@@ -529,4 +522,31 @@ unittest
 }
 
 
-// TODO: implement nextUp
+/**
+ * Computes the smallest representable GDN larger than `g` having the same degree as `g`.
+ *
+ * If $(MATH f(x) = g(x) + ε), where $(MATH ε) is an infinitesimal, then $(MATH f' = g').
+ *
+ * Params:
+ *   Deg = the degree a `g`
+ *   g = the starting value
+ *
+ * Returns:
+ *   a `GDN` object with the same degree as `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg nextUp(ulong Deg)(in GDN!Deg g)
+{
+    const f = std.math.operations.nextUp(g.val);
+    return GDN!Deg(f, std.math.isNaN(f) ? GDN!Deg.mkNaNDeriv() : g.d);
+}
+
+///
+unittest
+{
+    assert(nextUp(GDN!2(1)) is GDN!2(1 + real.epsilon));
+}
+
+unittest
+{
+    assert(isNaN(nextUp(GDN!1.nan)));
+}
