@@ -9,7 +9,8 @@ import std.range: ElementType, empty, front, isInputRange, popFront;
 import std.traits: isImplicitlyConvertible, Select;
 
 import ad.core;
-import ad.math.traits: areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isNaN, isOne, signbit;
+import ad.math.traits:
+    areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isNaN, isOne, sgn, signbit;
 
 
 /// The default relative difference for operations
@@ -316,7 +317,6 @@ unittest
 }
 
 
-// TODO: implement fma
 /**
  * Computes $(MATH gh + i). The degree of the result will be the least of the degrees of `G`, `H`,
  * and `I`. If any of the inputs is a real number, it will be converted to a constant `GDN` with the
@@ -403,7 +403,6 @@ unittest
 }
 
 
-// TODO: implement fmin
 /**
  * Computes $(MATH min{g, h}). The degree of the result will be the least of the degrees of `G` and
  * `H`. If either input is a real number, it will be converted to a constant `GDN` with the same
@@ -453,6 +452,53 @@ unittest
 }
 
 
-// TODO: implement nextafter
+/**
+ * Computes the next representable value after `g` in the direction of `h`.
+ *
+ * If $(MATH f(x) = g(x) + sgn(h(x))ε), where $(MATH ε) is an infinitesimal, then $(MATH f' = g').
+ *
+ * Params:
+ *   Deg = the degree a `GDN`
+ *   H = the type of `h`, either a `GDN` or a `real`
+ *   g = the starting value
+ *   h = a value in the target direction
+ *
+ * Returns:
+ *   the value with the next representable value after `g` in the direction of `h`.
+ */
+pure nothrow @nogc @safe GDN!Deg nextafter(H, ulong Deg)(in GDN!Deg g, in H h) if (isGDNOrReal!H)
+{
+    const hh = asGDN!Deg(h);
+    const f = std.math.operations.nextafter(g.val, hh.val);
+
+    if (std.math.isNaN(f)) {
+        return GDN!Deg.nan;
+    }
+
+    return GDN!Deg(f, g.d);
+}
+
+/// ditto
+pure nothrow @nogc @safe real nextafter(ulong Deg)(in real g, in GDN!Deg h) {
+    return std.math.operations.nextafter(g, asReal(h));
+}
+
+///
+unittest
+{
+    import std.format: format;
+
+    assert(nextafter(GDN!2(1), GDN!1(2)) is GDN!2(1+real.epsilon));
+    assert(nextafter(1, GDN!1(0)) == 1 - real.epsilon/2);
+}
+
+unittest
+{
+    assert(nextafter(GDN!1(2), 2) is GDN!1(2));
+    assert(nextafter(GDN!1(1), GDN!2(0)) is GDN!1(1 - real.epsilon/2));
+    assert(isNaN(nextafter(GDN!1.nan, GDN!1(2))));
+}
+
+
 // TODO: implement nextDown
 // TODO: implement nextUp

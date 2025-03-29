@@ -34,7 +34,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `getNaNPayload`
     * `isClose`
     * `NaN`
-    * `nextafter` (not implemented yet)
+    * `nextafter`
     * `nextDown` (not implemented yet)
     * `nextUp` (not implemented yet)
   * `std.math.remainder` (not implemented yet)
