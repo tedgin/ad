@@ -35,7 +35,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `isClose`
     * `NaN`
     * `nextafter`
-    * `nextDown` (not implemented yet)
+    * `nextDown`
     * `nextUp` (not implemented yet)
   * `std.math.remainder` (not implemented yet)
   * `std.math.rounding`

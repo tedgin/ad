@@ -486,8 +486,6 @@ pure nothrow @nogc @safe real nextafter(ulong Deg)(in real g, in GDN!Deg h) {
 ///
 unittest
 {
-    import std.format: format;
-
     assert(nextafter(GDN!2(1), GDN!1(2)) is GDN!2(1+real.epsilon));
     assert(nextafter(1, GDN!1(0)) == 1 - real.epsilon/2);
 }
@@ -501,4 +499,34 @@ unittest
 
 
 // TODO: implement nextDown
+/**
+ * Computes the largest representable GDN smaller than `g` having the same degree as `g`.
+ *
+ * If $(MATH f(x) = g(x) - ε), where $(MATH ε) is an infinitesimal, then $(MATH f' = g').
+ *
+ * Params:
+ *   Deg = the degree a `g`
+ *   g = the starting value
+ *
+ * Returns:
+ *   a `GDN` object with the same degree as `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
+{
+    const f = std.math.operations.nextDown(g.val);
+    return GDN!Deg(f, std.math.isNaN(f) ? GDN!Deg.mkNaNDeriv() : g.d);
+}
+
+///
+unittest
+{
+    assert(nextDown(GDN!2(1)) is GDN!2(1 - real.epsilon/2));
+}
+
+unittest
+{
+    assert(isNaN(nextDown(GDN!1.nan)));
+}
+
+
 // TODO: implement nextUp
