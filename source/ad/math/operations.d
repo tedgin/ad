@@ -4,6 +4,7 @@ module ad.math.operations;
 static import std.math.operations;
 
 import std.algorithm: min;
+import std.math.algebraic: abs;
 import std.math.hardware: ieeeFlags, resetIeeeFlags;
 import std.range: ElementType, empty, front, isInputRange, popFront;
 import std.traits: isImplicitlyConvertible, Select;
@@ -455,7 +456,8 @@ unittest
 /**
  * Computes the next representable value after `g` in the direction of `h`.
  *
- * If $(MATH f(x) = g(x) + sgn(h(x))ε), where $(MATH ε) is an infinitesimal, then $(MATH f' = g').
+ * If $(MATH f(x) = g(x) + sgn(h(x) - g(x))ε), where $(MATH ε) is an infinitesimal, then
+ * $(MATH f' = g' + sgn'(h - g)(h' - g')ε).
  *
  * Params:
  *   Deg = the degree a `GDN`
@@ -468,8 +470,12 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg nextafter(H, ulong Deg)(in GDN!Deg g, in H h) if (isGDNOrReal!H)
 {
-    const f = std.math.operations.nextafter(g.val, asGDN!Deg(h).val);
-    return GDN!Deg(f, std.math.isNaN(f) ? GDN!Deg.mkNaNDeriv() : g.d);
+    const hh = asGDN!Deg(h);
+    const f_val = std.math.operations.nextafter(g.val, hh.val);
+
+    return GDN!Deg(
+        f_val,
+        g.d + sgn(hh - g).d*(hh.d - g.d)*abs(f_val - g.val));
 }
 
 /// ditto
@@ -486,9 +492,31 @@ unittest
 
 unittest
 {
-    assert(nextafter(GDN!1(2), 2) is GDN!1(2));
-    assert(nextafter(GDN!1(1), GDN!2(0)) is GDN!1(1 - real.epsilon/2));
+    import std.format: format;
+
+    const q = nextafter(GDN!1(1), GDN!1(1));
+    assert(q == 1 && std.math.isNaN(q.d), format("nextafter(GDN!1(1), GDN!1(1)) != %s", q));
+
+    const f = nextafter(GDN!1(1), GDN!2(0));
+    assert(f is GDN!1(1 - real.epsilon/2), format("nextafter(GDN!1(1), GDN!2(0)) != %s", f));
+
     assert(isNaN(nextafter(GDN!1.nan, GDN!1(2))));
+
+    const w = nextafter(GDN!1(1, real.infinity), GDN!1(2, 0));
+    assert(
+        w == 1 + real.epsilon && std.math.isNaN(w.d),
+        format("nextafter(GDN!1(1, real.infinity), GDN!1(2, 0)) != %s", w));
+
+    const e = nextafter(GDN!1(1), GDN!1(2, real.infinity));
+    assert(e == 1 + real.epsilon && std.math.isNaN(e.d));
+
+    const r = nextafter(GDN!1(real.infinity), GDN!1(1));
+    assert(
+        r == real.max && std.math.isNaN(r.d),
+        format("nextafter(GDN!1(real.infinity), GDN!1(1)) != %s", r));
+
+    const t = nextafter(GDN!1(real.infinity), GDN!1(real.infinity));
+    assert(t == real.infinity && std.math.isNaN(t.d));
 }
 
 
