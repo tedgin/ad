@@ -8,9 +8,6 @@ import std.math: LN2;
 import ad.core;
 import ad.math.traits: signbit;
 
-
-// TODO: convert below to using latest traits and operations libraries
-
 /**
  * This function computes the base-2 logarithm of the given `GDN` object `g`. It is analogous to
  * `std.math.exponential.log2()`.

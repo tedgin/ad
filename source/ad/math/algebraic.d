@@ -311,8 +311,6 @@ unittest
 }
 
 
-// TODO: Convert below to use latest traits and operations libraries
-
 /**
  * This evaluates the polynomial $(MATH H(g) = h$(SUB 0) + h$(SUB 1)g + h$(SUB 2)g$(SUP 2) + ...)
  * using Horner's rule $(MATH H(g) = h$(SUB 0) + g⋅(h$(SUB 1) + g⋅(h$(SUB 2) + ...))). If either
@@ -324,7 +322,6 @@ unittest
  * $(MATH f' = h$(SUB 0)' + h$(SUB 1)g' + g⋅(h$(SUB 1)' + 2h$(SUB 2)g' + g⋅(h$(SUB 2)' + 3h$(SUB 3)g' + g⋅(...(h$(SUB n)')...)))).
  *
  * Params:
- *   F = a floating point type
  *   G = the type of `g`
  *   H = the type of `h`
  *   g = the argument of the polynomial
@@ -332,33 +329,13 @@ unittest
  *
  * Returns:
  *   the polynomial evaluated at `g`. The resulting GDN will have a degree equal to the lesser of
- *   the degrees of `g` and `H`.
+ *   the degrees of `G` and `H`.
  */
 pure nothrow @nogc @safe
 CommonGDN!(G, H) poly(G, H)(in G g, in H[] h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 in(h.length > 0, "coefficient array cannot be empty")
 {
-    static if (areAll!(isGDN, G, H)) {
-        return typeof(return)(poly_impl_base(g.val, h), poly_impl_deriv(g, h));
-    } else static if (isGDN!H) {
-        return typeof(return)(poly_impl_base(g, h), poly_impl_deriv(H.mkConst(g), h));
-    } else {
-        static if (G.DEGREE == 1)
-            auto df_acc = 0.0L;
-        else
-            auto df_acc = G.DerivType!1.zero;
-
-        const g_red = g.reduce();
-
-        ptrdiff_t n = h.length;
-        n--;
-        while (n > 0) {
-            df_acc = n * h[n] * g.d + g_red * df_acc;
-            n--;
-        }
-
-        return typeof(return)(std.math.algebraic.poly(g.val, h), df_acc);
-    }
+    return poly_impl_base(g, h);
 }
 
 /// ditto
@@ -366,20 +343,7 @@ pure nothrow @nogc @safe
 CommonGDN!(G, H) poly(G, H, int N)(in G g, ref const H[N] h)
 if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H) && N > 0 && N <= 10)
 {
-    static if (areAll!(isGDN, G, H)) {
-        return typeof(return)(poly_impl_base(g.val, h), poly_impl_deriv(g, h));
-    } else static if (isGDN!H) {
-        return typeof(return)(poly_impl_base(g, h), poly_impl_deriv(H.mkConst(g), h));
-    } else {
-        static if (G.DEGREE == 1)
-            auto df_acc = 0.0L;
-        else
-            auto df_acc = G.DerivType!1.zero;
-
-        static foreach (i; 1 .. N) df_acc = (N-i) * h[N-i] * g.d + g.reduce() * df_acc;
-
-        return typeof(return)(std.math.algebraic.poly(g.val, h), df_acc);
-    }
+    return poly_impl_base(g, h);
 }
 
 ///
@@ -396,86 +360,50 @@ unittest
     assert(typeof(poly(GDN!1(0), [GDN!2(-1)])).DEGREE == 1);
     assert(typeof(poly(GDN!3(-2), [GDN!1(-3), GDN!1(4)])).DEGREE == 1);
 
-    assert(poly(GDN!1(-4), [5., -5.]) is GDN!1(25, -5));
-    // f = 25
-    // f' = 0 + 0(-4) + -5*1 = -5
-
-    const q = poly(0., [GDN!1(-1), GDN!1(2)]);
-    assert(q is GDN!1(-1), format("%s", q));
-
     static GDN!3[2] e = [GDN!3(2), GDN!3(3)];
 
     const r = poly(GDN!2(-2), e);
     assert(typeof(r).DEGREE == 2, format("%s", r));
-
-    assert(typeof(poly(-2., e)).DEGREE == 3);
-
-    static real[3] y = [0., 1., 2.];
-
-    const u = poly(GDN!1(-1), y);
-    // f = 1
-    // f' = 0 + 1*1 + -1(0 + 2*2*1 + -1(0))
-    //    = 1 + -1(4)
-    //    = 1 - 4
-    //    = -3
-    assert(u is GDN!1(1, -3), format("poly(<-1,1>, %s) = %s", y, u));
-
-    assert(poly(GDN!2(-2), y) is GDN!2(6, -7, 4));
-    // f = 6
-    // <f',f"> = 0 + 1<1,0> + 2*2<-2,1><1,0>
-    //    = <1,0> + 4<-2,1>
-    //    = <1,0> + <-8,4>
-    //    = <-7,4>
-}
-
-private pragma(inline, true) pure nothrow @nogc @safe
-CommonGDN!(G, H).DerivType!1 poly_impl_deriv(G, H)(in G g, in H[] h) if (areAll!(isGDN, G, H))
-{
-    alias R = CommonGDN!(G, H);
-
-    const gd = cast(R) g;
-    const gd_red = gd.reduce();
-
-    ptrdiff_t n = h.length;
-    n--;
-    auto acc = (cast(R) h[n]).d;
-    while (n > 0) {
-        acc = (cast(R) h[n - 1]).d
-            + n * (cast(R) h[n]).reduce() * gd.d
-            + gd_red * acc;
-        n--;
-    }
-
-    return acc;
-}
-
-unittest
-{
-    assert(poly_impl_deriv(GDN!2(0), [GDN!2(1), GDN!2(2)]) is GDN!1(3, 2));
-    // f' = <h0',h0"> + <h1,h1'><g',g"> + <g,g'><h1',h1">
-    //    = <1,0> + <2,1><1,0> + <0,1><1,0>
-    //    = <1,0> + <2,1> + <0,1>
-    //    = <3,2>
 }
 
 // Taken from std.math.algebraic.polyImplBase
-private pure nothrow @nogc @safe real poly_impl_base(H)(in real x, in H[] h) if (isGDNOrReal!H)
+private pragma(inline, true) pure nothrow @nogc @safe
+CommonGDN!(G, H) poly_impl_base(G, H)(in G g, in H[] h)
+if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 {
+    alias Deg = typeof(return).DEGREE;
+
     ptrdiff_t n = h.length;
     --n;
-    auto acc = asReal(h[n]);
-    while (--n >= 0)
-    {
-        acc *= x;
-        acc += asReal(h[n]);
+    auto acc = asGDN!Deg(h[n]);
+    while (--n >= 0) {
+        acc = acc * asGDN!Deg(g) + asGDN!Deg(h[n]);
     }
+
     return acc;
 }
 
 unittest
 {
-    assert(poly_impl_base(0, [GDN!1(-1)]) == -1);
-    assert(poly_impl_base(2, [GDN!3(-2), GDN!3(-3), GDN!3(4)]) == 8);
+    import std.format: format;
+
+    const f = poly_impl_base(0, [GDN!1(-1)]);
+    assert(f is GDN!1(-1), format("f = %s", f));
+    // f = <-1,1>
+
+    const w = poly_impl_base(GDN!1(1), [2]);
+    assert(w is GDN!1(2, 0), format("w = %s", w));
+
+    const q = poly_impl_base(GDN!2(2), [GDN!2(-2), GDN!2(-3), GDN!2(4)]);
+    assert(q is GDN!2(8, 20, 18), format("q = %s", q));
+    // q = h0 + h1*g + h2*g^2
+    // q' = h'0 + h'1*g + h1*g' + h'2*g^2 + 2*h2*g*g'
+    // q = -2 + -3*2 + 4*2^2
+    // q = 8
+    // <q',q"> = <1,0> + <1,0><2,1> + <-3,1><1,0> + <1,0><2,1>^2 + 2<4,1><2,1><1,0>
+    //         = <1,0> + <2,1>      + <-3,1>      + <1,0><4,4>   + <8,2><2,1>
+    //         = <0,2>                            + <4,4>        + <16,12>
+    //         = <20,18>
 }
 
 

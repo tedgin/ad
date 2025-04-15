@@ -10,8 +10,6 @@ import ad.core;
 import ad.math.algebraic: sqrt;
 
 
-// TODO: convert below to using latest traits and operations libraries
-
 /**
  * This function computes the sine of its argument.
  *
@@ -27,11 +25,11 @@ import ad.math.algebraic: sqrt;
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sin(ulong Deg)(in GDN!Deg g)
 {
     static if (Deg == 1)
-        const cos_g = core.math.cos(g.reduce());
+        alias cosine = core.math.cos;
     else
-        const cos_g = cos(g.reduce());
+        alias cosine = cos;
 
-    return GDN!Deg(core.math.sin(g.val), cos_g*g.d);
+    return GDN!Deg(core.math.sin(g.val), cosine(g.reduce())*g.d);
 }
 
 ///
@@ -74,11 +72,11 @@ unittest
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg cos(ulong Deg)(in GDN!Deg g)
 {
     static if (Deg == 1)
-        const sin_g = core.math.sin(g.reduce());
+        alias sine = core.math.sin;
     else
-        const sin_g = sin(g.reduce());
+        alias sine = sin;
 
-    return GDN!Deg(core.math.cos(g.val), -sin_g*g.d);
+    return GDN!Deg(core.math.cos(g.val), -sine(g.reduce())*g.d);
 }
 
 ///
@@ -121,11 +119,11 @@ unittest
 pure nothrow @nogc @safe GDN!Deg tan(ulong Deg)(in GDN!Deg g)
 {
     static if (Deg == 1)
-        const cos_g = core.math.cos(g.reduce());
+        alias cosine = core.math.cos;
     else
-        const cos_g = cos(g.reduce());
+        alias cosine = cos;
 
-    return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/cos_g^^2);
+    return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/cosine(g.reduce())^^2);
 }
 
 ///
