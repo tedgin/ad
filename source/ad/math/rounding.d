@@ -7,9 +7,7 @@ import std.math: isFinite;
 
 import ad.core;
 import ad.math.internal: dirac;
-import ad.math.traits: isFinite;
-
-// TODO: finish implement this module.
+import ad.math.traits: asReal, isFinite;
 
 
 /**
@@ -26,20 +24,17 @@ import ad.math.traits: isFinite;
  */
 pure nothrow @nogc @safe GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1) {
+    static if (Deg == 1)
         const f_red = std.math.rounding.ceil(g.reduce());
-        const f_val = f_red;
-    } else {
+    else
         const f_red = ceil(g.reduce());
-        const f_val = f_red.val;
-    }
 
     GDN!Deg.DerivType!1 df;
     if (isFinite(g)) {
         df = g.d * dirac(g.reduce() - f_red);
     }
 
-    return GDN!Deg(f_val, df);
+    return GDN!Deg(asReal(f_red), df);
 }
 
 ///
@@ -74,20 +69,17 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg floor(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1) {
+    static if (Deg == 1)
         const f_red = std.math.rounding.floor(g.reduce());
-        const f_val = f_red;
-     } else {
+    else
         const f_red = floor(g.reduce());
-        const f_val = f_red.val;
-     }
 
     GDN!Deg.DerivType!1 df;
     if (isFinite(g)) {
         df = g.d * dirac(g.reduce() - f_red);
     }
 
-    return GDN!Deg(f_val, df);
+    return GDN!Deg(asReal(f_red), df);
 }
 
 ///

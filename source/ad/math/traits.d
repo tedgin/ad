@@ -157,7 +157,7 @@ unittest
 package pragma(inline, true) pure nothrow @nogc @safe
 GDN!Deg asGDN(ulong Deg, T)(in T t) if (isGDN!T)
 {
-    return cast(GDN!Deg)(t);
+    return cast(GDN!Deg) t;
 }
 
 unittest

@@ -10,6 +10,8 @@ import ad.core;
 import ad.math.algebraic: sqrt;
 
 
+// TODO: convert below to using latest traits and operations libraries
+
 /**
  * This function computes the sine of its argument.
  *

@@ -10,7 +10,9 @@ import std.traits: isFloatingPoint, isImplicitlyConvertible, Select;
 import ad.core;
 import ad.math.exponential: log2;
 import ad.math.rounding: ceil, floor;
-import ad.math.traits: isInfinity, sgn, signbit;
+import ad.math.traits:
+    areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isInfinity, isOne, sgn, signbit;
+
 
 /**
  * This function computes the absolute value of the argument.
@@ -165,9 +167,8 @@ unittest
  * $(MATH f' = (gg' + hh')(g$(SUP 2) + h$(SUP 2))$(SUP -½)).
  *
  * Params:
- *   R = a type that is implicitly convertible to `real`
- *   GDeg = the degree of the `GDN` object `g`
- *   HDeg = the degree of the `GDN` object `h`
+ *   G = the type of `g`, either a `GDN` or a `real`
+ *   H = the type of `h`, either a `GDN` or a `real`
  *   g = the `GDN` object representing the x-coordinate
  *   h = the `GDN` object representing the y-coordinate
  *
@@ -176,21 +177,23 @@ unittest
  *   degrees of `g` and `h`.
  */
 pure nothrow @nogc @safe
-GDN!(min(GDeg, HDeg)) hypot(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
+CommonGDN!(G, H) hypot(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 {
-    return hypot_impl(g, h);
-}
+    alias Deg = typeof(return).DEGREE;
 
-/// ditto
-pure nothrow @nogc @safe GDN!GDeg hypot(R, ulong GDeg)(in GDN!GDeg g, in R h)
-if (isImplicitlyConvertible!(R, real)) {
-    return hypot_impl(g, GDN!GDeg.mkConst(h));
-}
+    const gg = asGDN!Deg(g);
+    const hh = asGDN!Deg(h);
 
-/// ditto
-pure nothrow@nogc @safe GDN!HDeg hypot(R, ulong HDeg)(in R g, in GDN!HDeg h)
-if (isImplicitlyConvertible!(R, real)) {
-    return hypot_impl(GDN!HDeg.mkConst(g), h);
+    const g_red = gg.reduce();
+    const h_red = hh.reduce();
+
+    static if (Deg == 1)
+        const f_red = std.math.algebraic.hypot(g_red, h_red);
+    else
+        const f_red = hypot(g_red, h_red);
+
+    const df = (g_red * gg.d + h_red * hh.d) / f_red;
+    return GDN!Deg(asReal(f_red), df);
 }
 
 ///
@@ -201,29 +204,11 @@ unittest
     assert(hypot(GDN!1(1), GDN!1(2)) is GDN!1(sqrt(5.0L), 3/sqrt(5.0L)));
 }
 
-private pragma(inline, true) pure nothrow @nogc @safe
-GDN!Deg hypot_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h)
-{
-    const g_red = g.reduce();
-    const h_red = h.reduce();
-
-    static if (Deg == 1) {
-        const f_red = std.math.algebraic.hypot(g_red, h_red);
-        const f_val = f_red;
-    } else {
-        const f_red = hypot_impl(g_red, h_red);
-        const f_val = f_red.val;
-    }
-
-    const df = (g_red * g.d + h_red * h.d) / f_red;
-    return GDN!Deg(f_val, df);
-}
-
 unittest
 {
     import std.math: isClose, sqrt;
 
-    const f = hypot_impl(GDN!2(1), GDN!2(2));
+    const f = hypot(GDN!2(1), GDN!2(2));
     // f = sqrt(5)
     // <f',f"> = (<1,1><1,0> + <2,1><1,0>) / <sqrt(5),3/sqrt(5)>
     //    = (<1,1> + <2,1>) / <sqrt(5),3/sqrt(5)>
@@ -233,6 +218,8 @@ unittest
     const w = sqrt(5.0L);
     const q = GDN!2(w, 3/w, .4*w - 1.8/w);
     assert(isClose(f.d!2, q.d!2));
+
+    assert(hypot(GDN!2(0), GDN!1(1)) is GDN!1(1));
 }
 
 
@@ -245,11 +232,9 @@ unittest
  * $(MATH f' = (gg' + hh' + ii')(g$(SUP 2) + h$(SUP 2) + i$(SUP 2))$(SUP -½)).
  *
  * Params:
- *   R = a type that is implicitly convertible to `real`
- *   S = a type that is implicitly convertible to `real`
- *   GDeg = the degree of the `GDN` object `g`
- *   HDeg = the degree of the `GDN` object `h`
- *   IDeg = the degree of the `GDN` object `i`
+ *   G = the type of `g`, either a `GDN` or a `real`
+ *   H = the type of `h`, either a `GDN` or a `real`
+ *   I = the type of `i`, either a `GDN` or a `real`
  *   g = the `GDN` object representing the x-coordinate
  *   h = the `GDN` object representing the y-coordinate
  *   i = the `GDN` object representing the z-coordinate
@@ -259,53 +244,26 @@ unittest
  *   `g`, `h`, and `i`.
  */
 pure nothrow @nogc @safe
-GDN!(min(GDeg, HDeg, IDeg))
-hypot(ulong GDeg, ulong HDeg, ulong IDeg)(in GDN!GDeg g, in GDN!HDeg h, in GDN!IDeg i)
+CommonGDN!(G, H, I)
+hypot(G, H, I)(in G g, in H h, in I i) if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
 {
-    alias Res = typeof(return);
-    return hypot_impl(cast(Res) g, cast(Res) h, cast(Res) i);
-}
+    alias Deg = typeof(return).DEGREE;
 
-/// ditto
-pure nothrow @nogc @safe
-GDN!(min(GDeg, HDeg)) hypot(R, ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h, in R i)
-if (isImplicitlyConvertible!(R, real)) {
-    alias Res = typeof(return);
-    return hypot_impl(cast(Res) g, cast(Res) h, Res.mkConst(i));
-}
+    const gg = asGDN!Deg(g);
+    const hh = asGDN!Deg(h);
+    const ii = asGDN!Deg(i);
 
-/// ditto
-pure nothrow @nogc @safe
-GDN!(min(GDeg, IDeg)) hypot(R, ulong GDeg, ulong IDeg)(in GDN!GDeg g, in R h, in GDN!IDeg i)
-if (isImplicitlyConvertible!(R, real)) {
-    alias Res = typeof(return);
-    return hypot_impl(cast(Res) g, Res.mkConst(h), cast(Res) i);
-}
+    const g_red = gg.reduce();
+    const h_red = hh.reduce();
+    const i_red = ii.reduce();
 
-/// ditto
-pure nothrow @nogc @safe
-GDN!(min(HDeg, IDeg)) hypot(R, ulong HDeg, ulong IDeg)(in R g, in GDN!HDeg h, in GDN!IDeg i)
-if (isImplicitlyConvertible!(R, real)) {
-    alias Res = typeof(return);
-    return hypot_impl(Res.mkConst(g), cast(Res) h, cast(Res) i);
-}
+    static if (Deg == 1)
+        const f_red = std.math.algebraic.hypot(g_red, h_red, i_red);
+    else
+        const f_red = hypot(g_red, h_red, i_red);
 
-/// ditto
-pure nothrow @nogc @safe GDN!GDeg hypot(R, S, ulong GDeg)(in GDN!GDeg g, in R h, in S i)
-if (isImplicitlyConvertible!(R, real) && isImplicitlyConvertible!(S, real)) {
-    return hypot_impl(g, GDN!GDeg.mkConst(h), GDN!GDeg.mkConst(i));
-}
-
-/// ditto
-pure nothrow @nogc @safe GDN!HDeg hypot(R, S, ulong HDeg)(in R g, in GDN!HDeg h, in S i)
-if (isImplicitlyConvertible!(R, real) && isImplicitlyConvertible!(S, real)) {
-    return hypot_impl(GDN!HDeg.mkConst(g), h, GDN!HDeg.mkConst(i));
-}
-
-/// ditto
-pure nothrow @nogc @safe GDN!IDeg hypot(R, S, ulong IDeg)(in R g, in S h, in GDN!IDeg i)
-if (isImplicitlyConvertible!(R, real) && isImplicitlyConvertible!(S, real)) {
-    return hypot_impl(GDN!IDeg.mkConst(g), GDN!IDeg.mkConst(h), i);
+    const df = (g_red * gg.d + h_red * hh.d + i_red * ii.d) / f_red;
+    return GDN!Deg(asReal(f_red), df);
 }
 
 ///
@@ -320,7 +278,7 @@ unittest
 unittest
 {
     import std.format: format;
-    import std.math: sqrt;
+    import std.math: isClose, sqrt;
 
     assert(typeof(hypot(GDN!2.one, GDN!2.one, GDN!1.one)).DEGREE == 1);
     assert(typeof(hypot(GDN!2.one, GDN!1.one, GDN!3.one)).DEGREE == 1);
@@ -339,32 +297,8 @@ unittest
     const y = hypot(-2, -3, GDN!1(-4));
     const u = sqrt(29.0L);
     assert(y is GDN!1(u, -4/u));
-}
 
-private pragma(inline, true) pure nothrow @nogc @safe
-GDN!Deg hypot_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h, in GDN!Deg i)
-{
-    const g_red = g.reduce();
-    const h_red = h.reduce();
-    const i_red = i.reduce();
-
-    static if (Deg == 1) {
-        const f_red = std.math.algebraic.hypot(g_red, h_red, i_red);
-        const f_val = f_red;
-    } else {
-        const f_red = hypot_impl(g_red, h_red, i_red);
-        const f_val = f_red.val;
-    }
-
-    const df = (g_red*g.d + h_red*h.d + i_red*i.d) / f_red;
-    return GDN!Deg(f_val, df);
-}
-
-unittest
-{
-    import std.math: isClose, sqrt;
-
-    const f = hypot_impl(GDN!2(1), GDN!2(2), GDN!2(3));
+    const f = hypot(GDN!2(1), GDN!2(2), GDN!2(3));
     // f = sqrt(14)
     // <f',f"> = (<1,1><1,0> + <2,1><1,0> + <3,1><1,0>) / <sqrt(14),6/sqrt(14)>
     //    = (<1,1> + <2,1> + <3,1>) / <sqrt(14),6/sqrt(14)>
@@ -376,6 +310,8 @@ unittest
     assert(isClose(f.d!2, q.d!2));
 }
 
+
+// TODO: Convert below to use latest traits and operations libraries
 
 /**
  * This evaluates the polynomial $(MATH H(g) = h$(SUB 0) + h$(SUB 1)g + h$(SUB 2)g$(SUP 2) + ...)
@@ -389,77 +325,61 @@ unittest
  *
  * Params:
  *   F = a floating point type
- *   GDeg = the degree of the argument of the polynomial
- *   HDeg = the degree of the coefficients of the polynomial
+ *   G = the type of `g`
+ *   H = the type of `h`
  *   g = the argument of the polynomial
- *   H = the coefficients of the polynomial
+ *   h = the coefficients of the polynomial
  *
  * Returns:
  *   the polynomial evaluated at `g`. The resulting GDN will have a degree equal to the lesser of
  *   the degrees of `g` and `H`.
  */
 pure nothrow @nogc @safe
-GDN!(min(GDeg, HDeg)) poly(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg[] H)
-in(H.length > 0, "coefficient array cannot be empty")
+CommonGDN!(G, H) poly(G, H)(in G g, in H[] h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+in(h.length > 0, "coefficient array cannot be empty")
 {
-    return typeof(return)(poly_impl_base(g.val, H), poly_impl_deriv(g, H));
-}
+    static if (areAll!(isGDN, G, H)) {
+        return typeof(return)(poly_impl_base(g.val, h), poly_impl_deriv(g, h));
+    } else static if (isGDN!H) {
+        return typeof(return)(poly_impl_base(g, h), poly_impl_deriv(H.mkConst(g), h));
+    } else {
+        static if (G.DEGREE == 1)
+            auto df_acc = 0.0L;
+        else
+            auto df_acc = G.DerivType!1.zero;
 
-/// ditto
-pure nothrow @nogc @safe GDN!GDeg poly(F, ulong GDeg)(in GDN!GDeg g, in F[] H)
-if (isFloatingPoint!F)
-in(H.length > 0, "coefficient array cannot be empty")
-{
-    static if (GDeg == 1)
-        auto df_acc = 0.0L;
-    else
-        auto df_acc = GDN!GDeg.DerivType!1.zero;
+        const g_red = g.reduce();
 
-    const g_red = g.reduce();
-
-    ptrdiff_t n = H.length;
-    n--;
-    while (n > 0) {
-        df_acc = n * H[n] * g.d + g_red * df_acc;
+        ptrdiff_t n = h.length;
         n--;
+        while (n > 0) {
+            df_acc = n * h[n] * g.d + g_red * df_acc;
+            n--;
+        }
+
+        return typeof(return)(std.math.algebraic.poly(g.val, h), df_acc);
     }
-
-    return GDN!GDeg(std.math.algebraic.poly(g.val, H), df_acc);
-}
-
-/// ditto
-pure nothrow @nogc @safe GDN!HDeg poly(F, ulong HDeg)(in F g, in GDN!HDeg[] H)
-if (isFloatingPoint!F)
-in(H.length > 0, "coefficient array cannot be empty")
-{
-    return GDN!HDeg(poly_impl_base(g, H), poly_impl_deriv(GDN!HDeg.mkConst(g), H));
 }
 
 /// ditto
 pure nothrow @nogc @safe
-GDN!(min(GDeg, HDeg)) poly(ulong GDeg, ulong HDeg, int N)(in GDN!GDeg g, ref const GDN!HDeg[N] H)
-if (N > 0 && N <= 10) {
-    return typeof(return)(poly_impl_base(g.val, H), poly_impl_deriv(g, H));
-}
-
-/// ditto
-pure nothrow @nogc @safe GDN!GDeg poly(F, ulong GDeg, int N)(in GDN!GDeg g, const ref F[N] H)
-if (isFloatingPoint!F && N > 0 && N <= 10) {
-    static if (GDeg == 1)
-        auto df_acc = 0.0L;
-    else
-        auto df_acc = GDN!GDeg.DerivType!1.zero;
-
-    static foreach (i; 1 .. N) df_acc = (N-i) * H[N-i] * g.d + g.reduce() * df_acc;
-
-    return GDN!GDeg(std.math.algebraic.poly(g.val, H), df_acc);
-}
-
-/// ditto
-pure nothrow @nogc @safe GDN!HDeg poly(F, ulong HDeg, uint N)(in F g, const ref GDN!HDeg[N] H)
-if (isFloatingPoint!F && N > 0 && N <= 10)
+CommonGDN!(G, H) poly(G, H, int N)(in G g, ref const H[N] h)
+if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H) && N > 0 && N <= 10)
 {
-    return GDN!HDeg(poly_impl_base(g, H), poly_impl_deriv(GDN!HDeg.mkConst(g), H));
+    static if (areAll!(isGDN, G, H)) {
+        return typeof(return)(poly_impl_base(g.val, h), poly_impl_deriv(g, h));
+    } else static if (isGDN!H) {
+        return typeof(return)(poly_impl_base(g, h), poly_impl_deriv(H.mkConst(g), h));
+    } else {
+        static if (G.DEGREE == 1)
+            auto df_acc = 0.0L;
+        else
+            auto df_acc = G.DerivType!1.zero;
+
+        static foreach (i; 1 .. N) df_acc = (N-i) * h[N-i] * g.d + g.reduce() * df_acc;
+
+        return typeof(return)(std.math.algebraic.poly(g.val, h), df_acc);
+    }
 }
 
 ///
@@ -509,19 +429,19 @@ unittest
 }
 
 private pragma(inline, true) pure nothrow @nogc @safe
-auto poly_impl_deriv(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg[] h)
+CommonGDN!(G, H).DerivType!1 poly_impl_deriv(G, H)(in G g, in H[] h) if (areAll!(isGDN, G, H))
 {
-    alias Deg = Select!(GDeg < HDeg, GDeg, HDeg);
+    alias R = CommonGDN!(G, H);
 
-    const gd = cast(GDN!Deg) g;
+    const gd = cast(R) g;
     const gd_red = gd.reduce();
 
     ptrdiff_t n = h.length;
     n--;
-    auto acc = (cast(GDN!Deg) h[n]).d;
+    auto acc = (cast(R) h[n]).d;
     while (n > 0) {
-        acc = (cast(GDN!Deg) h[n - 1]).d
-            + n * (cast(GDN!Deg) h[n]).reduce() * gd.d
+        acc = (cast(R) h[n - 1]).d
+            + n * (cast(R) h[n]).reduce() * gd.d
             + gd_red * acc;
         n--;
     }
@@ -539,15 +459,15 @@ unittest
 }
 
 // Taken from std.math.algebraic.polyImplBase
-private pure nothrow @nogc @safe real poly_impl_base(ulong Deg)(in real x, in GDN!Deg[] h)
+private pure nothrow @nogc @safe real poly_impl_base(H)(in real x, in H[] h) if (isGDNOrReal!H)
 {
     ptrdiff_t n = h.length;
     --n;
-    auto acc = h[n].val;
+    auto acc = asReal(h[n]);
     while (--n >= 0)
     {
         acc *= x;
-        acc += h[n].val;
+        acc += asReal(h[n]);
     }
     return acc;
 }
@@ -572,7 +492,7 @@ unittest
  *   The GDN object whose value is the next power of 2 after `g`.
  */
 pure nothrow @nogc @safe GDN!Deg nextPow2(ulong Deg)(in GDN!Deg g)
-out (f; f.val == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextPow2")
+out (f; f == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextPow2")
 {
     const lg_abs_g = log2(fabs(g));
 
@@ -660,7 +580,7 @@ unittest
  *   `g` truncated to a power of 2
  */
 pure nothrow @nogc @safe GDN!Deg truncPow2(ulong Deg)(in GDN!Deg g)
-out (f; f.val == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")
+out (f; f == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")
 {
     return  sgn(g) * 2^^floor(log2(fabs(g)));
 }
