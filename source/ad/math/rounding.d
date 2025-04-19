@@ -1,13 +1,15 @@
 /// It extends `std.math.rounding` to support `GDN` objects.
 module ad.math.rounding;
 
+static import core.math;
 static import std.math.rounding;
 
-import std.math: isFinite;
+import std.math: isFinite, isNaN, nearbyint, signbit;
 
 import ad.core;
 import ad.math.internal: dirac;
-import ad.math.traits: asReal, isFinite;
+import ad.math.operations: nextDown, nextUp;
+import ad.math.traits: asReal, isFinite, isInfinity;
 
 
 /**
@@ -99,3 +101,83 @@ unittest
     assert(floor(GDN!2(2.3)) is GDN!2(2, 0, 0));
     assert(floor(GDN!1(0, -1/LN2)) is GDN!1(0, -real.infinity));
 }
+
+
+/**
+ * Rounds `g` to the nearest integer value, using the current rounding mode. If the return value is
+ * not identical to `g`, the `FE_INEXACT` exception is raised.
+ *
+ * If $(MATH f(g(x)) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
+ * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object to be rounded.
+ *
+ * Returns:
+ *   A `GDN` object representing the rounded value of `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
+{
+    const f = core.math.rint(g.val);
+
+    auto dfdg = GDN!Deg.mkZeroDeriv();
+    if (isInfinity(g)) {
+        dfdg = GDN!Deg.mkNaNDeriv();
+    } else {
+        auto fn = nearbyint(nextDown(g).val);
+        auto fp = nearbyint(nextUp(g).val);
+
+        if (f == 0) {
+            if (signbit(f) == 1) {
+                fp = f;
+            } else {
+                fn = f;
+            }
+        }
+
+        if (fn != fp) {
+            dfdg = dirac(g.reduce() - g.val);
+        }
+    }
+
+    return GDN!Deg(f, dfdg*g.d);
+}
+
+///
+unittest
+{
+    import std.math: ieeeFlags, resetIeeeFlags;
+
+    resetIeeeFlags();
+    const e = rint(GDN!2(1.5));
+    assert(ieeeFlags.inexact);
+    assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
+}
+
+unittest
+{
+    import std.math: ieeeFlags, resetIeeeFlags;
+
+    assert(rint(GDN!1.infinity) is GDN!1(real.infinity, real.nan));
+
+    resetIeeeFlags();
+    const w = rint(GDN!1.one);
+    assert(!ieeeFlags.inexact);
+    assert(w is GDN!1.one);
+
+    const f = rint(GDN!2(1.5));
+    assert(f == 2 && f.d == real.infinity && isNaN(f.d!2));
+
+    assert(rint(GDN!1(-0.)) is GDN!1(-0., 0));
+    assert(rint(GDN!1(+0.)) is GDN!1(+0., 0));
+}
+
+
+// TODO: Implement lround
+// TODO: Implement nearbyint
+// TODO: Implement quantize
+// TODO: Implement rint
+// TODO: Implement rndtol
+// TODO: Implement round
+// TODO: Implement trunc
