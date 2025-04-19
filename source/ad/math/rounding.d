@@ -4,7 +4,7 @@ module ad.math.rounding;
 static import core.math;
 static import std.math.rounding;
 
-import std.math: isFinite, isNaN, nearbyint, signbit;
+import std.math: FloatingPointControl, isFinite, isNaN, nearbyint, signbit;
 
 import ad.core;
 import ad.math.internal: dirac;
@@ -103,30 +103,17 @@ unittest
 }
 
 
-/**
- * Rounds `g` to the nearest integer value, using the current rounding mode. If the return value is
- * not identical to `g`, the `FE_INEXACT` exception is raised.
- *
- * If $(MATH f(g(x)) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
- * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- *
- * Returns:
- *   A `GDN` object representing the rounded value of `g`.
- */
-pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
+private pragma(inline, true) pure nothrow @nogc @safe
+GDN!Deg nearbyint_impl(string impl, ulong Deg)(in GDN!Deg g)
 {
-    const f = core.math.rint(g.val);
+    mixin("const f = " ~ impl ~ "(g.val);");
 
     auto dfdg = GDN!Deg.mkZeroDeriv();
     if (isInfinity(g)) {
         dfdg = GDN!Deg.mkNaNDeriv();
     } else {
-        auto fn = nearbyint(nextDown(g).val);
-        auto fp = nearbyint(nextUp(g).val);
+        auto fn = std.math.rounding.nearbyint(nextDown(g).val);
+        auto fp = std.math.rounding.nearbyint(nextUp(g).val);
 
         if (f == 0) {
             if (signbit(f) == 1) {
@@ -144,6 +131,39 @@ pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
     return GDN!Deg(f, dfdg*g.d);
 }
 
+unittest
+{
+    enum impl = "std.math.rounding.nearbyint";
+
+    assert(nearbyint_impl!impl(GDN!1.infinity) is GDN!1(real.infinity, real.nan));
+
+    const f = nearbyint_impl!impl(GDN!2(1.5));
+    assert(f == 2 && f.d == real.infinity && isNaN(f.d!2));
+
+    assert(nearbyint_impl!impl(GDN!1(-0.)) is GDN!1(-0., 0));
+    assert(nearbyint_impl!impl(GDN!1(+0.)) is GDN!1(+0., 0));
+}
+
+
+/**
+ * Rounds `g` to the nearest integer value, using the current rounding mode. If the return value is
+ * not identical to `g`, the `FE_INEXACT` exception is raised.
+ *
+ * If $(MATH f(g(x)) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
+ * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object to be rounded.
+ *
+ * Returns:
+ *   A `GDN` object representing the rounded value of `g`.
+ */
+pragma(inline, true) pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
+{
+    return nearbyint_impl!"std.math.rounding.rint"(g);
+}
+
 ///
 unittest
 {
@@ -159,23 +179,41 @@ unittest
 {
     import std.math: ieeeFlags, resetIeeeFlags;
 
-    assert(rint(GDN!1.infinity) is GDN!1(real.infinity, real.nan));
-
     resetIeeeFlags();
     const w = rint(GDN!1.one);
     assert(!ieeeFlags.inexact);
     assert(w is GDN!1.one);
+}
 
-    const f = rint(GDN!2(1.5));
-    assert(f == 2 && f.d == real.infinity && isNaN(f.d!2));
 
-    assert(rint(GDN!1(-0.)) is GDN!1(-0., 0));
-    assert(rint(GDN!1(+0.)) is GDN!1(+0., 0));
+/**
+ * Rounds `g` to the nearest integer value, using the current rounding mode.
+ *
+ * If $(MATH f(g(x)) = nearbyint(g(x))), then $(MATH f' = (df/dg)g'), where
+ * $(MATH df/dg = 𝛿(g - m)), $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode
+ * split point.
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object to be rounded.
+ *
+ * Returns:
+ *   A `GDN` object representing the rounded value of `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg nearbyint(ulong Deg)(in GDN!Deg g)
+{
+    return nearbyint_impl!"std.math.rounding.nearbyint"(g);
+}
+
+///
+unittest
+{
+    const e = nearbyint(GDN!2(1.5));
+    assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
 }
 
 
 // TODO: Implement lround
-// TODO: Implement nearbyint
 // TODO: Implement quantize
 // TODO: Implement rint
 // TODO: Implement rndtol

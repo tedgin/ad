@@ -29,11 +29,11 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * `std.math.rounding`
     * `ceil`
     * `floor`
-    * `lrint`
+    * `lrint` (not implemented yet)
     * `lround` (not implemented yet)
-    * `nearbyint` (not implemented yet)
+    * `nearbyint`
     * `quantize` (not implemented yet)
-    * `rint` (not implemented yet)
+    * `rint`
     * `rndtol` (not implemented yet)
     * `round` (not implemented yet)
     * `trunc` (not implemented yet)
