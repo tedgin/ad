@@ -103,6 +103,31 @@ unittest
 }
 
 
+/**
+ * Rounds `g` to the nearest integer value, using the current rounding mode.
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object to be rounded.
+ *
+ * Returns:
+ *   An integer representing the rounded value of `g`.
+ */
+pure nothrow @nogc @trusted long lrint(ulong Deg)(in GDN!Deg g)
+{
+    return std.math.rounding.lrint(g.val);
+}
+
+///
+unittest
+{
+    assert(lrint(GDN!1(1.5)) == 2L);
+}
+
+
+// TODO: Implement lround
+
+
 private pragma(inline, true) pure nothrow @nogc @safe
 GDN!Deg nearbyint_impl(string impl, ulong Deg)(in GDN!Deg g)
 {
@@ -142,6 +167,33 @@ unittest
 
     assert(nearbyint_impl!impl(GDN!1(-0.)) is GDN!1(-0., 0));
     assert(nearbyint_impl!impl(GDN!1(+0.)) is GDN!1(+0., 0));
+}
+
+
+/**
+ * Rounds `g` to the nearest integer value, using the current rounding mode.
+ *
+ * If $(MATH f(g(x)) = nearbyint(g(x))), then $(MATH f' = (df/dg)g'), where
+ * $(MATH df/dg = 𝛿(g - m)), $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode
+ * split point.
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object to be rounded.
+ *
+ * Returns:
+ *   A `GDN` object representing the rounded value of `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg nearbyint(ulong Deg)(in GDN!Deg g)
+{
+    return nearbyint_impl!"std.math.rounding.nearbyint"(g);
+}
+
+///
+unittest
+{
+    const e = nearbyint(GDN!2(1.5));
+    assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
 }
 
 
@@ -186,36 +238,7 @@ unittest
 }
 
 
-/**
- * Rounds `g` to the nearest integer value, using the current rounding mode.
- *
- * If $(MATH f(g(x)) = nearbyint(g(x))), then $(MATH f' = (df/dg)g'), where
- * $(MATH df/dg = 𝛿(g - m)), $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode
- * split point.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- *
- * Returns:
- *   A `GDN` object representing the rounded value of `g`.
- */
-pure nothrow @nogc @safe GDN!Deg nearbyint(ulong Deg)(in GDN!Deg g)
-{
-    return nearbyint_impl!"std.math.rounding.nearbyint"(g);
-}
-
-///
-unittest
-{
-    const e = nearbyint(GDN!2(1.5));
-    assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
-}
-
-
-// TODO: Implement lround
 // TODO: Implement quantize
-// TODO: Implement rint
 // TODO: Implement rndtol
 // TODO: Implement round
 // TODO: Implement trunc
