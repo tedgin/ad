@@ -113,7 +113,7 @@ unittest
  * Returns:
  *   An integer representing the rounded value of `g`.
  */
-pure nothrow @nogc @trusted long lrint(ulong Deg)(in GDN!Deg g)
+pure nothrow @nogc @safe long lrint(ulong Deg)(in GDN!Deg g)
 {
     return std.math.rounding.lrint(g.val);
 }
@@ -121,11 +121,30 @@ pure nothrow @nogc @trusted long lrint(ulong Deg)(in GDN!Deg g)
 ///
 unittest
 {
-    assert(lrint(GDN!1(1.5)) == 2L);
+    assert(lrint(GDN!1(1.9)) == 2L);
 }
 
 
-// TODO: Implement lround
+/**
+ * Returns the value of a `GDN` rounded to the nearest integer.
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object to be rounded.
+ * Returns:
+ *   An integer representing the rounded value of `g`.
+ */
+nothrow @nogc @safe long lround(ulong Deg)(in GDN!Deg g)
+{
+    return std.math.rounding.lround(g.val);
+}
+
+///
+unittest
+{
+    assert(lround(GDN!1(1.5)) == 2L);
+    assert(lround(GDN!1(-0.5)) == -1L);
+}
 
 
 private pragma(inline, true) pure nothrow @nogc @safe
