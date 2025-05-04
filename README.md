@@ -10,10 +10,10 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * `std.math.algebraic`
   * `std.math.constants`
   * `std.math.exponential`
-    * `exp` (not implemented yet)
-    * `exp2` (not implemented yet)
-    * `expm1` (not implemented yet)
-    * `frexp` (not implemented yet)
+    * `exp`
+    * `exp2`
+    * `expm1`
+    * `frexp`
     * `ilogb` (not implemented yet)
     * `ldexp` (not implemented yet)
     * `log` (not implemented yet)
@@ -30,7 +30,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `ceil`
     * `floor`
     * `lrint`
-    * `lround` (not implemented yet)
+    * `lround`
     * `nearbyint`
     * `quantize` (not implemented yet)
     * `rint`
