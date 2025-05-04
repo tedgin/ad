@@ -4,14 +4,14 @@ module ad.math.operations;
 static import std.math.operations;
 
 import std.algorithm: min;
-import std.math.algebraic: abs;
-import std.math.hardware: ieeeFlags, resetIeeeFlags;
+import std.math: abs, isNaN, signbit;
 import std.range: ElementType, empty, front, isInputRange, popFront;
 import std.traits: isImplicitlyConvertible, Select;
 
+static import ad.math.internal;
+
 import ad.core;
-import ad.math.traits:
-    areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isNaN, isOne, sgn, signbit;
+import ad.math.internal: areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isOne, sgn;
 
 
 /// The default relative difference for operations
@@ -36,8 +36,9 @@ enum real DEFAULT_REL_DIFF = 10.0L ^^ -((real.dig + 1)/2 + 1);
  *   a negative value if `x` precedes `y`, `0` if `x` and `y` are identical, and a positive value
  *   otherwise.
  */
-pure nothrow @nogc @safe int cmp(X, Y)(in X x, in Y y)
-if (isOne!(isGDN, X, Y) && areAll!(isGDNOrReal, X, Y)) {
+pure nothrow @nogc @safe
+int cmp(X, Y)(in X x, in Y y) if (isOne!(isGDN, X, Y) && areAll!(isGDNOrReal, X, Y))
+{
     static if (isImplicitlyConvertible!(X, real))
         alias Deg = Y.DEGREE;
     else static if (isImplicitlyConvertible!(Y, real))
@@ -100,8 +101,9 @@ unittest
  * Returns:
  *   the number of mantissa bits which are equal in `x` and `y`.
  */
-pure nothrow @nogc @safe int feqrel(X, Y)(in X x, in Y y)
-if (isGDNOrReal!X && isGDNOrReal!Y && (isGDN!X || isGDN!Y)) {
+pure nothrow @nogc @safe
+int feqrel(X, Y)(in X x, in Y y) if (isGDNOrReal!X && isGDNOrReal!Y && (isGDN!X || isGDN!Y))
+{
     return std.math.operations.feqrel(asReal(x), asReal(y));
 }
 
@@ -142,14 +144,16 @@ unittest
  */
 pure nothrow @nogc @safe
 bool isClose(T, U)(in T lhs, in U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
-if (areAll!(isGDNOrReal, T, U) && isOne!(isGDN, T, U)) {
+if (areAll!(isGDNOrReal, T, U) && isOne!(isGDN, T, U))
+{
     return std.math.operations.isClose(asReal(lhs), asReal(rhs), maxRelDiff, maxAbsDiff);
 }
 
 /// ditto
 pure nothrow @nogc @safe
 bool isClose(T, U)(in T lhs, U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
-if (isGDNOrReal!T && isInputRange!U && isGDNOrReal!(ElementType!U)) {
+if (isGDNOrReal!T && isInputRange!U && isGDNOrReal!(ElementType!U))
+{
     for(; !rhs.empty; rhs.popFront()) {
         if (!isClose(lhs, rhs.front, maxRelDiff, maxAbsDiff)) {
             return false;
@@ -162,7 +166,8 @@ if (isGDNOrReal!T && isInputRange!U && isGDNOrReal!(ElementType!U)) {
 /// ditto
 pure nothrow @nogc @safe
 bool isClose(T, U)(T lhs, in U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
-if (isInputRange!T && isGDNOrReal!(ElementType!T) && isGDNOrReal!U) {
+if (isInputRange!T && isGDNOrReal!(ElementType!T) && isGDNOrReal!U)
+{
     for(; !lhs.empty; lhs.popFront()) {
         if (!isClose(lhs.front, rhs, maxRelDiff, maxAbsDiff)) {
             return false;
@@ -175,7 +180,8 @@ if (isInputRange!T && isGDNOrReal!(ElementType!T) && isGDNOrReal!U) {
 /// ditto
 pure nothrow @nogc @safe
 bool isClose(T, U)(T lhs, U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
-if (areAll!(isInputRange, T, U) && areAll!(isGDNOrReal, ElementType!T, ElementType!U)) {
+if (areAll!(isInputRange, T, U) && areAll!(isGDNOrReal, ElementType!T, ElementType!U))
+{
     for(;; lhs.popFront(), rhs.popFront()) {
         if (lhs.empty) return rhs.empty;
         if (rhs.empty) return lhs.empty;
@@ -294,7 +300,7 @@ CommonGDN!(G, H) fdim(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     alias Deg = typeof(return).DEGREE;
 
     const gmh = asGDN!Deg(g) - asGDN!Deg(h);
-    if (signbit(gmh) == 1 && !isNaN(gmh)) return GDN!Deg.zero;
+    if (signbit(gmh.val) == 1 && !isNaN(gmh.val)) return GDN!Deg.zero;
     return gmh;
 }
 
@@ -314,7 +320,7 @@ unittest
 
     assert(fdim(GDN!1(2) ,GDN!1(0)) is GDN!1(2, 0));
     assert(fdim(GDN!2(-2), GDN!2(0)) is GDN!2.zero);
-    assert(isNaN(fdim(GDN!1.nan, GDN!1(2))));
+    assert(isNaN(fdim(GDN!1.nan, GDN!1(2)).val));
 }
 
 
@@ -337,7 +343,8 @@ unittest
  *   the resulting generalized dual number
  */
 pure nothrow @nogc @safe CommonGDN!(G, H, I) fma(G, H, I)(in G g, in H h, in I i)
-if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I)) {
+if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
+{
     alias Deg = typeof(return).DEGREE;
 
     const gg = asGDN!Deg(g);
@@ -383,7 +390,7 @@ CommonGDN!(G, H) fmax(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
-    if (isNaN(gg) || hh > gg) {
+    if (isNaN(gg.val) || hh > gg) {
         return hh;
     } else {
         return gg;
@@ -432,7 +439,7 @@ CommonGDN!(G, H) fmin(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
-    if (isNaN(gg) || hh < gg) {
+    if (isNaN(gg.val) || hh < gg) {
         return hh;
     } else {
         return gg;
@@ -495,28 +502,27 @@ unittest
     import std.format: format;
 
     const q = nextafter(GDN!1(1), GDN!1(1));
-    assert(q == 1 && std.math.isNaN(q.d), format("nextafter(GDN!1(1), GDN!1(1)) != %s", q));
+    assert(q == 1 && isNaN(q.d), format("nextafter(GDN!1(1), GDN!1(1)) != %s", q));
 
     const f = nextafter(GDN!1(1), GDN!2(0));
     assert(f is GDN!1(1 - real.epsilon/2), format("nextafter(GDN!1(1), GDN!2(0)) != %s", f));
 
-    assert(isNaN(nextafter(GDN!1.nan, GDN!1(2))));
+    assert(isNaN(nextafter(GDN!1.nan, GDN!1(2)).val));
 
     const w = nextafter(GDN!1(1, real.infinity), GDN!1(2, 0));
     assert(
-        w == 1 + real.epsilon && std.math.isNaN(w.d),
+        w == 1 + real.epsilon && isNaN(w.d),
         format("nextafter(GDN!1(1, real.infinity), GDN!1(2, 0)) != %s", w));
 
     const e = nextafter(GDN!1(1), GDN!1(2, real.infinity));
-    assert(e == 1 + real.epsilon && std.math.isNaN(e.d));
+    assert(e == 1 + real.epsilon && isNaN(e.d));
 
     const r = nextafter(GDN!1(real.infinity), GDN!1(1));
     assert(
-        r == real.max && std.math.isNaN(r.d),
-        format("nextafter(GDN!1(real.infinity), GDN!1(1)) != %s", r));
+        r == real.max && isNaN(r.d), format("nextafter(GDN!1(real.infinity), GDN!1(1)) != %s", r));
 
     const t = nextafter(GDN!1(real.infinity), GDN!1(real.infinity));
-    assert(t == real.infinity && std.math.isNaN(t.d));
+    assert(t == real.infinity && isNaN(t.d));
 }
 
 
@@ -534,19 +540,13 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
 {
-    const f = std.math.operations.nextDown(g.val);
-    return GDN!Deg(f, std.math.isNaN(f) ? GDN!Deg.mkNaNDeriv() : g.d);
+    return ad.math.internal.nextDown(g);
 }
 
 ///
 unittest
 {
     assert(nextDown(GDN!2(1)) is GDN!2(1 - real.epsilon/2));
-}
-
-unittest
-{
-    assert(isNaN(nextDown(GDN!1.nan)));
 }
 
 
@@ -564,17 +564,11 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg nextUp(ulong Deg)(in GDN!Deg g)
 {
-    const f = std.math.operations.nextUp(g.val);
-    return GDN!Deg(f, std.math.isNaN(f) ? GDN!Deg.mkNaNDeriv() : g.d);
+    return ad.math.internal.nextUp(g);
 }
 
 ///
 unittest
 {
     assert(nextUp(GDN!2(1)) is GDN!2(1 + real.epsilon));
-}
-
-unittest
-{
-    assert(isNaN(nextUp(GDN!1.nan)));
 }

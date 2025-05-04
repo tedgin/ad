@@ -4,12 +4,12 @@ module ad.math.rounding;
 static import core.math;
 static import std.math.rounding;
 
-import std.math: FloatingPointControl, isFinite, isNaN, nearbyint, signbit;
+import std.math: FloatingPointControl, isFinite, isInfinity, isNaN, nearbyint, signbit;
+
+static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: dirac;
-import ad.math.operations: nextDown, nextUp;
-import ad.math.traits: asReal, isFinite, isInfinity;
+import ad.math.internal: asReal, dirac, nextDown, nextUp;
 
 
 /**
@@ -26,17 +26,7 @@ import ad.math.traits: asReal, isFinite, isInfinity;
  */
 pure nothrow @nogc @safe GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        const f_red = std.math.rounding.ceil(g.reduce());
-    else
-        const f_red = ceil(g.reduce());
-
-    GDN!Deg.DerivType!1 df;
-    if (isFinite(g)) {
-        df = g.d * dirac(g.reduce() - f_red);
-    }
-
-    return GDN!Deg(asReal(f_red), df);
+    return ad.math.internal.ceil(g);
 }
 
 ///
@@ -46,16 +36,6 @@ unittest
     assert(ceil(GDN!1(-1.4)) is GDN!1(-1, 0));
 }
 
-unittest
-{
-    import std.math: LN2;
-
-    assert(ceil(GDN!1.nan) is GDN!1.nan);
-    assert(ceil(GDN!1(real.infinity)) is GDN!1(real.infinity, real.nan));
-    assert(ceil(GDN!1(-real.infinity)) is GDN!1(-real.infinity, real.nan));
-    assert(ceil(GDN!2(2.3)) is GDN!2(3, 0, 0));
-    assert(ceil(GDN!1(0, -1/LN2)) is GDN!1(0, -real.infinity));
-}
 
 /**
  * Returns the value of `g` rounded downward to the nearest integer.
@@ -71,17 +51,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg floor(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        const f_red = std.math.rounding.floor(g.reduce());
-    else
-        const f_red = floor(g.reduce());
-
-    GDN!Deg.DerivType!1 df;
-    if (isFinite(g)) {
-        df = g.d * dirac(g.reduce() - f_red);
-    }
-
-    return GDN!Deg(asReal(f_red), df);
+    return ad.math.internal.floor(g);
 }
 
 ///
@@ -89,17 +59,6 @@ unittest
 {
     assert(floor(GDN!1(1)) is GDN!1(1, real.infinity));
     assert(floor(GDN!1(-1.4)) is GDN!1(-2, 0));
-}
-
-unittest
-{
-    import std.math: LN2;
-
-    assert(floor(GDN!1.nan) is GDN!1.nan);
-    assert(floor(GDN!1(real.infinity)) is GDN!1(real.infinity, real.nan));
-    assert(floor(GDN!1(-real.infinity)) is GDN!1(-real.infinity, real.nan));
-    assert(floor(GDN!2(2.3)) is GDN!2(2, 0, 0));
-    assert(floor(GDN!1(0, -1/LN2)) is GDN!1(0, -real.infinity));
 }
 
 
@@ -153,7 +112,7 @@ GDN!Deg nearbyint_impl(string impl, ulong Deg)(in GDN!Deg g)
     mixin("const f = " ~ impl ~ "(g.val);");
 
     auto dfdg = GDN!Deg.mkZeroDeriv();
-    if (isInfinity(g)) {
+    if (isInfinity(g.val)) {
         dfdg = GDN!Deg.mkNaNDeriv();
     } else {
         auto fn = std.math.rounding.nearbyint(nextDown(g).val);

@@ -3,13 +3,12 @@ module ad.math.exponential;
 
 static import std.math.exponential;
 
-import std.math.constants: E, LN2;
-import std.math.traits: sgn;
+import std.math: E, isInfinity, isNaN, LN2, sgn;
+
+static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: dirac;
-import ad.math.rounding: floor;
-import ad.math.traits: asReal, isInfinity, isNaN, sgn, signbit;
+import ad.math.internal: asReal, dirac, floor, sgn;
 
 
 /**
@@ -18,11 +17,11 @@ import ad.math.traits: asReal, isInfinity, isNaN, sgn, signbit;
  * If $(MATH f(x) = e$(SUP g(x))), then $(MATH f' = e$(SUP g)g').
  *
  * Params:
- *  Deg = the degree of the GDN
- *  g = the power $(MATH e) is raised to.
+ *   Deg = the degree of the GDN
+ *   g = the power $(MATH e) is raised to.
  *
  * Returns:
- *  A GDN object representing $(MATH e) raised to the power of `g`.
+ *   A GDN object representing $(MATH e) raised to the power of `g`.
  */
 nothrow pure @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
 {
@@ -59,11 +58,11 @@ unittest
  * $(MATH f(x) = 2$(SUP g(x))), then $(MATH f' = 2$(SUP g)g'ln(2))
  *
  * Params:
- *  Deg = the degree of `g`
- *  g = the `GDN` object for which the base-2 exponential is to be calculated.
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object for which the base-2 exponential is to be calculated.
  *
  * Returns:
- *  A `GDN` object representing the base-2 exponential of `g`.
+ *   A `GDN` object representing the base-2 exponential of `g`.
  */
 pure nothrow @nogc @safe GDN!Deg exp2(ulong Deg)(in GDN!Deg g)
 {
@@ -98,11 +97,11 @@ unittest
  * If $(MATH f(x) = e$(SUP g(x)) - 1), then $(MATH f' = e$(SUP g)g').
  *
  * Params:
- *  Deg = the degree of `g`
- *  g = the exponent
+ *   Deg = the degree of `g`
+ *   g = the exponent
  *
  * Returns:
- *  A `GDN` object representing $(MATH e$(SUP g) - 1).
+ *   A `GDN` object representing $(MATH e$(SUP g) - 1).
  */
 pure nothrow @nogc @safe GDN!Deg expm1(ulong Deg)(in GDN!Deg g)
 {
@@ -138,27 +137,27 @@ unittest
  *
  *
  * Params:
- *  Deg = the degree of `g`
- *  g = the `GDN` object to be separated.
- *  e = the exponent of `g`
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object to be separated.
+ *   e = the exponent of `g`
  *
  * Returns:
- *  A `GDN` object representing the significand of `g`.
+ *   A `GDN` object representing the significand of `g`.
  *
  * Special cases:
- *  - If `g` is ±0, then `f` is ±0, `f.d` is NaN, and `e` is 0.
- *  - If `g` is +∞, then `f` is +∞, `f.d` is NaN, and `e` is `int.max`.
- *  - If `g` is -∞, then `f` is -∞, `f.d` is NaN, and `e` is `int.min`.
- *  - If `g` is ±NaN, then `f` is ±NaN, `f.d` is NaN, and `e` is `int.min`.
+ *   - If `g` is ±0, then `f` is ±0, `f.d` is NaN, and `e` is 0.
+ *   - If `g` is +∞, then `f` is +∞, `f.d` is NaN, and `e` is `int.max`.
+ *   - If `g` is -∞, then `f` is -∞, `f.d` is NaN, and `e` is `int.min`.
+ *   - If `g` is ±NaN, then `f` is ±NaN, `f.d` is NaN, and `e` is `int.min`.
  */
 pure nothrow @nogc @safe GDN!Deg frexp(ulong Deg)(in GDN!Deg g, out int e)
 {
-    if (isNaN(g)) {
+    if (isNaN(g.val)) {
         e = int.min;
         return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv);
     }
 
-    if (isInfinity(g)) {
+    if (isInfinity(g.val)) {
         e = sgn(g) == 1 ? int.max : int.min;
         return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv);
     }
@@ -273,8 +272,7 @@ nothrow pure @safe GDN!Deg log(ulong Deg)(in GDN!Deg x)
  */
 pure nothrow @nogc @safe GDN!Deg log2(ulong Deg)(in GDN!Deg g)
 {
-    const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : g.d/(LN2 * g.reduce());
-    return GDN!Deg(std.math.exponential.log2(g.val), df);
+    return ad.math.internal.log2(g);
 }
 
 ///
@@ -287,11 +285,6 @@ unittest
     assert(log2(GDN!1(+0.)) is GDN!1(-real.infinity, real.infinity));
 }
 
-unittest
-{
-    assert(log2(GDN!2(1)) is GDN!2(0, 1/LN2, -1/LN2));
-    assert(log2(GDN!1(1, -1)) is GDN!1(0, -1/LN2));
-}
 
 
 // TODO: implement logb

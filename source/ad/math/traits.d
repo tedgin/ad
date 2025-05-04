@@ -3,12 +3,12 @@ module ad.math.traits;
 
 static import std.math.traits;
 
-import std.algorithm: min;
-import std.traits:
-    fullyQualifiedName, isFloatingPoint, isImplicitlyConvertible, isIntegral, TemplateOf;
+import std.traits: isFloatingPoint, isIntegral;
+
+static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: dirac;
+import ad.math.internal: asReal, dirac, minDeg;
 
 
 /**
@@ -22,12 +22,7 @@ import ad.math.internal: dirac;
  * Returns:
  *   It returns `true` if every member of `TS` satisfies `Test`.
  */
-enum bool areAll(alias Test, TS...) = {
-    auto res = true;
-    static foreach(T; TS)
-        static if (!Test!T) res = false;
-    return res;
-}();
+enum bool areAll(alias Test, TS...) = ad.math.internal.areAll!(Test, TS);
 
 ///
 unittest
@@ -52,12 +47,7 @@ unittest
  * Returns:
  *   It returns `true` if at least one member of `TS` satisfies `Test`.
  */
-enum bool isOne(alias Test, TS...) = {
-    auto res = false;
-    static foreach(T; TS)
-        static if (Test!T) res = true;
-    return res;
-}();
+enum bool isOne(alias Test, TS...) = ad.math.internal.isOne!(Test, TS);
 
 ///
 unittest
@@ -81,7 +71,7 @@ unittest
  * Returns:
  *   `true` if `T` is a `GDN`, otherwise `false`.
  */
-enum bool isGDN(T) = fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN";
+enum bool isGDN(T) = ad.math.internal.isGDN!(T);
 
 ///
 unittest
@@ -100,35 +90,13 @@ unittest
  * Returns:
  *   `true` if `T` is a `GDN` or implicitly convertible to `real`, otherwise `false`.
  */
-enum bool isGDNOrReal(T) = isGDN!T || isImplicitlyConvertible!(T, real);
+enum bool isGDNOrReal(T) = ad.math.internal.isGDNOrReal!(T);
 
 ///
 unittest
 {
     static assert(isGDNOrReal!(GDN!2));
     static assert(isGDNOrReal!double);
-}
-
-
-// Determines the minimum GDN degree for a sequence of types. Only GDN types are considered. If no
-// GDN types are present, the result is 0.
-private enum minDeg(T...) = {
-    bool foundGDN = false;
-    ulong commonDeg = ulong.max;
-    static foreach (U; T) {
-        static if (isGDN!U) {
-            foundGDN = true;
-            commonDeg = min(commonDeg, U.DEGREE);
-        }
-    }
-    return foundGDN ? commonDeg : 0;
-}();
-
-unittest
-{
-    static assert(minDeg!(GDN!2) == 2);
-    static assert(minDeg!char == 0);
-    static assert(minDeg!(GDN!32, GDN!2, real) == 2);
 }
 
 
@@ -142,56 +110,15 @@ unittest
  * Returns:
  *   The GDN type of least degree.
  */
-template CommonGDN(G...) if (isOne!(isGDN, G) && areAll!(isGDNOrReal, G)) {
-    alias CommonGDN = GDN!(minDeg!G);
+template CommonGDN(G...)
+{
+    alias CommonGDN = ad.math.internal.CommonGDN!G;
 }
 
 ///
 unittest
 {
     static assert(is(CommonGDN!(GDN!2, GDN!3, real) == GDN!2));
-}
-
-
-// Converts a GDN to a GDN of the specified degree.
-package pragma(inline, true) pure nothrow @nogc @safe
-GDN!Deg asGDN(ulong Deg, T)(in T t) if (isGDN!T)
-{
-    return cast(GDN!Deg) t;
-}
-
-unittest
-{
-    assert(asGDN!1(GDN!2(3)) is GDN!1(3));
-    assert(asGDN!2(GDN!2(3)) is GDN!2(3));
-    assert(asGDN!3(GDN!2(3)) is GDN!3(3));
-}
-
-// Converts a real to a constant GDN of the specified degree.
-package pragma(inline, true) pure nothrow @nogc @safe
-GDN!Deg asGDN(ulong Deg)(in real t) {
-    return GDN!Deg.mkConst(t);
-}
-
-unittest
-{
-    assert(asGDN!2(3) is GDN!2(3, 0, 0));
-}
-
-
-// Converts a GDN or something implicitly convertible to a real to a real.
-package pragma(inline, true) pure nothrow @nogc @safe real asReal(F)(in F f) if (isGDNOrReal!F)
-{
-    static if (isGDN!F)
-        return f.val;
-    else
-        return f;
-}
-
-unittest
-{
-    assert(asReal(GDN!2(3)) is 3.0L);
-    assert(asReal(1) is 1.0L);
 }
 
 
@@ -407,8 +334,9 @@ unittest
  * Returns:
  *   `to` with the same sign as `from`
  */
-pure nothrow @nogc @safe GDN!TDeg copysign(G, ulong TDeg)(in GDN!TDeg to, in G from)
-if (isGDNOrReal!G) {
+pure nothrow @nogc @safe
+GDN!TDeg copysign(G, ulong TDeg)(in GDN!TDeg to, in G from) if (isGDNOrReal!G)
+{
     return GDN!TDeg(std.math.traits.copysign(to.val, asReal(from)), to.d);
 }
 
@@ -456,7 +384,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg sgn(ulong Deg)(in GDN!Deg g)
 {
-    return GDN!Deg(std.math.traits.sgn(g.val), 2*dirac(g.reduce())*g.d);
+    return ad.math.internal.sgn(g);
 }
 
 ///
@@ -464,14 +392,4 @@ unittest
 {
     assert(isIdentical(sgn(GDN!1(-2)), GDN!1(-1, 0)));
     assert(isIdentical(sgn(GDN!1(0)), GDN!1(0, real.infinity)));
-}
-
-unittest
-{
-    assert(isIdentical(sgn(GDN!1()), GDN!1.nan));
-    assert(isIdentical(sgn(GDN!1(0, real.nan)), GDN!1(0, real.nan)));
-    assert(isIdentical(sgn(GDN!2(1.0L, 2.0L, real.nan)), GDN!2(1.0L, 0.0L, real.nan)));
-    assert(isIdentical(sgn(GDN!1(real.infinity, 0)), GDN!1(1, 0)));
-    assert(isIdentical(sgn(GDN!1(-real.infinity, 0)), GDN!1(-1, 0)));
-    assert(isIdentical(sgn(GDN!1(-1)), GDN!1(-1, 0)));
 }

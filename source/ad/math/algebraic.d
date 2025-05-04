@@ -5,13 +5,14 @@ static import core.math;
 static import std.math.algebraic;
 
 import std.algorithm: min;
+import std.math: isInfinity, signbit;
 import std.traits: isFloatingPoint, isImplicitlyConvertible, Select;
 
+static import ad.math.internal;
+
 import ad.core;
-import ad.math.exponential: log2;
-import ad.math.rounding: ceil, floor;
-import ad.math.traits:
-    areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isInfinity, isOne, sgn, signbit;
+import ad.math.internal:
+    areAll, asGDN, asReal, ceil, CommonGDN, floor, isGDN, isGDNOrReal, isOne, log2, sgn;
 
 
 /**
@@ -28,7 +29,7 @@ import ad.math.traits:
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
 {
-    const df_val = signbit(g) == 0 ? 1.0L : -1.0L;
+    const df_val = signbit(g.val) == 0 ? 1.0L : -1.0L;
 
     static if (Deg == 1)
         const df = df_val;
@@ -77,31 +78,14 @@ unittest
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
 {
-    const dfdg = signbit(g) == 1 ? GDN!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
-    return GDN!Deg(core.math.sqrt(g.val), dfdg * g.d);
+    return ad.math.internal.sqrt(g);
 }
 
 ///
 unittest
 {
     assert(sqrt(GDN!2(1)) is GDN!2(1, 0.5, -0.25));
-    // f = 1
-    // <f',f"> = <1,0>/[2*sqrt(<1,1>)] = .5<1,0><1,1>^-.5 = <.5,-.25>
-
     assert(sqrt(GDN!1(+0.)) is GDN!1(0, real.infinity));
-}
-
-unittest
-{
-    import std.format: format;
-    import ad.math.traits: isNaN;
-
-    assert(sqrt(GDN!1(-0.)) is GDN!1(-0., real.nan), "sqrt(-0) incorrect");
-
-    const x = sqrt(-GDN!1.one);
-    assert(isNaN(x), format("sqrt(-1) = %s, should be %s", x, GDN!1.nan));
-
-    assert(sqrt(GDN!1.infinity) is GDN!1(real.infinity, 0), "sqrt(inf) incorrect");
 }
 
 
@@ -124,7 +108,7 @@ nothrow @nogc @safe GDN!Deg cbrt(ulong Deg)(in GDN!Deg g)
     }
 
     const p = -2.0L / 3;
-    const g_pow = isInfinity(g) && g < 0 ? -(-g.reduce())^^p : g.reduce()^^p;
+    const g_pow = isInfinity(g.val) && g < 0 ? -(-g.reduce())^^p : g.reduce()^^p;
     return GDN!Deg(std.math.algebraic.cbrt(g.val), g.d * g_pow / 3);
 }
 

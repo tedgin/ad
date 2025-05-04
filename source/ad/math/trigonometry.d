@@ -4,10 +4,10 @@ module ad.math.trigonometry;
 static import core.math;
 static import std.math.trigonometry;
 
-import std.math.algebraic: sqrt;
+import std.math: sqrt;
 
 import ad.core;
-import ad.math.algebraic: sqrt;
+import ad.math.internal: sqrt;
 
 
 /**
