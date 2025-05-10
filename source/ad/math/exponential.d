@@ -229,7 +229,28 @@ unittest
 }
 
 
-// TODO: implement ilogb
+/**
+ * Extracts the exponent of g as a signed integral value.
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the GDN to find the exponent of
+ *
+ * Returns:
+ *   the integral exponent of g
+ */
+pure nothrow @nogc @safe int ilogb(ulong Deg)(in GDN!Deg g)
+{
+    return std.math.exponential.ilogb(g.val);
+}
+
+///
+unittest
+{
+    assert(ilogb(GDN!1.one) == 0);
+}
+
+
 // TODO: implement ldexp
 
 
