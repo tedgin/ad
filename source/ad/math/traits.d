@@ -198,7 +198,7 @@ unittest
  */
 pure nothrow @nogc @safe bool isInfinity(ulong Deg)(in GDN!Deg f)
 {
-    return std.math.traits.isInfinity(f.val);
+    return ad.math.internal.isInfinity(f);
 }
 
 ///
@@ -220,7 +220,7 @@ unittest
  */
 pure nothrow @nogc @safe bool isNaN(ulong Deg)(in GDN!Deg f)
 {
-    return std.math.traits.isNaN(f.val);
+    return ad.math.internal.isNaN(f);
 }
 
 ///

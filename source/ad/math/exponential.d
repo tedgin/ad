@@ -10,7 +10,8 @@ import std.traits: isIntegral, Select;
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: areAll, asReal, CommonGDN, dirac, floor, isGDN, isGDNOrReal, isOne, sgn;
+import ad.math.internal:
+    areAll, asReal, CommonGDN, dirac, floor, isGDN, isGDNOrReal, isInfinity, isNaN, isOne, sgn;
 
 
 /**
@@ -130,14 +131,6 @@ unittest
 /**
  * Separates a `GDN` into its significand and exponent.
  *
- * If $(MATH g(x) = f(x)2$(SUP e(x))) where $(MATH ½ ≤ f < 1) and $MATH(e : ℝ ↦ ℤ), then
- * $(MATH f = g⋅2$(SUP -e)) and $(MATH f' = g'⋅2$(SUP -e) - ln(2)g⋅2$(SUP -e)e'). $(MATH e) is
- * constant when $(MATH f ≠ ½). When $(MATH f = ½), $(MATH e) jumps by $(MATH sgn(g')). This means
- * that $(MATH e' = sgn(g')𝛿(g⋅2$(SUP -e) - ½)). Thus
- * $(MATH f' = g'⋅2$(SUP -e) - ln(2)g⋅2$(SUP -e)sgn(g')𝛿(g⋅2$(SUP -e) - ½)), which simplifies to
- * $(MATH f' = (g' - ln(2)sgn(g')g⋅𝛿(g⋅2$(SUP -e) - ½))2$(SUP -e)).
- *
- *
  * Params:
  *   Deg = the degree of `g`
  *   g = the `GDN` object to be separated.
@@ -154,79 +147,50 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg frexp(ulong Deg)(in GDN!Deg g, out int e)
 {
-    if (isNaN(g.val)) {
-        e = int.min;
-        return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv);
+    std.math.exponential.frexp(g.val, e);
+
+    if (g == 0 || isInfinity(g) || isNaN(g)) {
+        return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv());
     }
 
-    if (isInfinity(g.val)) {
-        e = sgn(g) == 1 ? int.max : int.min;
-        return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv);
-    }
-
-    if (g == 0) {
-        e = 0;
-        return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv);
-    }
-
-    const f_val = std.math.exponential.frexp(g.val, e);
-    const _2r_e = 2.0L^^(-e);
-
-    auto df = g.d * _2r_e;
-    if (f_val == 0.5 && g.d != 0) {
-        const g_red_scale = g.reduce() * _2r_e;
-        df = df - LN2 * sgn(g.d) * g_red_scale * dirac(g_red_scale - 0.5);
-    }
-
-    return GDN!Deg(f_val, df);
+    return g * 2.0L ^^ -e;
 }
 
 ///
 unittest
 {
     int e;
-
     const f = frexp(GDN!1(1.1), e);
     assert(f is GDN!1(0.55, 0.5) && e == 1);
-
-    const g = frexp(GDN!1(+0.), e);
-    assert(g is GDN!1(0, real.nan) && e == 0);
-
-    const h = frexp(GDN!1(-0.), e);
-    assert(h is GDN!1(-0., real.nan) && e == 0);
-
-    const i = frexp(GDN!1(real.infinity), e);
-    assert(i is GDN!1(real.infinity, real.nan) && e == int.max);
-
-    const j = frexp(GDN!1(-real.infinity), e);
-    assert(j is GDN!1(-real.infinity, real.nan) && e == int.min);
-
-    const k = frexp(GDN!1(real.nan), e);
-    assert(k is GDN!1(real.nan, real.nan) && e == int.min);
 }
 
-//  TODO: test frexp
 unittest
 {
     import std.format: format;
+    import std.math: signbit;
 
     int e;
-    const q = frexp(GDN!1(-real.nan), e);
-    assert(q is GDN!1(-real.nan, real.nan) && e == int.min);
 
-    const w = frexp(GDN!1(0.5, 0),e);
-    assert(w is GDN!1(0.5, 0) && e == 0);
+    const q = frexp(GDN!1(+0.), e);
+    assert(q == +0. && isNaN(q.d) && e == 0);
 
-    const r = frexp(GDN!1(0.5, 1), e);
-    // f' = 1 * 2^0 - ln(2) * sgn(1) * 0.5 * 2^0 * dirac(0.5 * 2^0 - 0.5)
-    //    = 1       - ln(2)          * 0.5       * dirac(0.5       - 0.5)
-    //    = 1       - ln(2)/2                    * inf
-    //    = -inf
-    assert(r is GDN!1(0.5, -real.infinity) && e == 0);
+    const w = frexp(GDN!1(-0.), e);
+    assert(w == -0. && isNaN(w.d) && e == 0);
 
-    const t = frexp(GDN!2(3), e);
-    // <f',f"> = <1,0> * 2^(-2) = <0.25, 0>
-    assert(t is GDN!2(0.75, 0.25, 0) && e == 2, format("frexp(GDN!2(1), %s) != %s", e, t));
+    const r = frexp(GDN!1(+real.infinity), e);
+    assert(r == +real.infinity && isNaN(r.d) && e == int.max);
+
+    const t = frexp(GDN!1(-real.infinity), e);
+    assert(t == -real.infinity && isNaN(r.d) && e == int.min);
+
+    const y = frexp(GDN!1(real.nan), e);
+    assert(signbit(y.val) == 0 && isNaN(y) && isNaN(y.d) && e == int.min);
+
+    const u = frexp(GDN!1(-real.nan), e);
+    assert(u is GDN!1(-real.nan, real.nan) && e == int.min);
+
+    const i = frexp(GDN!2(3), e);
+    assert(i is GDN!2(0.75, 0.25, 0) && e == 2, format("frexp(GDN!2(1), %s) != %s", e, i));
 }
 
 

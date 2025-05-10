@@ -125,6 +125,20 @@ package pure nothrow @nogc @safe
     }
 
 
+    // The implementation of isInfinity
+    pragma(inline, true) bool isInfinity(ulong Deg)(in GDN!Deg f)
+    {
+        return std.math.traits.isInfinity(f.val);
+    }
+
+
+    // The implementation of isNaN
+    pragma(inline, true) bool isNaN(ulong Deg)(in GDN!Deg f)
+    {
+        return std.math.traits.isNaN(f.val);
+    }
+
+
     // The implementation of isOne
     enum bool isOne(alias Test, TS...) = {
         auto res = false;
@@ -207,7 +221,7 @@ package pure nothrow @nogc @safe
     {
         alias pow_red = Select!(Deg == 1, std.math.exponential.pow, pow);
 
-        if (isNaN(g.val)) {
+        if (isNaN(g)) {
             return GDN!Deg.nan;
         }
 
@@ -219,7 +233,7 @@ package pure nothrow @nogc @safe
     {
         import std.format: format;
 
-        assert(isNaN(pow(GDN!1.nan, 1).val));
+        assert(isNaN(pow(GDN!1.nan, 1)));
         assert(pow(GDN!1(2, 3), 0) is GDN!1(1, 0));
 
         const q = pow(GDN!1(3, real.infinity), 0);
@@ -245,7 +259,7 @@ package pure nothrow @nogc @safe
 
     unittest
     {
-        assert(isNaN(nextDown(GDN!1.nan).val));
+        assert(isNaN(nextDown(GDN!1.nan)));
     }
 
 
@@ -258,7 +272,7 @@ package pure nothrow @nogc @safe
 
     unittest
     {
-        assert(isNaN(nextUp(GDN!1.nan).val));
+        assert(isNaN(nextUp(GDN!1.nan)));
     }
 }
 
