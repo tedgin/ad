@@ -111,10 +111,14 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     {
         _x = val;
 
-        static if (Degree == 1)
-            _dx = 1;
-        else
-            _dx = GDN!(Degree - 1)(1, GDN!(Degree - 1).mkZeroDeriv());
+        if (isNaN(_x)) {
+            _dx = mkNaNDeriv();
+        } else {
+            static if (Degree == 1)
+                _dx = 1;
+            else
+                _dx = GDN!(Degree - 1)(1, GDN!(Degree - 1).mkZeroDeriv());
+        }
     }
 
     /**
@@ -129,10 +133,14 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     {
         _x = derivVals[0];
 
-        static if (Degree == 1)
-            _dx = derivVals[1];
-        else
-            _dx = DerivType!1(derivVals[1 .. Degree + 1]);
+        if (isNaN(_x)) {
+            _dx = mkNaNDeriv();
+        } else {
+            static if (Degree == 1)
+                _dx = derivVals[1];
+            else
+                _dx = DerivType!1(derivVals[1 .. Degree + 1]);
+        }
     }
 
     /**
@@ -161,7 +169,12 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     package pure nothrow @nogc @safe this(in real val, in DerivType!1 derivs)
     {
         _x = val;
-        _dx = derivs;
+
+        if (isNaN(_x)) {
+            _dx = mkNaNDeriv();
+        } else {
+            _dx = derivs;
+        }
     }
 
     /*
@@ -327,7 +340,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     It is defined in this module instead of core, because it is required to compute the derivative
     of the ^^ operator.
     */
-    package pure nothrow @nogc @safe GDN log() const
+    pragma(inline, true) package pure nothrow @nogc @safe GDN log() const
     {
         static import std.math;
 
@@ -938,11 +951,6 @@ unittest
 // log
 unittest
 {
-    const p = GDN!2(1).log();
-    assert(p.val == 0, "log(1) is incorrect");
-    assert(p.d.val == 1, "derivative of log(1) is incorrect");
-    assert(p.d!2 == -1, "second derivative of log(1) should be -1");
-
     const e = GDN!1(-0.);
     const q = e.log();
     assert(isNaN(q.val) && isNaN(q.d), "log(-0) should be NaN");

@@ -16,7 +16,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `frexp`
     * `ilogb`
     * `ldexp`
-    * `log` (not implemented yet)
+    * `log`
     * `log10` (not implemented yet)
     * `log1p` (not implemented yet)
     * `log2`

@@ -242,25 +242,28 @@ unittest
 }
 
 
-/+ TODO: implement log
 /**
-This function computes the natural logarithm of its argument. It is analogous
-to std.math.log().
-
-Params:
-    x = the argument
-*/
-nothrow pure @safe real log(in real x)
+ * This function computes the natural logarithm of its argument.
+ *
+ * If $(MATH f(x) = ln(g(x))), then $(MATH f' = g'/g).
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the argument
+ *
+ * Returns:
+ *   the natural logarithm of `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg log(ulong Deg)(in GDN!Deg g)
 {
-    return std.math.log(x);
+    return g.log();
 }
 
-/// ditto
-nothrow pure @safe GDN!Deg log(ulong Deg)(in GDN!Deg x)
+///
+unittest
 {
-    return x.log();
+    assert(log(GDN!2(1)) is GDN!2(0, 1, -1));
 }
-+/
 
 
 // TODO: implement log10
