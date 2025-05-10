@@ -5,11 +5,13 @@ static import core.math;
 static import std.math.rounding;
 
 import std.math: FloatingPointControl, isFinite, isInfinity, isNaN, nearbyint, signbit;
+import std.traits: arity, isIntegral, Parameters, ReturnType;
 
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: asReal, dirac, nextDown, nextUp;
+import ad.math.internal:
+    areAll, asGDN, asReal, CommonGDN, dirac, isGDN, isGDNOrReal, isOne, nextDown, nextUp, pow;
 
 
 /**
@@ -191,7 +193,7 @@ unittest
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
 {
-    return nearbyint_impl!"std.math.rounding.rint"(g);
+   return nearbyint_impl!"std.math.rounding.rint"(g);
 }
 
 ///
@@ -216,7 +218,100 @@ unittest
 }
 
 
-// TODO: Implement quantize
+/**
+ * Round val to a multiple of unit. rfunc specifies the rounding function to use.
+ *
+ * Params:
+ *   V = the value type
+ *   U = the unit type
+ *   round = the rounding function to use
+ *   val = the value to round
+ *   unit = the unit to round to
+ *
+ * Returns:
+ *   The rounded value of `val` to the nearest multiple of `unit`.
+ */
+CommonGDN!(U, V) quantize(alias round=rint, U, V)(in V val, in U unit)
+if (is(typeof(round(CommonGDN!(U, V).init)) : CommonGDN!(U, V)))
+{
+    return quantize_impl!round(val, unit);
+}
+
+///
+unittest
+{
+    const q = quantize!nearbyint(GDN!1(5), GDN!1(3));
+    assert(q is GDN!1(6, 2));
+}
+
+/**
+ * Round `g` to a multiple of `base ^^ exp`. `rfunc` specifies the rounding function to use.
+ *
+ * Params:
+ *   G = the type of `g`
+ *   I = the exponent type
+ *   round = the rounding function to use
+ *   base = the base of the number to round to
+ *   g = the `GDN` object to round
+ *   exp = the exponent of the number to round to
+ *
+ * Returns:
+ *   The rounded `GDN` object.
+ */
+CommonGDN!(G, typeof(base)) quantize(alias base, alias round=rint, G, I)(in G g, in I exp)
+if (isOne!(isGDN, G, typeof(base))
+    && areAll!(isGDNOrReal, G, typeof(base))
+    && (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base)))
+    && isIntegral!I)
+{
+    alias Deg = typeof(return).DEGREE;
+    enum b = asGDN!Deg(base);
+    return quantize_impl!round(asGDN!Deg(g), pow(b, exp));
+}
+
+/// ditto
+CommonGDN!(G, typeof(base)) quantize(alias base, long exp=1, alias round=rint, G)(in G g)
+if (isOne!(isGDN, G, typeof(base))
+    && areAll!(isGDNOrReal, G, typeof(base))
+    && (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base))))
+{
+    alias Deg = typeof(return).DEGREE;
+    enum unit = pow(asGDN!Deg(base), exp);
+    return quantize_impl!round(asGDN!Deg(g), unit);
+}
+
+///
+unittest
+{
+    import ad.math.operations: isClose;
+
+    const f = quantize!10(GDN!1(345.678_9), -2);
+    assert(isClose(f, 345.68) && f.d == 0);
+
+    const g = quantize!(GDN!1(2))(GDN!1(1.6), -1);
+    assert(g is GDN!1(1.5, -0.75));
+
+    assert(quantize!22(GDN!1(12_345.678_9)) is GDN!1(12_342, 0));
+}
+
+unittest
+{
+}
+
+private pragma(inline, true)
+GDN!Deg quantize_impl(alias round, ulong Deg)(in GDN!Deg val, in GDN!Deg unit)
+if (is(typeof(round(GDN!Deg.init)) : GDN!Deg))
+{
+    return round(val / unit) * unit;
+}
+
+unittest
+{
+    const f = quantize_impl!rint(GDN!1(1.5), GDN!1(0.5, 0));
+    assert(f is GDN!1(1.5, 0));
+}
+
+
 // TODO: Implement rndtol
 // TODO: Implement round
 // TODO: Implement trunc

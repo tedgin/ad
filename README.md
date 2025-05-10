@@ -32,7 +32,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `lrint`
     * `lround`
     * `nearbyint`
-    * `quantize` (not implemented yet)
+    * `quantize`
     * `rint`
     * `rndtol` (not implemented yet)
     * `round` (not implemented yet)

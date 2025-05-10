@@ -9,7 +9,7 @@ static import std.math.traits;
 
 import std.algorithm: min;
 import std.math: isFinite, isNaN, LN2, signbit;
-import std.traits: fullyQualifiedName, isImplicitlyConvertible, TemplateOf;
+import std.traits: fullyQualifiedName, isImplicitlyConvertible, isIntegral, Select, TemplateOf;
 
 import ad.core;
 
@@ -200,6 +200,33 @@ package pure nothrow @nogc @safe
     {
         assert(log2(GDN!2(1)) is GDN!2(0, 1/LN2, -1/LN2));
         assert(log2(GDN!1(1, -1)) is GDN!1(0, -1/LN2));
+    }
+
+    // The implement of pow for GDN where the exponent is an integer
+    pragma(inline, true) GDN!Deg pow(I, ulong Deg)(in GDN!Deg g, in I n) if (isIntegral!I)
+    {
+        alias pow_red = Select!(Deg == 1, std.math.exponential.pow, pow);
+
+        if (isNaN(g.val)) {
+            return GDN!Deg.nan;
+        }
+
+        const df = n == 0 ? 0.0L * g.d : n * pow_red(g.reduce(), n-1) * g.d;
+        return GDN!Deg(std.math.exponential.pow(g.val, n), df);
+    }
+
+    unittest
+    {
+        import std.format: format;
+
+        assert(isNaN(pow(GDN!1.nan, 1).val));
+        assert(pow(GDN!1(2, 3), 0) is GDN!1(1, 0));
+
+        const q = pow(GDN!1(3, real.infinity), 0);
+        assert(q == 1 && isNaN(q.d));
+
+        assert(pow(GDN!1(-2, 2), -1) is GDN!1(-0.5, -0.5));
+        assert(pow(GDN!2(3), 2) is GDN!2(9, 6, 2));
     }
 }
 

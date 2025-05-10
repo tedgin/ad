@@ -4,11 +4,12 @@ module ad.math.exponential;
 static import std.math.exponential;
 
 import std.math: E, isInfinity, isNaN, LN2, sgn;
+import std.traits: isIntegral;
 
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: asReal, dirac, floor, sgn;
+import ad.math.internal: areAll, asReal, CommonGDN, dirac, floor, isGDN, isGDNOrReal, isOne, sgn;
 
 
 /**
@@ -290,38 +291,39 @@ unittest
 // TODO: implement logb
 
 
-/+ TODO: implement pow
+// TODO: implement pow
 /**
-This function computes the raises a given number to a given power. It is
-analogous to std.math.pow().
-
-Params:
-    x = the base
-    y = the exponent
-*/
-nothrow pure @safe real pow(in real x, real y)
+ * This function determines the value of a `GDN` raised to an integer power.
+ *
+ * If $(MATH f(x) = g(x)$(SUP n)), where $(MATH n ∈ ℤ), then if $(MATH n = 0), $(MATH f' = 0g'),
+ * otherwise $(MATH f' = ng$(SUP n-1)g').
+ *
+ * Params:
+ *   I = the integer type of the exponent
+ *   Deg = the degree of the `GDN` `g`
+ *   g = the GDN base
+ *   n = the exponent
+ *
+ * Returns:
+ *   It returns a `GDN` representing `g` raised of `n`.
+ */
+pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in GDN!Deg g, in I n) if (isIntegral!I)
 {
-    return std.math.pow(x, y);
+    return ad.math.internal.pow(g, n);
 }
 
-/// ditto
-nothrow pure @safe GDN!Deg pow(ulong Deg)(in GDN!Deg x, in real y)
+///
+unittest
 {
-    return x ^^ y;
+    assert(pow(GDN!1(2), 3) is GDN!1(8, 12));
 }
 
-/// ditto
-nothrow pure @safe GDN!Deg pow(ulong Deg)(in real x, in GDN!Deg y)
-{
-    return x ^^ y;
-}
+// TODO: implement
+// pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in I x, in GDN!Deg g) if (isIntegral!I);
 
-/// ditto
-nothrow pure @safe GDN!Deg pow(ulong Deg)(in GDN!Deg x, in GDN!Deg y)
-{
-    return x ^^ y;
-}
-+/
+// TODO: implement
+// pure nothrow @nogc @safe
+// CommonGDN!(G, H) pow(G, H)(G g, H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H));
 
 
 // TODO: implement powmod
