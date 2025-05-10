@@ -1,10 +1,11 @@
 /// It extends `std.math.exponential` to support `GDN` objects.
 module ad.math.exponential;
 
+static import core.math;
 static import std.math.exponential;
 
 import std.math: E, isInfinity, isNaN, LN2, sgn;
-import std.traits: isIntegral;
+import std.traits: isIntegral, Select;
 
 static import ad.math.internal;
 
@@ -251,7 +252,30 @@ unittest
 }
 
 
-// TODO: implement ldexp
+/**
+ * This function computes $(MATH 2$(SUP c)g).
+ *
+ * If $(MATH f(x) = 2$(SUP c)g(x)), then $(MATH f' = 2$(SUP c)g').
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the generalized dual number being scaled.
+ *   c = the power of $(MATH 2) used to scale `g`,
+ *
+ * Returns:
+ *   A `GDN` object resulting from the computation.
+ */
+pragma(inline, true) pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
+{
+    alias ldexp_red = Select!(Deg == 1, core.math.ldexp, ldexp);
+    return GDN!Deg(core.math.ldexp(g.val, c), ldexp_red(g.d, c));
+}
+
+///
+unittest
+{
+    assert(ldexp(GDN!2(1), 2) is GDN!2(4, 4, 0));
+}
 
 
 /+ TODO: implement log
