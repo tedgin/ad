@@ -78,6 +78,14 @@ package pure nothrow @nogc @safe
         return res;
     }();
 
+    // The implementation of areNone
+    enum bool areNone(alias Test, TS...) = {
+        auto res = true;
+        static foreach(T; TS)
+            static if (Test!T) res = false;
+        return res;
+    }();
+
     // The implementation of isGDN
     enum bool isGDN(T) = fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN";
 

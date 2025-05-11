@@ -36,6 +36,33 @@ unittest
     static assert(!areAll!(isFinal, C, FC));
 }
 
+
+/**
+ * Checks to see if a sequence of types all fail to satisfy a given criteria
+ *
+ * Params:
+ *   Test = the condition. It must take a single template argument and evaluate to a bool at compile
+ *       time.
+ *   TS = a sequence of types to test
+ *
+ * Returns:
+ *   It returns `true` if no member of `TS` satisfies `Test`.
+ */
+enum bool areNone(alias Test, TS...) = ad.math.internal.areNone!(Test, TS);
+
+///
+unittest
+{
+    import std.traits: hasElaborateAssign, isFinal;
+
+    class C {}
+    final class FC {}
+
+    static assert(areNone!(hasElaborateAssign, C, FC));
+    static assert(!areNone!(isFinal, C, FC));
+}
+
+
 /**
  * Determines if at least one type in a sequence of types satisfies a certain condition.
  *
