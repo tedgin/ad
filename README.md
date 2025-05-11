@@ -4,6 +4,9 @@ This is an automatic differentiation library written in D supporting one-dimensi
 
 ## Features
 
+<!-- TODO: reconsider these implementations, possibly some of them should be treated as
+differentiable functions. -->
+
 * supports all of D's arithmetic operators
 * support the same set of functions as `core.math`
 * supports the same set of functions as `std.math`
@@ -21,7 +24,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `log1p` (not implemented yet)
     * `log2`
     * `logb` (not implemented yet)
-    * `pow` (not implemented yet)
+    * `pow`
     * `powmod` (not implemented yet)
     * `scalebn` (not implemented yet)
   * `std.math.operations`

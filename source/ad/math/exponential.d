@@ -11,7 +11,8 @@ static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asReal, CommonGDN, dirac, floor, isGDN, isGDNOrReal, isInfinity, isNaN, isOne, sgn;
+    areAll, areNone, asReal, CommonGDN, dirac, floor, isGDN, isGDNOrReal, isInfinity, isNaN, isOne,
+    sgn;
 
 
 /**
@@ -303,7 +304,6 @@ unittest
 // TODO: implement logb
 
 
-// TODO: implement pow
 /**
  * This function determines the value of a `GDN` raised to an integer power.
  *
@@ -317,7 +317,7 @@ unittest
  *   n = the exponent
  *
  * Returns:
- *   It returns a `GDN` representing `g` raised of `n`.
+ *   It returns a `GDN` representing `g` raised to `n`.
  */
 pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in GDN!Deg g, in I n) if (isIntegral!I)
 {
@@ -330,13 +330,74 @@ unittest
     assert(pow(GDN!1(2), 3) is GDN!1(8, 12));
 }
 
-// TODO: implement
-// pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in I x, in GDN!Deg g) if (isIntegral!I);
+/**
+ * This function determine the value of a integer raised to a `GDN` power;
+ *
+ * If $(MATH f(x) = n$(SUP g(x))), then $(MATH f' = n$(SUP g)g'ln(n)).
+ *
+ * Params:
+ *   I = the integer type of the base
+ *   Deg = the degree of g
+ *   n = the base
+ *   g = the exponent
+ *
+ * Returns:
+ *   A `GDN` representing `n` raised to `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in I n, in GDN!Deg g) if (isIntegral!I)
+{
+    static if (Deg == 1) {
+        const f_val = std.math.exponential.pow(n, g.val);
+        return GDN!Deg(f_val, f_val * g.d * std.math.exponential.log(n));
+    } else {
+        const f_red = pow(n, g.reduce());
+        return GDN!Deg(f_red.val(), f_red * g.d * std.math.exponential.log(n));
+    }
+}
 
-// TODO: implement
-// pure nothrow @nogc @safe
-// CommonGDN!(G, H) pow(G, H)(G g, H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H));
+///
+unittest
+{
+    import std.math: log;
 
+    assert(pow(2, GDN!1(5)) is GDN!1(32, 32*log(2)));
+}
+
+unittest
+{
+    const ln3 = std.math.exponential.log(3);
+    assert(pow(3, GDN!2(1, 2, 4)) is GDN!2(3, 6*ln3, 12*ln3*(ln3 + 1)));
+    // f = 3
+    // <f',f"> = 3^<1,2> * <2,4> * ln(3)
+    //         = <3,3*2ln(3)> * <2,4> * ln(3)
+    //         = <1,2ln(3)> * <2,4> * 3ln(3)
+    //         = <2,4ln(3) + 4> * 3ln(3)
+    //         = <6ln(3), 12ln(3)(ln(3)+1)>
+}
+
+/**
+ * This function calculates $(MATH g$(SUP h)). It is the same as `g ^^ h`.
+ *
+ * Params:
+ *   G = the type of g, either real or a GDN
+ *   H = the type of h, either real or a GDN
+ *   g = the base
+ *   h = the exponent
+ *
+ * Returns:
+ *   It returns `g ^^ h`.
+ */
+pragma(inline, true) pure nothrow @nogc @safe
+CommonGDN!(G, H) pow(G, H)(in G g, in H h)
+if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H) && areNone!(isIntegral, G, H))
+{
+    return g^^h;
+}
+
+unittest
+{
+    assert(pow(GDN!1(2), 3.) is GDN!1(8, 12));
+}
 
 // TODO: implement powmod
 // TODO: implement scalbn
