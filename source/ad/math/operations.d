@@ -4,14 +4,14 @@ module ad.math.operations;
 static import std.math.operations;
 
 import std.algorithm: min;
-import std.math: abs, isNaN, signbit;
+import std.math: abs, isNaN;
 import std.range: ElementType, empty, front, isInputRange, popFront;
 import std.traits: isImplicitlyConvertible, Select;
 
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isOne, sgn;
+import ad.math.internal: areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isOne, sgn, signbit;
 
 
 /// The default relative difference for operations
@@ -300,7 +300,7 @@ CommonGDN!(G, H) fdim(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     alias Deg = typeof(return).DEGREE;
 
     const gmh = asGDN!Deg(g) - asGDN!Deg(h);
-    if (signbit(gmh.val) == 1 && !isNaN(gmh.val)) return GDN!Deg.zero;
+    if (signbit(gmh) == 1 && !isNaN(gmh.val)) return GDN!Deg.zero;
     return gmh;
 }
 

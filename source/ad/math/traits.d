@@ -336,7 +336,7 @@ unittest
  */
 pure nothrow @nogc @safe int signbit(ulong Deg)(in GDN!Deg f)
 {
-    return std.math.traits.signbit(f.val);
+    return ad.math.internal.signbit(f);
 }
 
 ///

@@ -24,7 +24,7 @@ import std.algorithm: min;
 import std.math.constants: LN2;
 import std.traits: isFloatingPoint, Select;
 
-import ad.math.internal: areAll, asGDN, dirac, CommonGDN, isGDN, isGDNOrReal, isOne;
+import ad.math.internal: areAll, asGDN, dirac, CommonGDN, isGDN, isGDNOrReal, isOne, signbit;
 
 
 /**
@@ -120,7 +120,7 @@ private pure nothrow @nogc @safe GDN!Deg yl2x_impl(ulong Deg)(in GDN!Deg g, in G
     alias yl2x_red = Select!(Deg == 1, core.math.yl2x, yl2x_impl);
 
     GDN!Deg.DerivType!1 df;
-    if (signbit(g.val) == 0) {
+    if (signbit(g) == 0) {
         const g_red = g.reduce();
         df = yl2x_red(g_red, h.d) + h.reduce()*g.d/(LN2 * g_red);
     }

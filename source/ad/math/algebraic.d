@@ -5,14 +5,14 @@ static import core.math;
 static import std.math.algebraic;
 
 import std.algorithm: min;
-import std.math: isInfinity, signbit;
+import std.math: isInfinity;
 import std.traits: isFloatingPoint, isImplicitlyConvertible, Select;
 
 static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, asReal, ceil, CommonGDN, floor, isGDN, isGDNOrReal, isOne, log2, sgn;
+    areAll, asGDN, asReal, ceil, CommonGDN, floor, isGDN, isGDNOrReal, isOne, log2, sgn, signbit;
 
 
 /**
@@ -29,7 +29,7 @@ import ad.math.internal:
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
 {
-    const df_val = signbit(g.val) == 0 ? 1.0L : -1.0L;
+    const df_val = signbit(g) == 0 ? 1.0L : -1.0L;
 
     static if (Deg == 1)
         const df = df_val;

@@ -8,7 +8,7 @@ static import std.math.rounding;
 static import std.math.traits;
 
 import std.algorithm: min;
-import std.math: isFinite, isNaN, LN2, signbit;
+import std.math: isFinite, isNaN, LN2;
 import std.traits: fullyQualifiedName, isImplicitlyConvertible, isIntegral, Select, TemplateOf;
 
 import ad.core;
@@ -177,6 +177,12 @@ package pure nothrow @nogc @safe
         assert(sgn(GDN!1(-real.infinity, 0)) is GDN!1(-1, 0));
         assert(sgn(GDN!1(-1)) is GDN!1(-1, 0));
     }
+
+    // The implementation of signbit
+    pragma(inline, true) int signbit(ulong Deg)(in GDN!Deg f)
+    {
+        return std.math.traits.signbit(f.val);
+    }
 }
 
 
@@ -187,7 +193,7 @@ package pure @safe
 {
     pragma(inline, true) nothrow @nogc GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
     {
-        const dfdg = signbit(g.val) == 1 ? GDN!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
+        const dfdg = signbit(g) == 1 ? GDN!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
         return GDN!Deg(core.math.sqrt(g.val), dfdg * g.d);
     }
 
@@ -214,7 +220,7 @@ package pure nothrow @nogc @safe
     // The implementation of log2 for GDN.
     pragma(inline,true) GDN!Deg log2(ulong Deg)(in GDN!Deg g)
     {
-        const df = signbit(g.val) == 1 ? GDN!Deg.mkNaNDeriv : g.d/(LN2 * g.reduce());
+        const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : g.d/(LN2 * g.reduce());
         return GDN!Deg(std.math.exponential.log2(g.val), df);
     }
 
