@@ -20,7 +20,7 @@ differentiable functions. -->
     * `ilogb`
     * `ldexp`
     * `log`
-    * `log10` (not implemented yet)
+    * `log10`
     * `log1p` (not implemented yet)
     * `log2`
     * `logb` (not implemented yet)

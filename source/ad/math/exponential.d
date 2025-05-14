@@ -4,7 +4,7 @@ module ad.math.exponential;
 static import core.math;
 static import std.math.exponential;
 
-import std.math: E, isInfinity, isNaN, LN2, sgn;
+import std.math: E, isInfinity, isNaN, LN10, LN2, sgn;
 import std.traits: isIntegral, Select;
 
 static import ad.math.internal;
@@ -12,7 +12,7 @@ static import ad.math.internal;
 import ad.core;
 import ad.math.internal:
     areAll, areNone, asReal, CommonGDN, dirac, floor, isGDN, isGDNOrReal, isInfinity, isNaN, isOne,
-    sgn;
+    sgn, signbit;
 
 
 /**
@@ -168,7 +168,6 @@ unittest
 unittest
 {
     import std.format: format;
-    import std.math: signbit;
 
     int e;
 
@@ -185,7 +184,7 @@ unittest
     assert(t == -real.infinity && isNaN(r.d) && e == int.min);
 
     const y = frexp(GDN!1(real.nan), e);
-    assert(signbit(y.val) == 0 && isNaN(y) && isNaN(y.d) && e == int.min);
+    assert(signbit(y) == 0 && isNaN(y) && isNaN(y.d) && e == int.min);
 
     const u = frexp(GDN!1(-real.nan), e);
     assert(u is GDN!1(-real.nan, real.nan) && e == int.min);
@@ -267,13 +266,55 @@ unittest
 }
 
 
-// TODO: implement log10
+/**
+ * This function computes the logarithm of the given `GDN` object `g`.
+ *
+ * If $(MATH f(x) = log(g(x))), then $(MATH f' = g'/[g⋅ln(10)])
+ *
+ * Params:
+ *   Deg = the degree of `g`
+ *   g = the `GDN` object for which the logarithm is to be calculated.
+ *
+ * Returns:
+ *   A `GDN` object representing the logarithm of `g`.
+ */
+pure nothrow @nogc @safe GDN!Deg log10(ulong Deg)(in GDN!Deg g)
+{
+    if (signbit(g) == 1) {
+        return GDN!Deg.nan;
+    }
+
+    return GDN!Deg(std.math.exponential.log10(g.val), g.d / (LN10*g.reduce()));
+}
+
+///
+unittest
+{
+    assert(log10(GDN!1(1)) is GDN!1(0, 1/LN10));
+}
+
+unittest
+{
+    import std.format: format;
+    import std.math: LOG2;
+
+    const q = log10(GDN!1(-1));
+    assert(isNaN(q) && isNaN(q.d), format("log10(-1) = %s", q));
+
+    assert(log10(GDN!2(2)) is GDN!2(LOG2, 0.5/LN10, -0.25/LN10));
+    // f = log(2)
+    // <f',f"> = <1,0>/(ln(10)<2,1>)
+    //         = <1,0>/<2,1>/ln(10)
+    //         = <0.5,-0.25>/ln(10)
+    //         = <1/[2ln(10)],-1/[4ln(10)]>
+}
+
+
 // TODO: implement log1p
 
 
 /**
- * This function computes the base-2 logarithm of the given `GDN` object `g`. It is analogous to
- * `std.math.exponential.log2()`.
+ * This function computes the base-2 logarithm of the given `GDN` object `g`.
  *
  * If $(MATH f(x) = lg(g(x))), then $(MATH f' = g'/[g⋅ln(2)])
  *
