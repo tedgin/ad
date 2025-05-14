@@ -20,7 +20,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `nearbyint`
     * `quantize`
     * `rint`
-    * `rndtol` (not implemented yet)
+    * `rndtol`
     * `round` (not implemented yet)
     * `trunc` (not implemented yet)
   * `std.math.trigonometry`

@@ -28,29 +28,6 @@ import ad.math.internal: areAll, asGDN, CommonGDN, isGDN, isGDNOrReal, isOne, si
 
 
 /**
- * This function rounds `g` to a `long` using the current rounding mode. All of the derivative terms
- * are lost.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- *
- * Returns:
- *   the rounded value of `g`.
- */
-pragma(inline, true) pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
-{
-    return core.math.rndtol(g.val);
-}
-
-///
-unittest
-{
-    assert(rndtol(GDN!1(1.1)) == 1L);
-}
-
-
-/**
  * This function rounds the value of a `GDN` to a given floating point type removing all derivative
  * information.
  *
