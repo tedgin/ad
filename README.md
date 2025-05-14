@@ -23,7 +23,7 @@ differentiable functions. -->
     * `log10`
     * `log1p`
     * `log2`
-    * `logb` (not implemented yet)
+    * `logb`
     * `pow`
     * `powmod` (not implemented yet)
     * `scalebn` (not implemented yet)

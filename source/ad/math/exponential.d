@@ -369,8 +369,26 @@ unittest
 }
 
 
+/**
+ * Extracts the exponent of g as a signed integral valued real
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the `GDN` to extract the exponent from its value
+ *
+ * Returns:
+ *   The exponent of g
+ */
+nothrow @nogc @safe real logb(ulong Deg)(in GDN!Deg g)
+{
+    return std.math.exponential.logb(g.val);
+}
 
-// TODO: implement logb
+///
+unittest
+{
+    assert(logb(GDN!1(1)) == 0);
+}
 
 
 /**
