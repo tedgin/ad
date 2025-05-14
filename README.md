@@ -21,7 +21,7 @@ differentiable functions. -->
     * `ldexp`
     * `log`
     * `log10`
-    * `log1p` (not implemented yet)
+    * `log1p`
     * `log2`
     * `logb` (not implemented yet)
     * `pow`

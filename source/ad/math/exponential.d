@@ -280,11 +280,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg log10(ulong Deg)(in GDN!Deg g)
 {
-    if (signbit(g) == 1) {
-        return GDN!Deg.nan;
-    }
-
-    return GDN!Deg(std.math.exponential.log10(g.val), g.d / (LN10*g.reduce()));
+    const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : g.d / (LN10*g.reduce());
+    return GDN!Deg(std.math.exponential.log10(g.val), df);
 }
 
 ///
@@ -311,6 +308,37 @@ unittest
 
 
 // TODO: implement log1p
+/**
+ * Calculates the natural logarithm of 1 + g.
+ *
+ * If $(MATH f(x) = ln(1 + g(x))), then $(MATH f' = g'/(1 + g)).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the value to compute the shifted logarithm of
+ *
+ * Returns:
+ *  $(MATH ln(1 + g)) as a `GDN`
+ */
+pure nothrow @nogc @safe GDN!Deg log1p(ulong Deg)(in GDN!Deg g)
+{
+    const df = g <= -1 ? GDN!Deg.mkNaNDeriv() : g.d/(1+g.reduce());
+    return GDN!Deg(std.math.exponential.log1p(g.val), df);
+}
+
+///
+unittest
+{
+    import std.math: log;
+
+    assert(log1p(GDN!1(3)) is GDN!1(log(4), 0.25));
+    assert(log1p(GDN!1(-1)) is GDN!1(-real.infinity, real.nan));
+}
+
+unittest
+{
+    assert(isNaN(log1p(GDN!1(-2))));
+}
 
 
 /**
