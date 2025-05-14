@@ -11,8 +11,8 @@ static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    areAll, areNone, asReal, CommonGDN, dirac, floor, isGDN, isGDNOrReal, isInfinity, isNaN, isOne,
-    sgn, signbit;
+    areAll, areNone, asReal, CommonGDN, floor, isGDN, isGDNOrReal, isInfinity, isNaN, isOne, sgn,
+    signbit;
 
 
 /**
@@ -307,7 +307,6 @@ unittest
 }
 
 
-// TODO: implement log1p
 /**
  * Calculates the natural logarithm of 1 + g.
  *
@@ -486,5 +485,38 @@ unittest
     assert(pow(GDN!1(2), 3.) is GDN!1(8, 12));
 }
 
-// TODO: implement powmod
+
 // TODO: implement scalbn
+/**
+ * Multiplies g by 2$(SUP n).
+ *
+ * If $(MATH f(x) = g(x)2$(SUP n), the $(MATH  f' = g'2$(SUP n)).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the GDN to scale.
+ *   n = the exponent of the scale factor
+ *
+ * Returns:
+ *   It returns the scaled `GDN`.
+ */
+pure nothrow @nogc @safe GDN!Deg scalbn(ulong Deg)(in GDN!Deg g, in int n)
+{
+    static if (Deg == 1)
+        alias dev_scale = std.math.exponential.scalbn;
+    else
+        alias dev_scale = scalbn;
+
+    return GDN!Deg(std.math.exponential.scalbn(g.val, n), dev_scale(g.d, n));
+}
+
+///
+unittest
+{
+    assert(scalbn(GDN!1(2), 10) is GDN!1(2048, 1024));
+}
+
+unittest
+{
+    assert(scalbn(GDN!2(2048, 1, 2), -10) is GDN!2(2, 1.0L/1024, 1.0L/512));
+}

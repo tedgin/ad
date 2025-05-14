@@ -4,29 +4,12 @@ This is an automatic differentiation library written in D supporting one-dimensi
 
 ## Features
 
-<!-- TODO: reconsider these implementations, possibly some of them should be treated as
-differentiable functions. -->
-
 * supports all of D's arithmetic operators
-* support the same set of functions as `core.math`
+* supports the same set of functions as `core.math`
 * supports the same set of functions as `std.math`
   * `std.math.algebraic`
   * `std.math.constants`
   * `std.math.exponential`
-    * `exp`
-    * `exp2`
-    * `expm1`
-    * `frexp`
-    * `ilogb`
-    * `ldexp`
-    * `log`
-    * `log10`
-    * `log1p`
-    * `log2`
-    * `logb`
-    * `pow`
-    * `powmod` (not implemented yet)
-    * `scalebn` (not implemented yet)
   * `std.math.operations`
   * `std.math.remainder` (not implemented yet)
   * `std.math.rounding`
@@ -55,6 +38,7 @@ differentiable functions. -->
     * `tan`
     * `tanh` (not implemented yet)
   * `std.math.traits`
+* supports the same set of functions as `std.mathspecial`
 * supports arbitrary order differentiation, must be fixed at compile time
 
 ## Examples

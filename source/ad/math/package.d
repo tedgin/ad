@@ -24,7 +24,7 @@ import std.algorithm: min;
 import std.math.constants: LN2;
 import std.traits: isFloatingPoint, Select;
 
-import ad.math.internal: areAll, asGDN, dirac, CommonGDN, isGDN, isGDNOrReal, isOne, signbit;
+import ad.math.internal: areAll, asGDN, CommonGDN, isGDN, isGDNOrReal, isOne, signbit;
 
 
 /**
