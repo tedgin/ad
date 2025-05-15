@@ -334,7 +334,6 @@ unittest
 }
 
 
-// TODO: Implement round
 /**
  * Returns a value g rounded to the nearest integer.
  *
@@ -375,4 +374,42 @@ unittest
 }
 
 
-// TODO: Implement trunc
+/**
+ * Returns a value g truncated to the integer part.
+ *
+ * Where $(MATH g(x) < 0), $(MATH f(x) = ⌈g(x)⌉), otherwise $(MATH f(x) = ⌊g(x)⌋).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the `GDN` to round.
+ *
+ * Returns:
+ *   The truncated `GDN`,
+ */
+
+pure nothrow @nogc @trusted GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
+{
+    static if (Deg == 1)
+        const f_red = std.math.rounding.trunc(g.reduce());
+    else
+        const f_red = trunc(g.reduce());
+
+    GDN!Deg.DerivType!1 df;
+    if (isFinite(g.val)) {
+        df = g.d * dirac(abs(g.reduce() - f_red));
+    }
+
+    return GDN!Deg(asReal(f_red), df);
+}
+
+///
+unittest
+{
+    assert(trunc(GDN!1(0.01)) is GDN!1(+0., 0));
+    assert(trunc(GDN!1(-0.49)) is GDN!1(-0., 0));
+}
+
+unittest
+{
+    assert(trunc(GDN!2(0.5)) is GDN!2(0, 0, 0));
+}

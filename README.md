@@ -13,16 +13,6 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * `std.math.operations`
   * `std.math.remainder` (not implemented yet)
   * `std.math.rounding`
-    * `ceil`
-    * `floor`
-    * `lrint`
-    * `lround`
-    * `nearbyint`
-    * `quantize`
-    * `rint`
-    * `rndtol`
-    * `round`
-    * `trunc` (not implemented yet)
   * `std.math.trigonometry`
     * `acos`
     * `acosh` (not implemented yet)
