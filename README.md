@@ -21,7 +21,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
     * `quantize`
     * `rint`
     * `rndtol`
-    * `round` (not implemented yet)
+    * `round`
     * `trunc` (not implemented yet)
   * `std.math.trigonometry`
     * `acos`

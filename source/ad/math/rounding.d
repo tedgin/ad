@@ -4,7 +4,7 @@ module ad.math.rounding;
 static import core.math;
 static import std.math.rounding;
 
-import std.math: FloatingPointControl, isFinite, isInfinity, isNaN, nearbyint, signbit;
+import std.math: abs, FloatingPointControl, isFinite, isInfinity, isNaN, nearbyint, signbit;
 import std.traits: arity, isIntegral, Parameters, ReturnType;
 
 static import ad.math.internal;
@@ -153,9 +153,8 @@ unittest
 /**
  * Rounds `g` to the nearest integer value, using the current rounding mode.
  *
- * If $(MATH f(g(x)) = nearbyint(g(x))), then $(MATH f' = (df/dg)g'), where
- * $(MATH df/dg = 𝛿(g - m)), $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode
- * split point.
+ * If $(MATH f(x) = nearbyint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
+ * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
  *
  * Params:
  *   Deg = the degree of `g`
@@ -181,7 +180,7 @@ unittest
  * Rounds `g` to the nearest integer value, using the current rounding mode. If the return value is
  * not identical to `g`, the `FE_INEXACT` exception is raised.
  *
- * If $(MATH f(g(x)) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
+ * If $(MATH f(x) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
  * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
  *
  * Params:
@@ -336,4 +335,44 @@ unittest
 
 
 // TODO: Implement round
+/**
+ * Returns a value g rounded to the nearest integer.
+ *
+ * If $(MATH f(x) = round(g(x))), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i-½),
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the `GDN` to round.
+ *
+ * Returns:
+ *   The rounded `GDN`,
+ */
+nothrow @nogc @trusted GDN!Deg round(ulong Deg)(in GDN!Deg g)
+{
+    static if (Deg == 1)
+        const f_red = std.math.rounding.round(g.reduce());
+    else
+        const f_red = round(g.reduce());
+
+    GDN!Deg.DerivType!1 df;
+    if (isFinite(g.val)) {
+        df = g.d * dirac(abs(g.reduce() - f_red) - 0.5);
+    }
+
+    return GDN!Deg(asReal(f_red), df);
+}
+
+///
+unittest
+{
+    assert(round(GDN!1(4.5)) is GDN!1(5, real.infinity));
+    assert(round(GDN!1(-4.5)) is GDN!1(-5, real.infinity));
+}
+
+unittest
+{
+    assert(round(GDN!2(5.4)) is GDN!2(5, 0, 0));
+}
+
+
 // TODO: Implement trunc
