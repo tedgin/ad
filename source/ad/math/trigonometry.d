@@ -4,10 +4,11 @@ module ad.math.trigonometry;
 static import core.math;
 static import std.math.trigonometry;
 
-import std.math: sqrt;
+import std.math: isFinite, pow, sqrt;
 
 import ad.core;
-import ad.math.internal: sqrt;
+import ad.math.internal:
+    areAll, asGDN, CommonGDN, isFinite, isGDN, isGDNOrReal, isInfinity, isOne, pow, sqrt;
 
 
 /**
@@ -123,7 +124,7 @@ pure nothrow @nogc @safe GDN!Deg tan(ulong Deg)(in GDN!Deg g)
     else
         alias cosine = cos;
 
-    return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/cosine(g.reduce())^^2);
+    return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/pow(cosine(g.reduce()), 2));
 }
 
 ///
@@ -170,7 +171,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg asin(ulong Deg)(in GDN!Deg g)
 {
-    return GDN!Deg(std.math.trigonometry.asin(g.val), g.d/sqrt(1 - g.reduce()^^2));
+    return GDN!Deg(std.math.trigonometry.asin(g.val), g.d/sqrt(1 - pow(g.reduce(), 2)));
 }
 
 ///
@@ -217,7 +218,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg acos(ulong Deg)(in GDN!Deg g)
 {
-    return GDN!Deg(std.math.trigonometry.acos(g.val), -g.d/sqrt(1 - g.reduce()^^2));
+    return GDN!Deg(std.math.trigonometry.acos(g.val), -g.d/sqrt(1 - pow(g.reduce(), 2)));
 }
 
 ///
@@ -254,7 +255,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg atan(ulong Deg)(in GDN!Deg g)
 {
-    return GDN!Deg(std.math.trigonometry.atan(g.val), g.d/(1 + g.reduce()^^2));
+    return GDN!Deg(std.math.trigonometry.atan(g.val), g.d/(1 + pow(g.reduce(), 2)));
 }
 
 ///
@@ -273,100 +274,122 @@ unittest
 }
 
 
-/+
 /**
-This function computes the arctangent (inverse tangent) of $(MATH g/h).
-
-If $(MATH f(x) = tan$(SUP -1)(g(x)/h(x))), the $(MATH f' = (g'h - gh')/(h$(SUP 2) + g$(SUP 2))).
-*/
-GDN!(GDeg < HDeg ? GDeg : HDeg) atan2(ulong GDeg, ulong HDeg)(in GDN!GDeg g, in GDN!HDeg h)
-    pure nothrow @nogc @safe
+ * This function computes the arctangent (inverse tangent) of $(MATH g/h).
+ *
+ * If $(MATH f(x) = tan$(SUP -1)(g(x)/h(x))), then $(MATH f' = (g'h - gh')/(h$(SUP 2) + g$(SUP 2))).
+ *
+ * Params:
+ *   G = the type of g
+ *   H = the type of h
+ *   g = the numerator of the arctangent argument
+ *   h = the denominator of the arctangent argument
+ *
+ * Returns:
+ *   It returns the angle resulting from the arctan(g/h).
+ */
+pure nothrow @nogc @safe
+CommonGDN!(G, H) atan2(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 {
-    return atan2_impl(cast(typeof(return)) g, cast(typeof(return)) h);
-}
+    alias RGDN = typeof(return);
 
-/// ditto
-GDN!Deg atan2(ulong Deg)(in GDN!Deg g, in real c) pure nothrow @nogc @safe
-{
-    return atan2_impl(g, GDN!Deg.mkConst(c));
-}
+    const gg = asGDN!(RGDN.DEGREE)(g);
+    const hh = asGDN!(RGDN.DEGREE)(h);
+    const gg_red = gg.reduce();
+    const hh_red = hh.reduce();
 
-/// ditto
-GDN!Deg atan2(ulong Deg)(in real c, in GDN!Deg h) pure nothrow @nogc @safe
-{
-    return atan2_impl(GDN!Deg.mkConst(c), h);
+    RGDN.DerivType!1 df;
+    if (isFinite(gg) && isInfinity(hh)) {
+        if (isFinite(gg.d) && isFinite(hh.d)) {
+            df = gg.d / hh_red;
+        }
+    } else if (isInfinity(gg) && isFinite(hh)) {
+        if (isFinite(gg.d) && isFinite(hh.d)) {
+            df = -hh.d / gg_red;
+        }
+    } else {
+        df =  (gg.d*hh_red - gg_red*hh.d) / (pow(hh_red, 2) + pow(gg_red, 2));
+    }
+
+    return RGDN(std.math.trigonometry.atan2(gg.val, hh.val), df);
 }
 
 ///
 unittest
 {
-    import std.math : PI_4;
+    import std.math: PI_4;
 
-    const f = atan2(GDN!1(1), GDN!1(1));
-    assert(f == PI_4 && f.d == 0);
-
-    const e = atan2(GDN!2(-1), GDN!1(1));
-    assert(e == -PI_4 && e.d == 1);
-
-    const q = atan2(GDN!1(1), -1);
-    assert(q == 3 * PI_4 && q.d == -0.5);
-
-    const w = atan2(-1, GDN!1(-1));
-    assert(w == -3 * PI_4 && w.d == 0.5);
+    assert(atan2(GDN!1(1), GDN!1(1)) is GDN!1(PI_4, 0));
+    assert(atan2(GDN!1(1), -1) is GDN!1(3*PI_4, -0.5));
 }
 
 unittest
 {
-    import std.math : PI;
+    import std.format: format;
+    import std.math: isNaN, PI, PI_2, PI_4;
 
-    assert(atan2(GDN!1(+0.), GDN!2(-1)).same(GDN!1(PI, -1)));
-}
+    assert(atan2(GDN!2(-1), GDN!2(1)) is GDN!2(-PI_4, 1, 0));
+    // <f',f"> = (<1,0><1,1> - <-1,1><1,0>) / (<1,1>^2 + <-1,1>^2)
+    //         = (<1,1>      - <-1,1>)      / (<1,2>   + <1,-2>)
+    //         = <2,0>                      / <2,0>
+    //         = <1,0>
 
-package pragma(inline, true)
-GDN!Deg atan2_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h) pure nothrow @nogc @safe
-{
-    const g_red = g.reduce();
-    const h_red = h.reduce();
-    const gdh = g.d * h_red;
-    const hdg = h.d * g_red;
-
-    return GDN!Deg(std.math.atan2(g.val, h.val), (g.d*h_red - g_red*h.d)/(h_red^^2 + g_red^^2));
-}
-
-unittest
-{
-    import std.format;
-    import std.math : PI;
+    assert(atan2(GDN!1.nan, GDN!1(2)) is GDN!1.nan);
+    assert(atan2(GDN!1(-1), GDN!1.nan) is GDN!1.nan);
 
     const nz = GDN!1(-0.);
     const pz = GDN!1(+0.);
 
-    assert(atan2_impl(GDN!1(-0.), GDN!1(-1)).same(GDN!1(-PI, -1)));
-    assert(atan2_impl(GDN!1.nan, GDN!1(2)).same(GDN!1.nan));
-    assert(atan2_impl(GDN!1(-1), GDN!1.nan).same(GDN!1.nan));
-    assert(atan2_impl(GDN!1(+0.), GDN!1(1)).same(GDN!1(+0., 1)));
+    assert(atan2(pz, GDN!1(1)) is GDN!1(+0., 1));
+    assert(atan2(nz, GDN!1(3)) is GDN!1(-0., 1./3));
 
-    const h = GDN!1(3);
-    const f = atan2_impl(nz, h);
-    assert(f.same(GDN!1(-0., 1./3)), format("atan2(%s, %s) != %s", nz, h, f));
+    const q = atan2(pz, pz);
+    assert(q.val is +0. && isNaN(q.d), format("atan2(+0, +0) != %s", q));
 
-    const w = atan2_impl(pz, pz);
-    assert(w.same(GDN!1(+0., real.nan)), format("atan2(%s, %s) != %s", pz, pz, w));
+    const w = atan2(nz, pz);
+    assert(w.val is -0. && isNaN(w.d), format("atan2(-0, +0) != %s", w));
 
-    const e = atan2_impl(nz, pz);
-    assert(e.same(GDN!1(-0., real.infinity)), format("atan2(%s, %s) != %s", nz, pz, e));
-    // lim g->0-,h->0+ (h-g)/(hh + gg) => h-g > 0
+    assert(atan2(pz, GDN!1(-1)) is GDN!1(PI, -1));
+    assert(atan2(nz, GDN!1(-1)) is GDN!1(-PI, -1));
 
-    // TODO: test + /-0, -0
-    // TODO: test >0, + /-0
-    // TODO: test <0, + /-0
-    // TODO: test >0, inf
-    // TODO: test + /-inf, finite
-    // TODO: test >0, -inf
-    // TODO: test + /-inf, inf
-    // TODO: test + /-inf, -inf
+    const e = atan2(pz, nz);
+    assert(e == PI && isNaN(e.d));
+
+    const r = atan2(nz, nz);
+    assert(r == -PI && isNaN(r.d));
+
+    assert(atan2(GDN!1(1), pz) is GDN!1(PI_2, -1));
+    assert(atan2(GDN!1(1), nz) is GDN!1(PI_2, -1));
+    assert(atan2(GDN!1(-1), pz) is GDN!1(-PI_2, 1));
+    assert(atan2(GDN!1(-1), nz) is GDN!1(-PI_2, 1));
+
+    const ni = GDN!1(-real.infinity);
+    const pi = GDN!1(real.infinity);
+
+    assert(atan2(GDN!1(1), pi) is GDN!1(+0., +0.));
+    assert(atan2(GDN!1(-1), pi) is GDN!1(-0., +0.));
+
+    const t = atan2(ni, GDN!1(0));
+    assert(t is GDN!1(-PI_2, +0.), format("atan2(-inf, 0) != %s", t));
+
+    assert(atan2(pi, GDN!1(0)) is GDN!1(PI_2,-0.));
+
+    const y = atan2(GDN!1(1), ni);
+    assert(y is GDN!1(PI, -0.), format("atan(1, -inf) != %s", y));
+
+    const u = atan2(ni, pi);
+    assert(u == -PI_4 && isNaN(u.d));
+
+    const i = atan2(pi, pi);
+    assert(i == PI_4 && isNaN(i.d));
+
+    const o = atan2(ni, ni);
+    assert(o == -3*PI_4 && isNaN(o.d));
+
+    const p = atan2(pi, ni);
+    assert(p == 3*PI_4 && isNaN(p.d));
 }
-+/
+
 
 /**
 This function calculates the hyperbolic sine of its argument `g`.

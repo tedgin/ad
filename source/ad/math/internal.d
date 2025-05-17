@@ -133,6 +133,13 @@ package pure nothrow @nogc @safe
     }
 
 
+    // The implementation of isFinite
+    pragma(inline, true) bool isFinite(ulong Deg)(in GDN!Deg f)
+    {
+        return std.math.traits.isFinite(f.val);
+    }
+
+
     // The implementation of isInfinity
     pragma(inline, true) bool isInfinity(ulong Deg)(in GDN!Deg f)
     {
@@ -187,7 +194,7 @@ package pure nothrow @nogc @safe
 
 
 /*
- * std.math.trigonometry shared internals
+ * std.math.algebraic shared internals
  */
 package pure @safe
 {

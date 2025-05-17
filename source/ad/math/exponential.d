@@ -490,7 +490,7 @@ unittest
 /**
  * Multiplies g by 2$(SUP n).
  *
- * If $(MATH f(x) = g(x)2$(SUP n), the $(MATH  f' = g'2$(SUP n)).
+ * If $(MATH f(x) = g(x)2$(SUP n)), then $(MATH  f' = g'2$(SUP n)).
  *
  * Params:
  *   Deg = the degree of g

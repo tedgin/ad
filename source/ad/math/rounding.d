@@ -337,7 +337,7 @@ unittest
 /**
  * Returns a value g rounded to the nearest integer.
  *
- * If $(MATH f(x) = round(g(x))), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i-½),
+ * If $(MATH f(x) = round(g(x))), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i-½)),
  *
  * Params:
  *   Deg = the degree of g

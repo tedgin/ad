@@ -161,7 +161,7 @@ unittest
  */
 pure nothrow @nogc @safe bool isFinite(ulong Deg)(in GDN!Deg f)
 {
-    return std.math.traits.isFinite(f.val);
+    return ad.math.internal.isFinite(f);
 }
 
 ///
