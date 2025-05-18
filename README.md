@@ -14,19 +14,6 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * `std.math.remainder` (not implemented yet)
   * `std.math.rounding`
   * `std.math.trigonometry`
-    * `acos`
-    * `acosh` (not implemented yet)
-    * `asin`
-    * `asinh` (not implemented yet)
-    * `atan`
-    * `atan2` (not implemented yet)
-    * `atanh` (not implemented yet)
-    * `cos`
-    * `cosh` (not implemented yet)
-    * `sin`
-    * `sinh` (not implemented yet)
-    * `tan`
-    * `tanh` (not implemented yet)
   * `std.math.traits`
 * supports the same set of functions as `std.mathspecial`
 * supports arbitrary order differentiation, must be fixed at compile time

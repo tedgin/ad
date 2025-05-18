@@ -107,7 +107,7 @@ private pure nothrow @nogc @safe GDN!Deg yl2x_impl(ulong Deg)(in GDN!Deg g, in G
 
 unittest
 {
-    assert(isNaN(yl2x(GDN!1(-1), GDN!1(1))));
+    assert(isNaN(yl2x(GDN!1(-1), GDN!1(1)).val));
 
     const f = yl2x(GDN!1(0), GDN!1(1));
     assert(f == -real.infinity && isNaN(f.d));

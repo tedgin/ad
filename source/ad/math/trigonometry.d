@@ -4,11 +4,11 @@ module ad.math.trigonometry;
 static import core.math;
 static import std.math.trigonometry;
 
-import std.math: isFinite, pow, sqrt;
+import std.math: abs, isFinite, pow, sqrt;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, CommonGDN, isFinite, isGDN, isGDNOrReal, isInfinity, isOne, pow, sqrt;
+    areAll, asGDN, CommonGDN, isFinite, isGDN, isGDNOrReal, isInfinity, isNaN, isOne, pow, sqrt;
 
 
 /**
@@ -392,49 +392,242 @@ unittest
 
 
 /**
-This function calculates the hyperbolic sine of its argument `g`.
+ * This function calculates the hyperbolic sine of its argument `g`.
+ *
+ * If $(MATH f(x) = sinh(g(x))), then $(MATH f' = g'cosh(g)).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the argument of the hyperbolic sine.
+ *
+ * Returns:
+ *   It returns the hyperbolic sine of g.
+ */
+pure nothrow @nogc @safe GDN!Deg sinh(ulong Deg)(in GDN!Deg g)
+{
+    static if (Deg == 1)
+        alias ch = std.math.trigonometry.cosh;
+    else
+        alias ch = cosh;
 
-If $(MATH f(x) = sinh(g(x))), then $(MATH f' = g'cosh(g)).
-*/
-// TODO: implement
-GDN!Deg sinh(ulong Deg)(in GDN!Deg g) pure nothrow @nogc @safe;
+    return GDN!Deg(std.math.trigonometry.sinh(g.val), ch(g.reduce())*g.d);
+}
 
-/**
-This function calculates the hyperbolic cosine of its argument `g`.
+///
+unittest
+{
+    const f = sinh(GDN!1(0));
+    assert(f is GDN!1(0, 1));
+}
 
-If $(MATH f(x) = cosh(g(x))), then $(MATH f' = g'sinh(g)).
-*/
-// TODO: implement
-GDN!Deg cosh(ulong Deg)(in GDN!Deg g) pure nothrow @nogc @safe;
+unittest
+{
+    import std.math: E;
 
-/**
-This function calculates the hyperbolic tangent of its argument `g`.
+    assert(sinh(GDN!2(1)) is GDN!2((E - 1/E)/2, (E + 1/E)/2, (E - 1/E)/2));
+    // <f',f"> = cosh(<1,1>)<1,0> = <cosh(1),sinh(1)1> = <(E + 1/E)/2,(E - 1/E)/2>
+}
 
-If $(MATH f(x) = tanh(g(x))), then $(MATH f' = g'/cosh$(SUP 2)(g)).
-*/
-// TODO: implement
-GDN!Deg tanh(ulong Deg)(in GDN!Deg g) pure nothrow @nogc @safe;
-
-/**
-This function calculates the inverse hyperbolic sine of its argument `g`.
-
-If $(MATH f(x) = sinh$(SUP -1)g(x)), then $(MATH f' = g'/√(1 + g$(SUP 2))).
-*/
-// TODO: implement
-GDN!Deg asinh(ulong Deg)(in GDN!Deg g) pure nothrow @nogc @safe;
-
-/**
-This function calculates the inverse hyperbolic cosine of its argument `g`.
-
-If $(MATH f(x) = cosh$(SUP -1)g(x)), then $(MATH f' = g'/√(g$(SUP 2) - 1)).
-*/
-// TODO: implement
-GDN!Deg acosh(ulong Deg)(in GDN!Deg g) pure nothrow @nogc @safe;
 
 /**
-This function calculates the inverse hyperbolic tangent of its argument `g`.
+ * This function calculates the hyperbolic cosine of its argument `g`.
+ *
+ * If $(MATH f(x) = cosh(g(x))), then $(MATH f' = g'sinh(g)).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the argument of the hyperbolic cosine.
+ *
+ * Returns:
+ *   It returns the hyperbolic cosine of g.
+ */
+pure nothrow @nogc @safe GDN!Deg cosh(ulong Deg)(in GDN!Deg g)
+{
+    static if (Deg == 1)
+        alias sh = std.math.trigonometry.sinh;
+    else
+        alias sh = sinh;
 
-If $(MATH f(x) = tanh$(SUP -1)g(x)), then $(MATH f' = g'/(1 - g$(SUP 2)), |g| < 1).
-*/
-// TODO: implement
-GDN!Deg atanh(ulong Deg)(in GDN!Deg g) pure nothrow @nogc @safe;
+    return GDN!Deg(std.math.trigonometry.cosh(g.val), sh(g.reduce())*g.d);
+}
+
+///
+unittest
+{
+    assert(cosh(GDN!1(0)) is GDN!1(1, 0));
+}
+
+unittest
+{
+    import std.math: E;
+
+    assert(cosh(GDN!2(1)) is GDN!2((E + 1/E)/2, (E - 1/E)/2, (E + 1/E)/2));
+}
+
+
+/**
+ * This function calculates the hyperbolic tangent of its argument `g`.
+ *
+ * If $(MATH f(x) = tanh(g(x))), then $(MATH f' = g'/cosh$(SUP 2)(g)).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the argument of the hyperbolic tangent.
+ *
+ * Returns:
+ *   It returns the hyperbolic tangent of g.
+ */
+pure nothrow @nogc @safe GDN!Deg tanh(ulong Deg)(in GDN!Deg g)
+{
+    static if (Deg == 1)
+        alias ch = std.math.trigonometry.cosh;
+    else
+        alias ch = cosh;
+
+    return GDN!Deg(std.math.trigonometry.tanh(g.val), g.d/pow(ch(g.reduce()), 2));
+}
+
+///
+unittest
+{
+    assert(tanh(GDN!1(0)) is GDN!1(0, 1));
+}
+
+unittest
+{
+    import std.math: isClose;
+
+    const g = GDN!2(1);
+    const f1 = tanh(g);
+    const f2 = sinh(g) / cosh(g);
+    assert(f1.val.isClose(f2.val));
+    assert(f1.d.val.isClose(f2.d.val));
+    assert(f1.d!2.isClose(f2.d!2));
+}
+
+
+/**
+ * This function calculates the inverse hyperbolic sine of its argument `g`.
+ *
+ * If $(MATH f(x) = sinh$(SUP -1)g(x)), then $(MATH f' = g'/√(1 + g$(SUP 2))).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the argument of the inverse hyperbolic sine.
+ *
+ * Returns:
+ *   It returns the inverse hyperbolic sine of g.
+ */
+pure nothrow @nogc @safe GDN!Deg asinh(ulong Deg)(in GDN!Deg g)
+{
+    return GDN!Deg(std.math.trigonometry.asinh(g.val), g.d/sqrt(pow(g.reduce(), 2) + 1));
+}
+
+///
+unittest
+{
+    assert(asinh(GDN!1(0)) is GDN!1(0, 1));
+}
+
+unittest
+{
+    assert(asinh(GDN!2(-0.)) is GDN!2(-0., 1, 0));
+    // <f',f"> = <1,0> / sqrt(1 + <-0,1>^2)
+    //         = <1,0> / sqrt(1 + <+0,-0>)
+    //         = <1,0> / sqrt(<1,-0>)
+    //         = <1,0> / <1,-0>
+    //         = <1,0>
+}
+
+
+/**
+ * This function calculates the inverse hyperbolic cosine of its argument `g`.
+ *
+ * If $(MATH f(x) = cosh$(SUP -1)g(x)), then $(MATH f' = g'/√(g$(SUP 2) - 1)).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the argument of the inverse hyperbolic cosine.
+ *
+ * Returns:
+ *   It returns the inverse hyperbolic cosine of g.
+ */
+pure nothrow @nogc @safe GDN!Deg acosh(ulong Deg)(in GDN!Deg g)
+{
+    return GDN!Deg(std.math.trigonometry.acosh(g.val), g.d / sqrt(pow(g.reduce(), 2) - 1));
+}
+
+///
+unittest
+{
+    assert(isNaN(acosh(GDN!1(0.9))));
+    assert(acosh(GDN!1(1)) is GDN!1(0, real.infinity));
+}
+
+unittest
+{
+    assert(
+        acosh(GDN!2(2, 3, 1))
+        is GDN!2(std.math.trigonometry.acosh(2.0L), sqrt(3.0L), -5*sqrt(3.0L)/3));
+    // f = acosh(2)
+    // <f',f"> = <3,1> / sqrt(<2,3>^2 - 1)
+    //         = <3,1> / sqrt(<4,12>  - 1)
+    //         = <3,1> / sqrt(<3,12>)
+    //         = <3,1> / <sqrt(3), 6/sqrt(3)>
+    //         = <3/sqrt(3), (sqrt(3) - 18/sqrt(3))/3>
+    //         = <sqrt(3),sqrt(3)/3 - 6/sqrt(3)>
+    //         = <sqrt(3),sqrt(3)/3 - 2sqrt(3)>
+    //         = <sqrt(3),-5sqrt(3)/3?
+}
+
+
+/**
+ * This function calculates the inverse hyperbolic tangent of its argument `g`.
+ *
+ * If $(MATH f(x) = tanh$(SUP -1)g(x)), then $(MATH f' = g'/(1 - g$(SUP 2)), |g| < 1).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the argument of the inverse hyperbolic tangent.
+ *
+ * Returns:
+ *   It returns the inverse hyperbolic tangent of g.
+ */
+pure nothrow @nogc @safe GDN!Deg atanh(ulong Deg)(in GDN!Deg g)
+{
+    GDN!Deg.DerivType!1 df;
+    if (abs(g) < 1) {
+        df =  g.d/(1 - pow(g.reduce(), 2));
+    }
+
+    return GDN!Deg(std.math.trigonometry.atanh(g.val), df);
+}
+
+///
+unittest
+{
+    import std.math: isNaN;
+    import ad.math.traits: sgn;
+
+    assert(atanh(GDN!1(0)) is GDN!1(0, 1));
+
+    const f = atanh(GDN!1(1));
+    assert(sgn(f) == 1 && isInfinity(f) && isNaN(f.d));
+}
+
+unittest
+{
+    import std.math: isNaN;
+    import ad.math.traits: sgn;
+
+    const q = atanh(GDN!1(-1));
+    assert(sgn(q) == -1 && isInfinity(q) && isNaN(q.d));
+
+    assert(atanh(GDN!2(-0., 2, 1)) is GDN!2(-0., 2, 1));
+    // f = -0
+    // <f',f"> = <2,1> / (1 - <-0.,2>^2)
+    //         = <2,1> / (1 - <-0.,-0.>)
+    //         = <2,1> / <1,-0.>
+    //         = <2,(1 - -0/1>
+    //         = <2,1>
+}
