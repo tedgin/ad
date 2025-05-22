@@ -15,7 +15,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * `std.math.rounding`
   * `std.math.trigonometry`
   * `std.math.traits`
-* supports the same set of functions as `std.mathspecial`
+* supports the same set of functions as `std.mathspecial` (not implemented yet)
 * supports arbitrary order differentiation, must be fixed at compile time
 
 ## Examples

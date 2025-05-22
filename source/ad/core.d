@@ -630,30 +630,30 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
 
     /** <b>g % h</b>
      *
-    * This computes the modulus (remainder) of one generalized dual number divided by another. If
-    * either the dividend or the divisor has type `real`, it is converted to a constant generalized
-    * dual number with the same degree as the divisor or dividend, respectively.
-    *
-    * If $(MATH f(x) = g(x) (mod h(x))), then $(MATH f' = g' - (g - f)h'/h - δ(f)(g'h - gh')/h),
-    * where $(MATH δ) is the Dirac Delta function.
-    *
-    * Params:
-    *   that = the divisor
-    *
-    * Returns:
-    *   the remainder of the two generalized dual numbers with degree being the lesser of the degree
-    *   of the dividend and the degree of the divisor.
-    *
-    * Examples:
-    *   ```
-    *   auto x = GDN!1(2);
-    *   auto y = GDN!1(-1);
-    *   auto z = x % y;
-    *   auto w = 5 % x;
-    *   assert(z == 0 && z.d == -real.infinity);
-    *   assert(w == 1 && w.d == -2);
-    *   ```
-    */
+     * This computes the modulus (remainder) of one generalized dual number divided by another. If
+     * either the dividend or the divisor has type `real`, it is converted to a constant generalized
+     * dual number with the same degree as the divisor or dividend, respectively.
+     *
+     * If $(MATH f(x) = g(x) (mod h(x))), then $(MATH f' = g' - (g - f)h'/h - δ(f)(g'h - gh')/h),
+     * where $(MATH δ) is the Dirac Delta function.
+     *
+     * Params:
+     *   that = the divisor
+     *
+     * Returns:
+     *   the remainder of the two generalized dual numbers with degree being the lesser of the
+     *   degree of the dividend and the degree of the divisor.
+     *
+     * Examples:
+     *   ```
+     *   auto x = GDN!1(2);
+     *   auto y = GDN!1(-1);
+     *   auto z = x % y;
+     *   auto w = 5 % x;
+     *   assert(z == 0 && z.d == -real.infinity);
+     *   assert(w == 1 && w.d == -2);
+     *   ```
+     */
     /*
     Derivation:
     f (mod g) = f - ⌊f/g⌋g ⇒ ⌊f/g⌋ = {f - [f (mod g)]}/g
