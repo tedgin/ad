@@ -389,17 +389,7 @@ unittest
 
 pure nothrow @nogc @trusted GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        const f_red = std.math.rounding.trunc(g.reduce());
-    else
-        const f_red = trunc(g.reduce());
-
-    GDN!Deg.DerivType!1 df;
-    if (isFinite(g.val)) {
-        df = g.d * dirac(abs(g.reduce() - f_red));
-    }
-
-    return GDN!Deg(asReal(f_red), df);
+    return ad.math.internal.trunc(g);
 }
 
 ///
@@ -407,9 +397,4 @@ unittest
 {
     assert(trunc(GDN!1(0.01)) is GDN!1(+0., 0));
     assert(trunc(GDN!1(-0.49)) is GDN!1(-0., 0));
-}
-
-unittest
-{
-    assert(trunc(GDN!2(0.5)) is GDN!2(0, 0, 0));
 }

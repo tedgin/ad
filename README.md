@@ -11,7 +11,11 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * `std.math.constants`
   * `std.math.exponential`
   * `std.math.operations`
-  * `std.math.remainder` (not implemented yet)
+  * `std.math.remainder`
+    * `fmod`
+    * `modf`
+    * `remainder` (not implemented)
+    * `remquo` (not implemented)
   * `std.math.rounding`
   * `std.math.trigonometry`
   * `std.math.traits`

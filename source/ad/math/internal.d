@@ -8,7 +8,7 @@ static import std.math.rounding;
 static import std.math.traits;
 
 import std.algorithm: min;
-import std.math: isFinite, isNaN, LN2;
+import std.math: abs, isFinite, isNaN, LN2;
 import std.traits: fullyQualifiedName, isImplicitlyConvertible, isIntegral, Select, TemplateOf;
 
 import ad.core;
@@ -312,7 +312,7 @@ package pure nothrow @nogc @safe
             const f_red = ceil(g.reduce());
 
         GDN!Deg.DerivType!1 df;
-        if (isFinite(g.val)) {
+        if (isFinite(g)) {
             df = g.d * dirac(g.reduce() - f_red);
         }
 
@@ -340,7 +340,7 @@ package pure nothrow @nogc @safe
             const f_red = floor(g.reduce());
 
         GDN!Deg.DerivType!1 df;
-        if (isFinite(g.val)) {
+        if (isFinite(g)) {
             df = g.d * dirac(g.reduce() - f_red);
         }
 
@@ -356,5 +356,27 @@ package pure nothrow @nogc @safe
         assert(floor(GDN!1(-real.infinity)) is GDN!1(-real.infinity, real.nan));
         assert(floor(GDN!2(2.3)) is GDN!2(2, 0, 0));
         assert(floor(GDN!1(0, -1/LN2)) is GDN!1(0, -real.infinity));
+    }
+
+
+    // The implementation of trunc for GDN
+    pragma(inline, true) GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
+    {
+        static if (Deg == 1)
+            const f_red = std.math.rounding.trunc(g.reduce());
+        else
+            const f_red = trunc(g.reduce());
+
+        GDN!Deg.DerivType!1 df;
+        if (isFinite(g)) {
+            df = g.d * dirac(abs(g.reduce()) - f_red);
+        }
+
+        return GDN!Deg(asReal(f_red), df);
+    }
+
+    unittest
+    {
+        assert(trunc(GDN!2(0.5)) is GDN!2(0, 0, 0));
     }
 }

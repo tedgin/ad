@@ -4,7 +4,7 @@ module ad.math.remainder;
 static import std.math.remainder;
 
 import ad.core;
-import ad.math.internal: areAll, CommonGDN, isGDN, isGDNOrReal, isOne;
+import ad.math.internal: areAll, CommonGDN, isGDN, isGDNOrReal, isOne, trunc;
 
 
 /**
@@ -36,8 +36,39 @@ unittest
 }
 
 
-// TODO: implement
-nothrow @nogc @safe real modf(ulong Deg)(in GDN!Deg g, ref real i);
+/**
+ * Breaks g into an integer and a fraction, each with the same sign as g.
+ *
+ * `f = modf(g, i)` can be expressed mathematically as follows. When $MATH(g ≥ 0), $(MATH i = ⌊g⌋),
+ * and when $(MATH g < 0), $(MATH i = ⌈g⌉). This is the mathematical definition of `trunc(g)`.
+ * $(MATH f = g - i).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the GDN object to break into an integer and a fraction.
+ *   i = the integer part of g.
+ *
+ * Returns:
+ *   The fractional part of g.
+ */
+nothrow @nogc @safe GDN!Deg modf(ulong Deg)(in GDN!Deg g, out GDN!Deg i)
+{
+	i = trunc(g);
+	return g - i;
+}
+
+///
+unittest
+{
+	import std.math: isClose;
+
+	const g = GDN!1(3.14159);
+	GDN!1 i;
+	const f = modf(GDN!1(g), i);
+	assert(i is GDN!1(3, 0));
+	assert(isClose(f.val, 0.14159));
+	assert(f.d == 1);
+}
 
 
 // TODO: implement
