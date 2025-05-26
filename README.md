@@ -7,18 +7,6 @@ This is an automatic differentiation library written in D supporting one-dimensi
 * supports all of D's arithmetic operators
 * supports the same set of functions as `core.math`
 * supports the same set of functions as `std.math`
-  * `std.math.algebraic`
-  * `std.math.constants`
-  * `std.math.exponential`
-  * `std.math.operations`
-  * `std.math.remainder`
-    * `fmod`
-    * `modf`
-    * `remainder` (not implemented)
-    * `remquo` (not implemented)
-  * `std.math.rounding`
-  * `std.math.trigonometry`
-  * `std.math.traits`
 * supports the same set of functions as `std.mathspecial` (not implemented yet)
 * supports arbitrary order differentiation, must be fixed at compile time
 

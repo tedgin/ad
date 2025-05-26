@@ -94,6 +94,71 @@ unittest
 }
 
 
+/** Calculates integer quotient of `g` and `h` and its remainder using the definition of remainder
+ * provided by IEC 60559.
+ *
+ * The integer quotient n is $(MATH n(x) = round(g(x)/h(x))), and the remainder is defined as
+ * $(MATH f(g(x), h(x)) = g(x) - h(x)n(x)).
+ *
+ * Params:
+ *   G = the type of g, either `GDN` or `real`.
+ *   H = the type of h, either `GDN` or `real`.
+ *   g = the dividend.
+ *   h = the divisor.
+ *   n = the integer quotient of g and h.
+ *
+ * Returns:
+ *   The remainder of `g` divided by `h`.
+ */
+nothrow @nogc @safe
+CommonGDN!(G, H) remquo(G, H)(in G g, in H h, out int n)
+if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+{
+	if (g == 0 && h != 0) {
+		n = 0;
+		return g;
+	}
+
+	if (isFinite(g) && isInfinity(h)) {
+		return g;
+	}
+
+	const n_gdn = round(g / h);
+	n = cast(int) n_gdn.val;
+	return g - h * n_gdn;
+}
+
+///
+unittest
+{
+	import std.math: isClose;
+
+	int n;
+	const f = remquo(GDN!1(5.1), GDN!1(3), n);
+	assert(n ==2 && isClose(f.val, -0.9) && f.d == -1);
+}
+
+unittest
+{
+	import ad.math.traits: isNaN;
+
+	int n;
+
+	n = int.min;
+	const q = remquo(GDN!1(-0.), GDN!1(1), n);
+	assert(n == 0 && q is GDN!1(-0., 1));
+
+	n = int.min;
+	const w = remquo(GDN!1(+0.), GDN!1(1), n);
+	assert(n == 0 && w is GDN!1(+0., 1));
+
+	assert(isNaN(remquo(GDN!1(-real.infinity), GDN!1(1), n)));
+	assert(isNaN(remquo(GDN!1(real.infinity), GDN!1(1), n)));
+	assert(isNaN(remquo(GDN!1(1), GDN!1(0), n)));
+	assert(remquo(GDN!1(2), GDN!1(-real.infinity), n) is GDN!1(2));
+}
+
+
 /** Calculates the remainder of `g` divided by `h` using the definition of remainder provided by
  * IEC 60559.
  *
@@ -112,13 +177,9 @@ nothrow @nogc @safe
 CommonGDN!(G, H) remainder(G, H)(in G g, in H h)
 if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 {
-	if ((g == 0 && h != 0) || (isFinite(g) && isInfinity(h))) {
-		return g;
-	}
-
-	return g - h * round(g / h);
+	int _;
+	return remquo(g, h, _);
 }
-
 
 ///
 unittest
@@ -129,26 +190,3 @@ unittest
 	assert(isClose(f.val, -0.9));
 	assert(f.d == -1);
 }
-
-unittest
-{
-	import std.format: format;
-	import ad.math.traits: isNaN;
-
-	const q = remainder(GDN!1(-0.), GDN!1(1));
-	assert(q is GDN!1(-0., 1), format("q: %s", q));
-
-	assert(remainder(GDN!1(+0.), GDN!1(1)) is GDN!1(+0., 1));
-	assert(isNaN(remainder(GDN!1(-real.infinity), GDN!1(1))));
-	assert(isNaN(remainder(GDN!1(real.infinity), GDN!1(1))));
-	assert(isNaN(remainder(GDN!1(1), GDN!1(0))));
-
-	const w = remainder(GDN!1(2), GDN!1(-real.infinity));
-	assert(w is GDN!1(2), format("w: %s", w));
-}
-
-
-// TODO: implement
-nothrow @nogc @safe
-CommonGDN!(G, H) remquo(G, H)(in G g, in H h, out int n)
-if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H));
