@@ -4,14 +4,14 @@ module ad.math.rounding;
 static import core.math;
 static import std.math.rounding;
 
-import std.math: abs, FloatingPointControl, isFinite, isInfinity, isNaN, nearbyint, signbit;
+import std.math: FloatingPointControl, isInfinity, isNaN, nearbyint, signbit;
 import std.traits: arity, isIntegral, Parameters, ReturnType;
 
 static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, asReal, CommonGDN, dirac, isGDN, isGDNOrReal, isOne, nextDown, nextUp, pow;
+    areAll, asGDN, CommonGDN, dirac, isGDN, isGDNOrReal, isOne, nextDown, nextUp, pow;
 
 
 /**
@@ -348,17 +348,7 @@ unittest
  */
 nothrow @nogc @trusted GDN!Deg round(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        const f_red = std.math.rounding.round(g.reduce());
-    else
-        const f_red = round(g.reduce());
-
-    GDN!Deg.DerivType!1 df;
-    if (isFinite(g.val)) {
-        df = g.d * dirac(abs(g.reduce() - f_red) - 0.5);
-    }
-
-    return GDN!Deg(asReal(f_red), df);
+    return ad.math.internal.round(g);
 }
 
 ///
@@ -366,11 +356,6 @@ unittest
 {
     assert(round(GDN!1(4.5)) is GDN!1(5, real.infinity));
     assert(round(GDN!1(-4.5)) is GDN!1(-5, real.infinity));
-}
-
-unittest
-{
-    assert(round(GDN!2(5.4)) is GDN!2(5, 0, 0));
 }
 
 
@@ -386,7 +371,6 @@ unittest
  * Returns:
  *   The truncated `GDN`,
  */
-
 pure nothrow @nogc @trusted GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
 {
     return ad.math.internal.trunc(g);

@@ -3,8 +3,11 @@ module ad.math.remainder;
 
 static import std.math.remainder;
 
+import std.math: sgn;
+
 import ad.core;
-import ad.math.internal: areAll, CommonGDN, isGDN, isGDNOrReal, isOne, trunc;
+import ad.math.internal:
+	areAll, CommonGDN, isGDN, isGDNOrReal, isFinite, isInfinity, isOne, round, trunc;
 
 
 /**
@@ -54,6 +57,11 @@ unittest
 nothrow @nogc @safe GDN!Deg modf(ulong Deg)(in GDN!Deg g, out GDN!Deg i)
 {
 	i = trunc(g);
+
+	if (isInfinity(g)) {
+		return GDN!Deg(sgn(g.val) * 0., GDN!Deg.mkNaNDeriv());
+	}
+
 	return g - i;
 }
 
@@ -70,11 +78,74 @@ unittest
 	assert(f.d == 1);
 }
 
+unittest
+{
+	import std.format: format;
 
-// TODO: implement
+	GDN!1 i;
+
+	const q = modf(GDN!1(-real.infinity), i);
+	assert(
+		q is GDN!1(-0., real.nan) && i is GDN!1(-real.infinity, real.nan),
+		format("q: %s, i: %s", q, i));
+
+	const w = modf(GDN!1(real.infinity), i);
+	assert(w is GDN!1(0., real.nan) && i is GDN!1(real.infinity, real.nan));
+}
+
+
+/** Calculates the remainder of `g` divided by `h` using the definition of remainder provided by
+ * IEC 60559.
+ *
+ * The remainder is defined as $(MATH f(g(x), h(x)) = g(x) - h(x)round(g(x)/h(x))).
+ *
+ * Params:
+ *   G = the type of g, either `GDN` or `real`.
+ *   H = the type of h, either `GDN` or `real`.
+ *   g = the dividend.
+ *   h = the divisor.
+ *
+ * Returns:
+ *   The remainder of `g` divided by `h`.
+ */
 nothrow @nogc @safe
 CommonGDN!(G, H) remainder(G, H)(in G g, in H h)
-if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H));
+if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+{
+	if ((g == 0 && h != 0) || (isFinite(g) && isInfinity(h))) {
+		return g;
+	}
+
+	return g - h * round(g / h);
+}
+
+
+///
+unittest
+{
+	import std.math: isClose;
+
+	const f = remainder(GDN!1(5.1), GDN!1(3));
+	assert(isClose(f.val, -0.9));
+	assert(f.d == -1);
+}
+
+unittest
+{
+	import std.format: format;
+	import ad.math.traits: isNaN;
+
+	const q = remainder(GDN!1(-0.), GDN!1(1));
+	assert(q is GDN!1(-0., 1), format("q: %s", q));
+
+	assert(remainder(GDN!1(+0.), GDN!1(1)) is GDN!1(+0., 1));
+	assert(isNaN(remainder(GDN!1(-real.infinity), GDN!1(1))));
+	assert(isNaN(remainder(GDN!1(real.infinity), GDN!1(1))));
+	assert(isNaN(remainder(GDN!1(1), GDN!1(0))));
+
+	const w = remainder(GDN!1(2), GDN!1(-real.infinity));
+	assert(w is GDN!1(2), format("w: %s", w));
+}
 
 
 // TODO: implement

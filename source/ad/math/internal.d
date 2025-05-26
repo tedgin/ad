@@ -303,20 +303,46 @@ package pure nothrow @nogc @safe
  */
 package pure nothrow @nogc @safe
 {
-    // The implementation of ceil for GDN.
-    pragma(inline, true) GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
+    pragma(inline,true) private
+    GDN!Deg
+    round_impl(string Fn, ulong Deg)(
+        in GDN!Deg g,
+        in GDN!Deg.DerivType!1 delegate(in GDN!Deg.DerivType!1, in GDN!Deg.DerivType!1)
+            pure nothrow @nogc @safe
+            fn_deriv)
     {
         static if (Deg == 1)
-            const f_red = std.math.rounding.ceil(g.reduce());
+            mixin("const f_red = std.math.rounding." ~ Fn ~ "(g.reduce());");
         else
-            const f_red = ceil(g.reduce());
+            mixin("const f_red = " ~ Fn ~ "(g.reduce());");
 
         GDN!Deg.DerivType!1 df;
         if (isFinite(g)) {
-            df = g.d * dirac(g.reduce() - f_red);
+            df = fn_deriv(f_red, g.reduce()) * g.d;
         }
 
         return GDN!Deg(asReal(f_red), df);
+    }
+
+    unittest
+    {
+        real sub(in real f, in real g) { return f - g; }
+        assert(round_impl!("ceil", 1)(GDN!1(3.5), &sub) is GDN!1(4, 0.5));
+
+        auto add(in GDN!1 f, in GDN!1 g) { return f + g; }
+        const q = round_impl!("ceil", 2)(GDN!2(3.5), &add);
+        assert(q is GDN!2(4, 7.5, 1));
+    }
+
+
+    // The implementation of ceil for GDN.
+    pragma(inline, true) GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
+    {
+        auto dfn(in GDN!Deg.DerivType!1 f_red, in GDN!Deg.DerivType!1 g_red) {
+            return dirac(g_red - f_red);
+        }
+
+        return round_impl!("ceil", Deg)(g, &dfn);
     }
 
     unittest
@@ -334,17 +360,11 @@ package pure nothrow @nogc @safe
     // The implementation of floor for GDN
     pragma(inline, true) GDN!Deg floor(ulong Deg)(in GDN!Deg g)
     {
-        static if (Deg == 1)
-            const f_red = std.math.rounding.floor(g.reduce());
-        else
-            const f_red = floor(g.reduce());
-
-        GDN!Deg.DerivType!1 df;
-        if (isFinite(g)) {
-            df = g.d * dirac(g.reduce() - f_red);
+        auto dfn(in GDN!Deg.DerivType!1 f_red, in GDN!Deg.DerivType!1 g_red) {
+            return dirac(g_red - f_red);
         }
 
-        return GDN!Deg(asReal(f_red), df);
+        return round_impl!("floor", Deg)(g, &dfn);
     }
 
     unittest
@@ -359,20 +379,30 @@ package pure nothrow @nogc @safe
     }
 
 
+    // The implementation of round for GDN
+    pragma(inline, true) GDN!Deg round(ulong Deg)(in GDN!Deg g)
+    {
+        auto dfn(in GDN!Deg.DerivType!1 f_red, in GDN!Deg.DerivType!1 g_red) {
+            return dirac(abs(g_red - f_red) - 0.5);
+        }
+
+        return round_impl!("round", Deg)(g, &dfn);
+    }
+
+    unittest
+    {
+        assert(round(GDN!2(5.4)) is GDN!2(5, 0, 0));
+    }
+
+
     // The implementation of trunc for GDN
     pragma(inline, true) GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
     {
-        static if (Deg == 1)
-            const f_red = std.math.rounding.trunc(g.reduce());
-        else
-            const f_red = trunc(g.reduce());
-
-        GDN!Deg.DerivType!1 df;
-        if (isFinite(g)) {
-            df = g.d * dirac(abs(g.reduce()) - f_red);
+        auto dfn(in GDN!Deg.DerivType!1 f_red, in GDN!Deg.DerivType!1 g_red) {
+            return dirac(abs(g_red - f_red));
         }
 
-        return GDN!Deg(asReal(f_red), df);
+        return round_impl!("trunc", Deg)(g, &dfn);
     }
 
     unittest
