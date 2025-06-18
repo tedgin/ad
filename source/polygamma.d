@@ -24,7 +24,7 @@ unittest
 }
 
 
-static immutable size_t MAX_EULER_ZIGZAG_IDX = 1867;
+private static immutable size_t MAX_EULER_ZIGZAG_IDX = 1867;
 
 // Implemented using Seidel's algorithm
 private pure nothrow @safe real[MAX_EULER_ZIGZAG_IDX] init_euler_zigzag()
@@ -66,7 +66,7 @@ private pure nothrow @safe real[MAX_EULER_ZIGZAG_IDX] init_euler_zigzag()
 	return t;
 }
 
-static immutable real[MAX_EULER_ZIGZAG_IDX] T = init_euler_zigzag();
+private static immutable real[MAX_EULER_ZIGZAG_IDX] T = init_euler_zigzag();
 
 // Euler Zig Zag Numbers
 private pure nothrow @nogc @safe real euler_zigzag(in ulong n)
