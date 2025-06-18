@@ -329,8 +329,11 @@ pure nothrow @nogc @safe GDN!Deg log1p(ulong Deg)(in GDN!Deg g)
 unittest
 {
     import std.math: log;
+    import ad.math.operations: isClose;
 
-    assert(log1p(GDN!1(3)) is GDN!1(log(4), 0.25));
+    const f_act = log1p(GDN!1(3));
+    const f_exp = GDN!1(log(4.), 0.25);
+    assert(isClose(f_act, f_exp));
     assert(log1p(GDN!1(-1)) is GDN!1(-real.infinity, real.nan));
 }
 
@@ -434,10 +437,10 @@ pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in I n, in GDN!Deg g) if (isI
 {
     static if (Deg == 1) {
         const f_val = std.math.exponential.pow(n, g.val);
-        return GDN!Deg(f_val, f_val * g.d * std.math.exponential.log(n));
+        return GDN!Deg(f_val, f_val * g.d * std.math.exponential.log(cast(real)n));
     } else {
         const f_red = pow(n, g.reduce());
-        return GDN!Deg(f_red.val(), f_red * g.d * std.math.exponential.log(n));
+        return GDN!Deg(f_red.val(), f_red * g.d * std.math.exponential.log(cast(real)n));
     }
 }
 
@@ -445,14 +448,17 @@ pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in I n, in GDN!Deg g) if (isI
 unittest
 {
     import std.math: log;
+    import ad.math.operations: isClose;
 
-    assert(pow(2, GDN!1(5)) is GDN!1(32, 32*log(2)));
+    assert(isClose(pow(2, GDN!1(5)), GDN!1(32, 32*log(2.))));
 }
 
 unittest
 {
-    const ln3 = std.math.exponential.log(3);
-    assert(pow(3, GDN!2(1, 2, 4)) is GDN!2(3, 6*ln3, 12*ln3*(ln3 + 1)));
+    import ad.math.operations: isClose;
+
+    const ln3 = std.math.exponential.log(3.);
+    assert(isClose(pow(3, GDN!2(1, 2, 4)), GDN!2(3, 6*ln3, 12*ln3*(ln3 + 1))));
     // f = 3
     // <f',f"> = 3^<1,2> * <2,4> * ln(3)
     //         = <3,3*2ln(3)> * <2,4> * ln(3)
