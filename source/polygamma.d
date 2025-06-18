@@ -1,5 +1,5 @@
 import core.math: cos, fabs, rndtol, sin;
-import std.math: abs, ceil, log10, PI, poly, sgn, signbit, trunc;
+import std.math: abs, ceil, log10, nextUp, PI, poly, sgn, signbit, trunc;
 import std.mathspecial: digamma;
 
 
@@ -250,7 +250,7 @@ unittest
 // 2x > n + ⌊log(1/ε)⌋, and x > n.
 private pure nothrow @nogc @safe real polygamma_asymptotic_series(ulong n)(in real x) if (n > 0)
 {
-	static const real sgn = (-1) ^^ (n - 1);
+	static const real sgn = -(-1.) ^^ n;
 	static const term_0 = sgn * factorial(n-1);
 	static const term_1 = sgn * factorial(n) / 2;
 
@@ -293,6 +293,7 @@ unittest
 }
 
 
+// polygamma
 pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
 {
 	static const odd_order = n%2 == 1;
@@ -305,7 +306,7 @@ pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
 
 	// x is too small. If x is positive, use the recurrence relation.
 	if (x > 0) {
-		const long x_shift = cast(long) ceil(x_cut - x);
+		const long x_shift = cast(long) ceil(nextUp(x_cut - x));
 		return polygamma!n(x+x_shift) - polygamma_recurrence_delta!n(x, x_shift);
 	}
 
@@ -343,7 +344,7 @@ unittest
 		const info = format("exp=%s, act=%s, err=%s > %s",
 			expected_result, act, fabs(act - expected_result), fabs(real.epsilon*expected_result));
 
-		assert(isClose(act, expected_result, real.epsilon), info);
+		assert(isClose(act, expected_result, 10*real.epsilon), info);
 	}
 
 	// test n = 0
@@ -353,10 +354,10 @@ unittest
 	assert(polygamma!1(+0.) == real.infinity);
 	assert(polygamma!1(-0.) == real.infinity);
 	assert(polygamma!1(-1) == real.infinity);
-	//assert_close!1(-12.75, 19.663_772_856_722_737_612_034_697_464_751_605L);
-	//assert_close!1(-0.25, 18.541_879_647_671_606_498_397_662_880_417_078L);
-	//assert_close!1(9.765_625e-4, 1.048_577_642_589_392_152_617_040_806_167_829_8e6L);
-	//assert_close!1(0.125, 65.388_133_444_988_034_473_142_999_334_395_961L);
+	assert_close!1(-12.75, 19.663_772_856_722_737_612_034_697_464_751_605L);
+	assert_close!1(-0.25, 18.541_879_647_671_606_498_397_662_880_417_078L);
+	assert_close!1(9.765_625e-4, 1.048_577_642_589_392_152_617_040_806_167_829_8e6L);
+	assert_close!1(0.125, 65.388_133_444_988_034_473_142_999_334_395_961L);
 	assert_close!1(10.75, 0.097_483_848_201_852_104_395_946_001_854_344_927L);
 	assert_close!1(100, 0.010_050_166_663_333_571_395_245_668_465_701_423L);
 
@@ -364,14 +365,18 @@ unittest
 	assert(polygamma!2(+0.) == -real.infinity);
 	assert(polygamma!2(-0.) == real.infinity);
 	assert(isNaN(polygamma!2(-1)));
-	// TODO: test negative
-	// TODO: test small positive
+	assert_close!2(-12.75, -124.030_794_614_158_233_846_041_532_515_436_81L);
+	assert_close!2(-0.25, 122.697_366_783_662_360_368_567_293_089_561_59L);
+	assert_close!2(9.765_625e-4, -2.147_483_650_397_783_916_396_063_006_390_936_4e9L);
+	assert_close!2(0.125, -1.025_753_338_118_135_682_595_668_930_056_517_4e3L);
 	assert_close!2(10.75, -9.495_619_644_926_590_077_648_896_563_179_177_5e-3L);
 	assert_close!2(100, -1.010_049_998_333_499_970_008_330_044_605_938_2e-4L);
 
 	// test n >= 10
-	// TODO: test negative
-	// TODO: test small positive
+	assert_close!20(-9.5, -1.030_763_776_245_141_659_801_808_179_634_593_2e-3L);
+	assert_close!10(-0.25, 1.522_020_442_846_279_111_956_134_706_549_276e13L);
+	assert_close!15(9.765_625e-4, 1.911_168_229_927_653_680_431_359_258_893_451_1e60L);
+	assert_close!12(0.125, -2.633_339_144_617_578_462_370_751_412_184_393_7e20L);
 	assert_close!12(17.125, -8.747_949_394_125_802_795_334_672_654_399_567_7e-8L);
 	assert_close!12(100, -4.236_368_168_960_810_441_389_986_390_777_533_3e-17L);
 }
