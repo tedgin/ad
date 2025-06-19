@@ -1,6 +1,7 @@
+module ad.math.polygamma;
+
 import core.math: cos, fabs, rndtol, sin;
-import std.math: abs, ceil, log10, nextUp, PI, poly, sgn, signbit, trunc;
-import std.mathspecial: digamma;
+import std.math: abs, ceil, isNaN, log10, nextUp, PI, poly, sgn, signbit, trunc;
 
 
 // n!
@@ -250,9 +251,12 @@ unittest
 // 2x > n + ⌊log(1/ε)⌋, and x > n.
 private pure nothrow @nogc @safe real polygamma_asymptotic_series(ulong n)(in real x) if (n > 0)
 {
-	static const real sgn = -(-1.) ^^ n;
-	static const term_0 = sgn * factorial(n-1);
-	static const term_1 = sgn * factorial(n) / 2;
+	static const real sign = -(-1.) ^^ n;
+	static const term_0 = sign * factorial(n-1);
+	static const term_1 = sign * factorial(n) / 2;
+
+	if (isNaN(x)) return real.nan;
+	if (x == real.infinity) return sign * 0;
 
 	real series = 0;
 
@@ -262,7 +266,7 @@ private pure nothrow @nogc @safe real polygamma_asymptotic_series(ulong n)(in re
 		series += trunc_fac * (bernoulli!(-1)(2*k) / x^^(2*k + n));
 	}
 
-	return term_0 / x^^n + term_1 / x^^(n + 1) + sgn * series;
+	return term_0 / x^^n + term_1 / x^^(n + 1) + sign * series;
 }
 
 unittest
@@ -294,10 +298,12 @@ unittest
 
 
 // polygamma
-pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
+package pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
 {
 	static const odd_order = n%2 == 1;
 	static const x_cut = (n + ceil(log10(1/real.epsilon))) / 2.0L;
+
+	if (isNaN(x) || x == -real.infinity) return real.nan;
 
 	// If x is large enough, use the asymptotic expansion
 	if (x > x_cut) {
@@ -329,10 +335,6 @@ pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
 	return (odd_order ? -1 : 1)*polygamma!n(1-x) - polygamma_reflection_delta!n(x);
 }
 
-pragma(inline, true) pure nothrow @nogc @safe real polygamma(ulong n : 0)(in real x) {
-	return digamma(x);
-}
-
 unittest
 {
 	import std.format: format;
@@ -347,10 +349,11 @@ unittest
 		assert(isClose(act, expected_result, 10*real.epsilon), info);
 	}
 
-	// test n = 0
-	assert(polygamma!0(32) == digamma(32));
-
 	// test n = 1
+	assert(isNaN(polygamma!1(real.nan)));
+
+	const q = polygamma!1(-real.infinity);
+	assert(isNaN(q), format("Ψ⁽¹⁾(-∞) != %s", q));
 	assert(polygamma!1(+0.) == real.infinity);
 	assert(polygamma!1(-0.) == real.infinity);
 	assert(polygamma!1(-1) == real.infinity);
