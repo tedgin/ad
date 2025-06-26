@@ -1,8 +1,20 @@
 module ad.math.polygamma;
 
 import core.math: cos, fabs, rndtol, sin;
-import std.math: abs, ceil, isNaN, log10, nextUp, PI, poly, sgn, signbit, trunc;
+import std.math: abs, ceil, isInfinity, isNaN, log10, nextUp, PI, poly, sgn, signbit, trunc;
+import std.traits: isIntegral;
 
+private pure nothrow @nogc @safe bool isOdd(T)(in T n) if (isIntegral!T)
+{
+	return (n & 1) == 1;
+}
+
+unittest
+{
+	assert(!isOdd(0));
+	assert(isOdd(1));
+	assert(!isOdd(-2));
+}
 
 // n!
 private pure nothrow @nogc @safe real factorial(in ulong n)
@@ -25,23 +37,19 @@ unittest
 }
 
 
-private static immutable size_t MAX_EULER_ZIGZAG_IDX = 1867;
-
 // Implemented using Seidel's algorithm
-private pure nothrow @safe real[MAX_EULER_ZIGZAG_IDX] init_euler_zigzag()
+private nothrow pure @safe real[] initEulerZigZag()
 {
-	typeof(return) t;
-	t[0] = 1;
-
 	real[][] s;
-	s.length = t.length;
+	s.length = 1;
 	s[0].length = 1;
 	s[0][0] = 1;
 
-	for (auto k = 1; k < t.length; k++) {
+	for (auto k = 1; true; k++) {
+		s.length++;
 		s[k].length = k + 1;
 
-		if (k % 2 == 1) {
+		if (isOdd(k)) {
 			auto j = 0;
 			s[k][j] = s[k-1][j];
 
@@ -61,16 +69,20 @@ private pure nothrow @safe real[MAX_EULER_ZIGZAG_IDX] init_euler_zigzag()
 			s[k][j] = s[k][j+1];
 		}
 
-		t[k] = k%2 == 1 ? s[k][0] : s[k][$-1];
+		if (isInfinity(isOdd(k) ? s[k][0] : s[k][$-1])) break;
 	}
 
+	real [] t;
+	t.length = cast(long)s.length - 1;
+	t[0] = 1;
+	for (auto k = 1; k < t.length; k++) t[k] = isOdd(k) ? s[k][0] : s[k][$-1];
 	return t;
 }
 
-private static immutable real[MAX_EULER_ZIGZAG_IDX] T = init_euler_zigzag();
+private static immutable real[] T = initEulerZigZag();
 
 // Euler Zig Zag Numbers
-private pure nothrow @nogc @safe real euler_zigzag(in ulong n)
+private pure nothrow @nogc @safe real eulerZigZag(in ulong n)
 {
 
 	if (n < T.length) {
@@ -82,13 +94,13 @@ private pure nothrow @nogc @safe real euler_zigzag(in ulong n)
 
 unittest
 {
-	assert(euler_zigzag(1) == 1);
-	assert(euler_zigzag(1) == 1);
-	assert(euler_zigzag(2) == 1);
-	assert(euler_zigzag(3) == 2);
-	assert(euler_zigzag(5) == 16);
-	assert(euler_zigzag(11) == 353_792);
-	assert(euler_zigzag(2000) == real.infinity);
+	assert(eulerZigZag(1) == 1);
+	assert(eulerZigZag(1) == 1);
+	assert(eulerZigZag(2) == 1);
+	assert(eulerZigZag(3) == 2);
+	assert(eulerZigZag(5) == 16);
+	assert(eulerZigZag(11) == 353_792);
+	assert(eulerZigZag(2000) == real.infinity);
 }
 
 
@@ -104,8 +116,8 @@ private pure nothrow @nogc @safe real bernoulli(int Sign)(in ulong n)
 			return -1.0L / 2;
 	}
 
-	if (n % 2 == 1) return 0;
-	return (-1.0L)^^(n / 2) * n * (euler_zigzag(n-1) / (2.0L^^n - 4.0L^^n));
+	if (isOdd(n)) return 0;
+	return (-1.0L)^^(n / 2) * n * (eulerZigZag(n-1) / (2.0L^^n - 4.0L^^n));
 }
 
 
@@ -127,11 +139,11 @@ unittest
 
 
 // Polynomial coefficients for derivatives of cot(πx)
-private pure nothrow @safe real[] polygamma_reflection_poly_coef(in ulong n)
+private pure nothrow @safe real[] polygammaReflectPolyCoef(in ulong n)
 {
 	if (n == 1) return [-1.0L, 0, 0];
 
-	const prev = polygamma_reflection_poly_coef(n - 1);
+	const prev = polygammaReflectPolyCoef(n - 1);
 
 	real[] coef;
 	coef.length = n + 2;  // polynomial has degree n+1
@@ -157,23 +169,23 @@ unittest
 	import std.format: format;
 
 	// p1(x) = -[x^2 + (1-x^2)] = -1 + 0x + 0x^2
-	const p1 = polygamma_reflection_poly_coef(1);
+	const p1 = polygammaReflectPolyCoef(1);
 	assert(p1 == [-1, 0, 0], format("p_1 = %s", p1));
 
 	// p2(x) = -(0 + 0x) + (-n-1)(-1)x + 0x^2 + 0x^3
-	const p2 = polygamma_reflection_poly_coef(2);
+	const p2 = polygammaReflectPolyCoef(2);
 	assert(p2 == [0, 2, 0, 0], format("p_2 = %s", p2));
 
-	const p9 = polygamma_reflection_poly_coef(9);
+	const p9 = polygammaReflectPolyCoef(9);
 	assert(
 		p9 == [-7_936, 0, -137_216, 0.0L, -185_856, 0, -31_616, 0, -256, 0, 0],
 		format("p_9 = %s", p9));
 }
 
 
-private pure nothrow @nogc @safe real polygamma_reflection_delta(ulong n)(in real x)
+private pure nothrow @nogc @safe real polygammaReflectDelta(ulong n)(in real x)
 {
-	static immutable coef = polygamma_reflection_poly_coef(n);
+	static immutable coef = polygammaReflectPolyCoef(n);
 
 	// Reduce the round-off error when PI*x = +/-PI/2
 	const cs = (fabs(x)%1 == 0.5) ? 0.0L : cos(PI*x);
@@ -189,38 +201,38 @@ unittest
 
 	real act, exp;
 
-	assert(polygamma_reflection_delta!1(-0.5) == -PI^^2);
+	assert(polygammaReflectDelta!1(-0.5) == -PI^^2);
 
 	exp = -(PI / sin(0.1*PI))^^2;
-	act = polygamma_reflection_delta!1(-0.1);
+	act = polygammaReflectDelta!1(-0.1);
 	assert(
 		isClose(act, exp, real.epsilon),
 		format("exp=%s, act=%s, err=%s > %s", exp, act, fabs(act - exp), fabs(real.epsilon*exp)));
 
-	assert(polygamma_reflection_delta!1(-1.5) == -PI^^2);
-	assert(polygamma_reflection_delta!1(-99.5) == -PI^^2);
+	assert(polygammaReflectDelta!1(-1.5) == -PI^^2);
+	assert(polygammaReflectDelta!1(-99.5) == -PI^^2);
 
 	exp = 0;
-	act = polygamma_reflection_delta!2(-0.5);
+	act = polygammaReflectDelta!2(-0.5);
 	assert(
 		isClose(act, exp, real.epsilon),
 		format("exp=%s, act=%s, err=%s > %s", exp, act, fabs(act - exp), fabs(real.epsilon*exp)));
 
 	exp = -2 * cos(1.2*PI) * (PI / sin(1.2*PI))^^3;
-	act = polygamma_reflection_delta!2(-1.2);
+	act = polygammaReflectDelta!2(-1.2);
 	assert(
 		isClose(act, exp, real.epsilon),
 		format("exp=%s, act=%s, err=%s > %s", exp, act, fabs(act - exp), fabs(real.epsilon*exp)));
 
 	exp = -7_936 * PI^^10;
-	act = polygamma_reflection_delta!9(-0.5);
+	act = polygammaReflectDelta!9(-0.5);
 	assert(
 		isClose(act, exp, real.epsilon),
 		format("exp=%s, act=%s, err=%s > %s", exp, act, fabs(act - exp), fabs(real.epsilon*exp)));
 }
 
 
-private pure nothrow @nogc @safe real polygamma_recurrence_delta(ulong n)(in real x, in long shift)
+private pure nothrow @nogc @safe real polygammaRecureDelta(ulong n)(in real x, in long shift)
 {
 	static const real scale = (-1.0L)^^n * factorial(n);
 	static const pow = -1.0L*(n + 1);
@@ -238,18 +250,18 @@ unittest
 
 	real y;
 
-	y = polygamma_recurrence_delta!1(1, 1);
+	y = polygammaRecureDelta!1(1, 1);
 	assert(y == -1, format("%s", y));
 
-	assert(polygamma_recurrence_delta!1(2, 1) == -0.25);
-	assert(polygamma_recurrence_delta!1(1, 3) == -1.25 - 1.0L/9);
-	assert(polygamma_recurrence_delta!2(1, 1) == 2);
+	assert(polygammaRecureDelta!1(2, 1) == -0.25);
+	assert(polygammaRecureDelta!1(1, 3) == -1.25 - 1.0L/9);
+	assert(polygammaRecureDelta!2(1, 1) == 2);
 }
 
 
 // Ψ⁽ⁿ⁾(x) ~ (-1)ⁿ⁻¹{(n-1)!/xⁿ + n!/(2xⁿ⁺¹) + ∑ₖ₌₁∞[(-1)ᵏ|B⁻₂ₖ|/(2k)!](2k+n-1)!/x²ᵏ⁺ⁿ}, for n > 0,
 // 2x > n + ⌊log(1/ε)⌋, and x > n.
-private pure nothrow @nogc @safe real polygamma_asymptotic_series(ulong n)(in real x) if (n > 0)
+private pure nothrow @nogc @safe real polygammaAsymptoticSeries(ulong n)(in real x) if (n > 0)
 {
 	static const real sign = -(-1.) ^^ n;
 	static const term_0 = sign * factorial(n-1);
@@ -281,7 +293,7 @@ unittest
 	acc = 0;
 	for (auto k = 10; k > 0; k--) acc += 1.0L / k^^2;
 	exp = PI^^2 / 6 - acc;
-	act = polygamma_asymptotic_series!1(11);
+	act = polygammaAsymptoticSeries!1(11);
 	assert(
 		isClose(act, exp, 10*real.epsilon),
 		format("exp=%s, act=%s, err=%s > %s", exp, act, fabs(act - exp), fabs(10*real.epsilon*exp)));
@@ -290,7 +302,7 @@ unittest
 	acc = 0;
 	for (auto k = 99; k > 0; k--) acc += 1.0L / k^^2;
 	exp = PI^^2 / 6 - acc;
-	act = polygamma_asymptotic_series!1(100);
+	act = polygammaAsymptoticSeries!1(100);
 	assert(
 		isClose(act, exp/*, 10*real.epsilon*/),
 		format("exp=%s, act=%s, err=%s > %s", exp, act, fabs(act - exp), fabs(10*real.epsilon*exp)));
@@ -303,21 +315,21 @@ package pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
 	static const odd_order = n%2 == 1;
 	static const x_cut = (n + ceil(log10(1/real.epsilon))) / 2.0L;
 
-	if (isNaN(x) || x == -real.infinity) return real.nan;
+	if (isNaN(x)) return real.nan;
 
 	// If x is large enough, use the asymptotic expansion
 	if (x > x_cut) {
-		return polygamma_asymptotic_series!n(x);
+		return polygammaAsymptoticSeries!n(x);
 	}
 
 	// x is too small. If x is positive, use the recurrence relation.
 	if (x > 0) {
 		const long x_shift = cast(long) ceil(nextUp(x_cut - x));
-		return polygamma!n(x+x_shift) - polygamma_recurrence_delta!n(x, x_shift);
+		return polygamma!n(x+x_shift) - polygammaRecureDelta!n(x, x_shift);
 	}
 
 	// x is not positive. If x is an integer, polygamma has a pole there. Handle
-	// the pole.
+	// the pole. Also handle the case where x is -∞.
 	if (x <= 0 && x == trunc(x)) {
 		// If x is -0, Ψ⁽ⁿ⁾ approaches positive infinity.
 		// If x is +0 and n is odd, Ψ⁽ⁿ⁾ approaches positive infinity.
@@ -326,13 +338,13 @@ package pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
 			return (signbit(x) == 1 || odd_order) ? real.infinity : -real.infinity;
 		}
 
-		// x is a negative integer. If n is odd, Ψ⁽ⁿ⁾ approaches infinity,
+		// x is a negative integer or -∞. If n is odd, Ψ⁽ⁿ⁾ approaches infinity,
 		// otherwise it diverges
 		return odd_order ? real.infinity : real.nan;
 	}
 
 	// x is nonintegral negative number. Use the reflection relation.
-	return (odd_order ? -1 : 1)*polygamma!n(1-x) - polygamma_reflection_delta!n(x);
+	return (odd_order ? -1 : 1)*polygamma!n(1-x) - polygammaReflectDelta!n(x);
 }
 
 unittest
@@ -351,9 +363,7 @@ unittest
 
 	// test n = 1
 	assert(isNaN(polygamma!1(real.nan)));
-
-	const q = polygamma!1(-real.infinity);
-	assert(isNaN(q), format("Ψ⁽¹⁾(-∞) != %s", q));
+	assert(polygamma!1(-real.infinity) == real.infinity);
 	assert(polygamma!1(+0.) == real.infinity);
 	assert(polygamma!1(-0.) == real.infinity);
 	assert(polygamma!1(-1) == real.infinity);
@@ -365,6 +375,7 @@ unittest
 	assert_close!1(100, 0.010_050_166_663_333_571_395_245_668_465_701_423L);
 
 	// test n = 2
+	assert(isNaN(polygamma!2(-real.infinity)));
 	assert(polygamma!2(+0.) == -real.infinity);
 	assert(polygamma!2(-0.) == real.infinity);
 	assert(isNaN(polygamma!2(-1)));
