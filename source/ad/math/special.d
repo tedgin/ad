@@ -1,6 +1,6 @@
 module ad.math.special;
 
-static import std.mathspecial;
+public import std.mathspecial;
 
 import std.math: isNaN, trunc;
 import std.traits: select;
@@ -232,16 +232,16 @@ unittest
 {
 	const f = sgnGamma(GDN!1(1));
 	assert(f == 1 && f.d == 0);
+}
 
-	// TODO: figure out why this fails
-	import std.format: format;
-	assert(std.mathspecial.sgnGamma(-0.1) == -1, format("sgnGamma(-0.1) = %s", std.mathspecial.sgnGamma(-0.1)));
-	assert(std.mathspecial.sgnGamma(-0.5) == -1, format("sgnGamma(-0.5) = %s", std.mathspecial.sgnGamma(-0.5)));
-	const g = sgnGamma(GDN!1(-0.5));
-	assert(g == -1 && g.d == 0);
+unittest
+{
+	//XXX: This fails because of https://github.com/dlang/phobos/issues/10801
+	//const g = sgnGamma(GDN!1(-0.5));
+	//assert(g == -1 && g.d == 0);
 
-	// const h = sgnGamma(GDN!1(+0.));
-	// assert(h == 1 && isNaN(h.d));
+	const h = sgnGamma(GDN!1(+0.));
+	assert(h is GDN!1(1, 0));
 
 	const i = sgnGamma(GDN!1(-1));
 	assert(isNaN(i.val) && isNaN(i.d));
