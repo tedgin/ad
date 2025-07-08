@@ -232,10 +232,10 @@ unittest
 }
 
 
-private pure nothrow @nogc @safe real polygammaRecureDelta(ulong n)(in real x, in long shift)
+private pure nothrow @nogc @safe real polygammaRecureDelta(ulong N)(in real x, in long shift)
 {
-	static const real scale = (-1.0L)^^n * factorial(n);
-	static const pow = -1.0L*(n + 1);
+	static const real scale = (-1.0L)^^N * factorial(N);
+	static const pow = -1.0L*(N + 1);
 
 	const x0 = x - (shift<0 ? 1 : 0);
 
@@ -261,24 +261,24 @@ unittest
 
 // Ψ⁽ⁿ⁾(x) ~ (-1)ⁿ⁻¹{(n-1)!/xⁿ + n!/(2xⁿ⁺¹) + ∑ₖ₌₁∞[(-1)ᵏ|B⁻₂ₖ|/(2k)!](2k+n-1)!/x²ᵏ⁺ⁿ}, for n > 0,
 // 2x > n + ⌊log(1/ε)⌋, and x > n.
-private pure nothrow @nogc @safe real polygammaAsymptoticSeries(ulong n)(in real x) if (n > 0)
+private pure nothrow @nogc @safe real polygammaAsymptoticSeries(ulong N)(in real x) if (N > 0)
 {
-	static const real sign = -(-1.) ^^ n;
-	static const term_0 = sign * factorial(n-1);
-	static const term_1 = sign * factorial(n) / 2;
+	static const real sign = -(-1.) ^^ N;
+	static const term_0 = sign * factorial(N-1);
+	static const term_1 = sign * factorial(N) / 2;
 
 	if (isNaN(x)) return real.nan;
 	if (x == real.infinity) return sign * 0;
 
 	real series = 0;
 
-	for(ulong k = rndtol(PI*x - n/2.0L); k >= 1; k--) {
+	for(ulong k = rndtol(PI*x - N/2.0L); k >= 1; k--) {
 		real trunc_fac = 1;
-		for(auto j = 2*k + 1; j < 2*k + n; j++) trunc_fac *= j;
-		series += trunc_fac * (bernoulli!(-1)(2*k) / x^^(2*k + n));
+		for(auto j = 2*k + 1; j < 2*k + N; j++) trunc_fac *= j;
+		series += trunc_fac * (bernoulli!(-1)(2*k) / x^^(2*k + N));
 	}
 
-	return term_0 / x^^n + term_1 / x^^(n + 1) + sign * series;
+	return term_0 / x^^N + term_1 / x^^(N + 1) + sign * series;
 }
 
 unittest
@@ -310,22 +310,22 @@ unittest
 
 
 // polygamma
-package pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
+package pure nothrow @nogc @safe real polygamma(ulong N)(in real x) if (N > 0)
 {
-	static const odd_order = n%2 == 1;
-	static const x_cut = (n + ceil(log10(1/real.epsilon))) / 2.0L;
+	static const odd_order = N%2 == 1;
+	static const x_cut = (N + ceil(log10(1/real.epsilon))) / 2.0L;
 
 	if (isNaN(x)) return real.nan;
 
 	// If x is large enough, use the asymptotic expansion
 	if (x > x_cut) {
-		return polygammaAsymptoticSeries!n(x);
+		return polygammaAsymptoticSeries!N(x);
 	}
 
 	// x is too small. If x is positive, use the recurrence relation.
 	if (x > 0) {
 		const long x_shift = cast(long) ceil(nextUp(x_cut - x));
-		return polygamma!n(x+x_shift) - polygammaRecureDelta!n(x, x_shift);
+		return polygamma!N(x+x_shift) - polygammaRecureDelta!N(x, x_shift);
 	}
 
 	// x is not positive. If x is an integer, polygamma has a pole there. Handle
@@ -344,7 +344,7 @@ package pure nothrow @nogc @safe real polygamma(ulong n)(in real x) if (n > 0)
 	}
 
 	// x is nonintegral negative number. Use the reflection relation.
-	return (odd_order ? -1 : 1)*polygamma!n(1-x) - polygammaReflectDelta!n(x);
+	return (odd_order ? -1 : 1)*polygamma!N(1-x) - polygammaReflectDelta!N(x);
 }
 
 unittest
