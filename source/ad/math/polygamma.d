@@ -259,16 +259,23 @@ unittest
 }
 
 
-// Ψ⁽ⁿ⁾(x) ~ (-1)ⁿ⁻¹{(n-1)!/xⁿ + n!/(2xⁿ⁺¹) + ∑ₖ₌₁∞[(-1)ᵏ|B⁻₂ₖ|/(2k)!](2k+n-1)!/x²ᵏ⁺ⁿ}, for n > 0,
+// Ψₙ(x) ~ (-1)ⁿ⁻¹{(n-1)!/xⁿ + n!/(2xⁿ⁺¹) + ∑ₖ₌₁∞[(-1)ᵏ|B⁻₂ₖ|/(2k)!](2k+n-1)!/x²ᵏ⁺ⁿ}, for n > 0,
 // 2x > n + ⌊log(1/ε)⌋, and x > n.
 private pure nothrow @nogc @safe real polygammaAsymptoticSeries(ulong N)(in real x) if (N > 0)
 {
-	static const real sign = -(-1.) ^^ N;
-	static const term_0 = sign * factorial(N-1);
-	static const term_1 = sign * factorial(N) / 2;
+	static const real sign = (-1.) ^^ (N - 1);
+	static const term_0 = sign * factorial(N - 1);
+	static const term_1 = sign * factorial(N);
+	static const max_x = (cast(real)long.max + N/2.0L) / PI;
 
 	if (isNaN(x)) return real.nan;
 	if (x == real.infinity) return sign * 0;
+
+	if (x > max_x) {
+		// (n-1)!/xⁿ + n!/(2xⁿ⁺¹) ≤ (-1)ⁿ⁺¹Ψₙ(x) ≤ (n-1)!/xⁿ + n!/xⁿ⁺¹
+		// Ψₙ(x) ≈ (-1)ⁿ⁺¹[(n-1)!/xⁿ + 3n!/(4xⁿ⁺¹)]
+		return term_0/x^^N + 0.75*term_1/x^^(N + 1);
+	}
 
 	real series = 0;
 
@@ -278,7 +285,7 @@ private pure nothrow @nogc @safe real polygammaAsymptoticSeries(ulong N)(in real
 		series += trunc_fac * (bernoulli!(-1)(2*k) / x^^(2*k + N));
 	}
 
-	return term_0 / x^^N + term_1 / x^^(N + 1) + sign * series;
+	return term_0 / x^^N + term_1 / (2 * x^^(N + 1)) + sign * series;
 }
 
 unittest
@@ -331,14 +338,14 @@ package pure nothrow @nogc @safe real polygamma(ulong N)(in real x) if (N > 0)
 	// x is not positive. If x is an integer, polygamma has a pole there. Handle
 	// the pole. Also handle the case where x is -∞.
 	if (x <= 0 && x == trunc(x)) {
-		// If x is -0, Ψ⁽ⁿ⁾ approaches positive infinity.
-		// If x is +0 and n is odd, Ψ⁽ⁿ⁾ approaches positive infinity.
-		// If x is +0 and n is even Ψ⁽ⁿ⁾ approaches negative infinity.
+		// If x is -0, Ψₙ approaches positive infinity.
+		// If x is +0 and n is odd, Ψₙ approaches positive infinity.
+		// If x is +0 and n is even Ψₙ approaches negative infinity.
 		if (x == 0) {
 			return (signbit(x) == 1 || odd_order) ? real.infinity : -real.infinity;
 		}
 
-		// x is a negative integer or -∞. If n is odd, Ψ⁽ⁿ⁾ approaches infinity,
+		// x is a negative integer or -∞. If n is odd, Ψₙ approaches infinity,
 		// otherwise it diverges
 		return odd_order ? real.infinity : real.nan;
 	}
