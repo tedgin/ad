@@ -271,6 +271,12 @@ package pure nothrow @nogc @safe
  */
 package pure nothrow @nogc @safe
 {
+    // The implementation of getNaNPayload for GDN.
+    pragma(inline, true) ulong getNaNPayload(ulong Deg)(in GDN!Deg f)
+    {
+        return std.math.operations.getNaNPayload(f.val);
+    }
+
     // The implementation of nextDown for GDN.
     pragma(inline, true) GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
     {

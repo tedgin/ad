@@ -263,7 +263,7 @@ unittest
  */
 pure nothrow @nogc @safe ulong getNaNPayload(ulong Deg)(in GDN!Deg f)
 {
-    return std.math.operations.getNaNPayload(f.val);
+    return ad.math.internal.getNaNPayload(f);
 }
 
 ///
