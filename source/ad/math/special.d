@@ -115,10 +115,10 @@ unittest
     assert(isNaN(q.val) && isNaN(q.d));
 
     const t = gamma(GDN!1(-0.));
-    assert(t == GDN!1(-real.infinity) && isNaN(t.d), format("Γ(-0) != %s", t));
+    assert(t is GDN!1(-real.infinity, -real.infinity), format("Γ(-0) = %s", t));
 
     const y = gamma(GDN!1(+0.));
-    assert(y == GDN!1(real.infinity) && isNaN(y.d));
+    assert(y is GDN!1(real.infinity, -real.infinity), format("Γ(+0) = %s", y));
 
     const w = gamma(GDN!1(-2));
     assert(isNaN(w.val) && isNaN(w.d));
@@ -416,8 +416,9 @@ unittest
     const h = beta(GDN!1(+0.), GDN!1(-2));
     assert(isNaN(h.val) && isNaN(h.d));
 
-    const j = beta(GDN!1(0), GDN!1(0));
-    assert(isNaN(j.val) && isNaN(j.d));
+// NB: Fails because std.mathspecial.digamma(+0.) = real.nan. Fixed in stable.
+    const j = beta(GDN!1(+0.), GDN!1(+0.));
+    assert(j == real.infinity && isNaN(j.d), format("B(+0,+0) = %s", j));
 
 // NB: Fails because std.mathspecial.digamma(-0.) is NaN. Fixed in stable branch.
 //     const k = beta(GDN!1(-0.), GDN!1(1));
@@ -496,10 +497,10 @@ unittest
     assert(digamma(GDN!1(2, 3)) is e);
 
     const f_nz = digamma(GDN!1(-0.));
-    assert(isNaN(f_nz.val) && isNaN(f_nz.d), format("Ψ₁(-0) = %s", f_nz));
+    assert(f_nz is GDN!1(real.infinity, real.infinity), format("Ψ₁(-0) = %s", f_nz));
 
-    const f_pz = digamma(GDN!1(-0.));
-    assert(isNaN(f_pz.val) && isNaN(f_pz.d), format("Ψ₁(+0) = %s", f_pz));
+    const f_pz = digamma(GDN!1(+0.));
+    assert(f_pz is GDN!1(-real.infinity, real.infinity), format("Ψ₁(+0) = %s", f_pz));
 
     const q = digamma(GDN!1(-real.infinity));
     assert(isNaN(q.val) && isNaN(q.d));
@@ -667,7 +668,7 @@ unittest
     // g' = 0⁻
     assert(w is GDN!1(+0., -0.), format("logmdigammaInverse(∞) != %s", w));
 
-// NB: Failed because of https://github.com/dlang/phobos/issues/10888
+// NB: Failed because std.mathspecial.logmdigammaInverse(-.0) is -real.infinity, fixed in stable
 //     const e = logmdigammaInverse(GDN!1(-0.));
 //     // Assume x > 0. ln(x) - 1/(2x) - Ψ₁(x) > 0 ⇒ ln(x) - Ψ₁(x) > 1/(2x) > 0.
 //     // f(x) = ln(x) - Ψ₁(x) is defined for x ∊ ℝ⁺. f: ℝ⁺ ↦ ℝ⁺ ⇒ f⁻¹: ℝ⁺ ↦ ℝ⁺
