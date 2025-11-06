@@ -388,10 +388,10 @@ unittest
     // f' = B(-.5,-.2)[Ψ(-.5) + Ψ(-.2) - 2Ψ(-.7)]
 
 // NB: Fails because std.mathspecial.beta(-1.5, -.5) is NaN. Fixed in stable branch.
-//     const p = beta(GDN!1(-1.5), GDN!1(-0.5));
-//     // f = B(-1.5,-.5) = Γ(-1.5)Γ(-.5)/Γ(-2) = -0
-//     // f' = f[Ψ(-1.5) + Ψ(-.5) - 2Ψ(-2)] DNE
-//     assert(p.val is -0.0L && isNaN(p.d), format("B(-1.5,-0.5) != %s", p));
+    // const p = beta(GDN!1(-1.5), GDN!1(-0.5));
+    // // f = B(-1.5,-.5) = Γ(-1.5)Γ(-.5)/Γ(-2) = -0
+    // // f' = f[Ψ(-1.5) + Ψ(-.5) - 2Ψ(-2)] DNE
+    // assert(p.val is -0.0L && isNaN(p.d), format("B(-1.5,-0.5) != %s", p));
 
     const a = beta(GDN!1(-1), GDN!1(-0.5));
     assert(isNaN(a.val) && isNaN(a.d));
@@ -430,18 +430,15 @@ unittest
 //     // f' = B(+0, 1)[Ψ(+0) + Ψ(1) - 2Ψ(1)] = ∞[-∞ - Ψ(1)] = -∞,
 //     assert(l == real.infinity && l.d == -real.infinity, format("B(+0,1) = %s", l));
 
-// NB: Fails because std.mathspecial.beta(real.infinity, 1) is NaN. Fixed in stable branch.
+// NB: Fails because std.mathspecial.beta(real.infinity, 1) is NaN. Fixed in
+// stable branch.
 //     const z = beta(GDN!1(real.infinity), GDN!1(1));
-//     // f' = lim(x⟶∞)B(x, 1)[Ψ(x) + Ψ(1) - 2Ψ(x+1)]
-//     // lim(x⟶∞)[Ψ(x) + Ψ(1) - 2Ψ(x+1)] = Ψ(1) + lim(x⟶∞){Ψ(x) - 2[Ψ(x) + 1/x]}
-//     //                                 = Ψ(1) - lim(x⟶∞)[Ψ(x) + 1/x]
-//     //                                 = -∞
-//     assert(z is GDN!1(0, -real.infinity), format("B(∞,1) != %s", z));
+//     assert(z == 0 && isNaN(z.d), format("B(∞,1) != %s", z));
 
-// NB: Fails because std.mathspecial.beta(real.infinity, real.infinity) is NaN. Fixed in stable
-// branch.
+// NB: Fails because std.mathspecial.beta(real.infinity, real.infinity) is NaN.
+// Fixed in stable branch.
 //     const x = beta(GDN!1(real.infinity), GDN!1(real.infinity));
-//     assert(x is GDN!1(0, 0), format("B(∞,∞) = %s", x));
+//     assert(x == 0 && isNaN(x.d), format("B(∞,∞) = %s", x));
 
     const c = beta(GDN!1(-real.infinity), GDN!1(1));
     assert(isNaN(c.val) && isNaN(c.d));
@@ -786,6 +783,14 @@ pure nothrow @nogc @safe GDN!Deg betaIncomplete(ulong Deg)(in real a, in real b,
                 dfdg = numerator;
             else
                 dfdg = GDN!Deg.DerivType!1(numerator.val, numerator.d/denominator);
+        } else if (numerator == 0 && denominator == 0) {
+            // In this case, the denominator is not really zero. It's just too
+            // small to represent. Instead of return 0/0 = NaN, return the
+            // numerator. The derivatives still need to be scaled.
+            static if (Deg == 1)
+                dfdg = numerator;
+            else
+                dfdg = GDN!Deg.DerivType!1(numerator.val, numerator.d/denominator);
         } else {
             dfdg = numerator / denominator;
         }
@@ -907,15 +912,17 @@ unittest
 
     // a = ɛ, b = ɛ
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const b = betaIncomplete(ɛ, ɛ, GDN!1(0));
-//     assert(b.val == 0 && b.d > nearInf, format("I(0; ɛ,ɛ) = %s", b));
-//
+// NB: Fails because std.mathspecial.beta(ɛ, ɛ) is nan. Fixed in stable.
+    // const b = betaIncomplete(ɛ, ɛ, GDN!1(0));
+    // assert(b.val == 0 && b.d > nearInf, format("I(0; ɛ,ɛ) = %s", b));
+
+// NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const c = betaIncomplete(ɛ, ɛ, GDN!1(.5));
-//     assert(c.val == .5 && c.d < nearZero);
-//
-//     const d = betaIncomplete(ɛ, ɛ, GDN!1(1));
-//     assert(d == 1 && d.d > nearInf);
+//     assert(c.val == .5 && c.d < nearZero, format("I(.5;,ɛ) = %s", c));
+
+// NB: Fails because std.mathspecial.beta(ɛ, ɛ) is nan. Fixed in stable.
+    // const d = betaIncomplete(ɛ, ɛ, GDN!1(1));
+    // assert(d == 1 && d.d > nearInf);
 
     // a = ɛ, b = .5
 
@@ -952,17 +959,19 @@ unittest
 
     // a = ɛ, b = M
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const k = betaIncomplete(ɛ, M, GDN!1(0));
-//     assert(k is GDN!1(0, real.infinity), format("I(0; ɛ,M) = %s", k));
+// NB: Fails because std.mathspecial.beta(ɛ, M) is nan. Fixed in stable.
+    // const k = betaIncomplete(ɛ, M, GDN!1(0));
+    // assert(k is GDN!1(0, real.infinity), format("I(0; ɛ,M) = %s", k));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const l = betaIncomplete(ɛ, M, GDN!1(.5));
 //     assert(isClose(l.val, 1.0L) && l.d < nearZero, format("I(.5; ɛ,M) = %s", l));
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
+// NB: Fails because std.mathspecial.beta(ɛ, M) is nan. Fixed in stable.
 //     const m = betaIncomplete(ɛ, M, GDN!1(1));
-//     assert(m == 1 && m.d < nearZero, format("I(1; ɛ,M) = %s", m));
+//     // f = I(1; ɛ,M) = 1
+//     // f' = 1^(ɛ-1)(1-1)^(M-1)/B(ɛ,M) = 1⋅0^(M-1)/B(ɛ,M) = 1⋅0/B(ɛ,M) = 0
+//     assert(m is GDN!1(1, 0), format("I(1; ɛ,M) = %s", m));
 
     // a = ɛ, b = ∞
 
@@ -1026,16 +1035,18 @@ unittest
 
     // a = .5, b = M
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const s = betaIncomplete(.5, M, GDN!1(0));
-//     assert(s is GDN!1(0, real.infinity), format("I(0; .5,M) = %s", s));
+// NB: Fails because std.mathspecial.beta(.5, M) = real.nan. Fixed in stable
+    // const s = betaIncomplete(.5, M, GDN!1(0));
+    // assert(s is GDN!1(0, real.infinity), format("I(0; .5,M) = %s", s));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const t = betaIncomplete(.5, M, GDN!1(.5));
 //     assert(isClose(t.val, 1.0L) && t.d < nearZero, format("I(.5; .5,M) = %s", t));
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
+// NB: Fails because std.mathspecial.beta(.5, M) = real.nan. Fixed in stable
 //     const u = betaIncomplete(.5, M, GDN!1(1));
+//     // f = 1
+//     // f' = 1^(.5-1)(1-1)^(M-1)/B(.5,M) = 1^-.5⋅0^(M-1)/B(.5,M) = 1⋅0/B(.5,M) = 0/B(.5,M) = 0
 //     assert(u is GDN!1(1, 0), format("I(1; .5,M) = %s", u));
 
     // a = .5, b = ∞
@@ -1096,17 +1107,19 @@ unittest
 
     // a = 1, b = M
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const aa = betaIncomplete(1, M, GDN!1(0));
-//     assert(aa == 0 && aa.d > nearInf, format("I(0; 1,M) = %s", aa));
+// NB: Fails because std.mathspecial.beta(1,M) = real.nan. Fixed in stable
+    // const aa = betaIncomplete(1, M, GDN!1(0));
+    // assert(aa == 0 && aa.d > nearInf, format("I(0; 1,M) = %s", aa));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const ab = betaIncomplete(1, M, GDN!1(.5));
 //     assert(isClose(ab.val, 1.0L) && ab.d < nearZero, format("I(.5; 1,M) = %s", ab));
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const ac = betaIncomplete(1, M, GDN!1(1));
-//     assert(ac is GDN!1(1, 0), format("I(1; 1,M) = %s", ac));
+// NB: Fails because std.mathspecial.beta(1,M) = real.nan. Fixed in stable
+    // const ac = betaIncomplete(1, M, GDN!1(1));
+    // // f = I(1; 1,M) = 1
+    // // f' = 1^(1-1)(1-1)^(M-1)/B(1,M) = 0
+    // assert(ac is GDN!1(1, 0), format("I(1; 1,M) = %s", ac));
 
     // a = 1, b = ∞
 
@@ -1168,15 +1181,20 @@ unittest
 
     // a = 2, b = M
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     assert(betaIncomplete(2, M,GDN!1(0)) is GDN!1(0, 0));
+// NB: Fails because std.mathspecial.beta(2, M) = real.nan. Fixed in stable.
+    // const tmz = betaIncomplete(2, M, GDN!1(0));
+    // // f = I(0; 2,M) = 0
+    // // f' = 0^(2-1)(1-0)^(M-1)/B(2,M) = 0
+    // assert(tmz is GDN!1(0, 0), format("I(0; 2,M) = %s", tmz));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const ai = betaIncomplete(2, M, GDN!1(.5));
 //     assert(isClose(ai.val, 1.0L) && ai.d < nearZero);
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     assert(betaIncomplete(2, M, GDN!1(1)) is GDN!1(1, 0));
+// NB: Fails because std.mathspecial.beta(2, M) = real.nan. Fixed in stable.
+    // const tmo = betaIncomplete(2, M, GDN!1(1));
+    // // f' = 1^(2-1)(1-1)^(M-1)/B(2,M) = 0
+    // assert(tmo is GDN!1(1, 0), format("I(1; 2,M) = %s", tmo));
 
     // a = 2, b = ∞
 
@@ -1197,73 +1215,82 @@ unittest
 
     // a = M, b = ɛ
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     assert(betaIncomplete(M, ɛ, GDN!1(0)) is GDN!1(0, 0));
+// NB: Fails because std.mathspecial.beta(M, ɛ) = real.nan. Fixed in stable.
+    // const mez = betaIncomplete(M, ɛ, GDN!1(0));
+    // // f' = 0^(M-1)(1-0)^(ɛ-1)/B(M,ɛ) = 0
+    // assert(mez is GDN!1(0, 0), format("I(0; M,ɛ) = %s", mez));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const ak = betaIncomplete(M, ɛ, GDN!1(.5));
 //     assert(ak < nearZero && ak.d < nearZero, format("I(.5; M,ɛ) = %s)", ak));
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     assert(betaIncomplete(M, ɛ, GDN!1(1)) is GDN!1(1, 0));
+// NB: Fails because std.mathspecial.beta(M, ɛ) = real.nan. Fixed in stable.
+    // const meo = betaIncomplete(M, ɛ, GDN!1(1));
+    // // f' = 1^(M-1)(1-1)^(ɛ-1)/B(M,ɛ) = 0^(ɛ-1)/B(M,ɛ) = ∞
+    // assert(meo is GDN!1(1, real.infinity), format("I(1; M,ɛ) = %s", meo));
 
     // a = M, b = .5
-    // Intended: I(0)=0 (∞ derivative), I(.5) ≈ 1, I(1)=1
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const mhz = betaIncomplete(M, 0.5L, GDN!1(0));
-//     assert(mhz is GDN!1(0, real.infinity), format("I(0; M,.5) = %s", mhz));
+// NB: Fails because std.mathspecial.beta(M, .5) = real.nan. Fixed in stable.
+    // const mhz = betaIncomplete(M, 0.5L, GDN!1(0));
+    // // f' = 0^(M-1)(1-0)^(.5-1)/B(M,.5) = 0
+    // assert(mhz is GDN!1(0, 0), format("I(0; M,.5) = %s", mhz));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const mhh = betaIncomplete(M, 0.5L, GDN!1(.5));
 //     assert(mhh < nearZero && mhh.d < nearZero, format("I(.5; M,.5) = %s", mhh));
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const mho = betaIncomplete(M, 0.5L, GDN!1(1));
-//     assert(mho is GDN!1(1, 0), format("I(1; M,.5) = %s", mho));
+// NB: Fails because std.mathspecial.beta(M, .5) = real.nan. Fixed in stable.
+    // const mho = betaIncomplete(M, 0.5L, GDN!1(1));
+    // // f' = 1^(M-1)(1-1)^(.5-1)/B(M,.5) = ∞
+    // assert(mho is GDN!1(1, real.infinity), format("I(1; M,.5) = %s", mho));
 
     // a = M, b = 1
-    // Intended: I(0)=0 (∞ derivative), I(.5)≈1, I(1)=1
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const moz = betaIncomplete(M, 1, GDN!1(0));
-//     assert(moz is GDN!1(0, real.infinity), format("I(0; M,1) = %s", moz));
+// NB: Fails because std.mathspecial.beta(M, 1) = real.nan. Fixed in stable.
+    // const moz = betaIncomplete(M, 1, GDN!1(0));
+    // // f' = 0^(M-1)(1-0)^(1-1)/B(M,1) = 0
+    // assert(moz is GDN!1(0, 0), format("I(0; M,1) = %s", moz));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const moh = betaIncomplete(M, 1, GDN!1(.5));
 //     assert(moh < nearZero && moh.d < nearZero, format("I(.5; M,1) = %s", moh));
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const moo = betaIncomplete(M, 1, GDN!1(1));
-//     assert(moo is GDN!1(1, 0), format("I(1; M,1) = %s", moo));
+// NB: Fails because std.mathspecial.beta(M, 1) = real.nan. Fixed in stable.
+    // const moo = betaIncomplete(M, 1, GDN!1(1));
+    // // f' = 1^(M-1)(1-1)^(1-1)/B(M,1) = 1/B(M,1)
+    // assert(moo == 1 && isClose(moo.d, real.infinity), format("I(1; M,1) = %s", moo));
 
     // a = M, b = 2
-    // Intended: I(0)=0, I(.5) ≈ 1, I(1)=1
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const mtz = betaIncomplete(M, 2, GDN!1(0));
-//     assert(mtz is GDN!1(0, 0), format("I(0; M,2) = %s", mtz));
+// NB: Fails because std.mathspecial.beta(M, 2) = real.nan. Fixed in stable.
+    // const mtz = betaIncomplete(M, 2, GDN!1(0));
+    // // f' = 0^(M-1)(1-0)^(2-1)/B(M,2) = 0
+    // assert(mtz is GDN!1(0, 0), format("I(0; M,2) = %s", mtz));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     const mth = betaIncomplete(M, 2, GDN!1(.5));
 //     assert(mth.val < nearZero && mth.d < nearZero, format("I(.5; M,2) = %s", mth));
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const mto = betaIncomplete(M, 2, GDN!1(1));
-//     assert(mto is GDN!1(1, 0), format("I(0; M,2) = %s", mto));
+// NB: Fails because std.mathspecial.beta(M, 2) = real.nan. Fixed in stable.
+    // const mto = betaIncomplete(M, 2, GDN!1(1));
+    // // f' = 1^(M-1)(1-1)^(2-1)/B(M,2) = 0
+    // assert(mto is GDN!1(1, 0), format("I(0; M,2) = %s", mto));
 
     // a = M, b = M
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const mmz = betaIncomplete(M, M, GDN!1(0));
-//     assert(mmz is GDN!1(0, 0), format("I(0; M,M) = %s", mmz));
+// NB: Fails because std.mathspecial.beta(M, M) = real.nan. Fixed in stable.
+    // const mmz = betaIncomplete(M, M, GDN!1(0));
+    // // f' = 0^(M-1)(1-0)^(M-1)/B(M,M) = 0
+    // assert(mmz is GDN!1(0, 0), format("I(0; M,M) = %s", mmz));
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10889
 //     assert(!isNaN(betaIncomplete(M, M, GDN!1(.5))));
 
-// NB: Fails because https://github.com/dlang/phobos/issues/10826
-//     const mmo = betaIncomplete(M, M, GDN!1(1));
-//     assert(mmo is GDN!1(1, 0), format("I(1; M,M) = %s", mmo));
+// NB: Fails because std.mathspecial.beta(M, M) = real.nan. Fixed in stable.
+    // const mmo = betaIncomplete(M, M, GDN!1(1));
+    // // f' = 1^(M-1)(1-1)^(M-1)/B(M,M) = 0
+    // assert(mmo is GDN!1(1, 0), format("I(1; M,M) = %s", mmo));
 
     // a = M, b = ∞
 
