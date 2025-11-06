@@ -734,8 +734,8 @@ pure nothrow @nogc @safe GDN!Deg betaIncomplete(ulong Deg)(in real a, in real b,
 {
     // When one of the input parameters is NaN, return the NaN with the largest payload.
     if (isNaN(a) || isNaN(b) || isNaN!Deg(g)) {
-        const largerParam = getNaNPayload(a) >= getNaNPayload(b) ? a : b;
-        return getNaNPayload(g) >= getNaNPayload(largerParam) ? g : GDN!Deg(largerParam);
+        const largerParam = cmp(abs(a), abs(b)) >= 0 ? a : b;
+        return cmp(abs(g.val), abs(largerParam)) >= 0 ? g : GDN!Deg(largerParam);
     }
 
     // Handle domain violations
