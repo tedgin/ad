@@ -150,7 +150,7 @@ pure nothrow @nogc @safe GDN!Deg frexp(ulong Deg)(in GDN!Deg g, out int e)
 {
     std.math.exponential.frexp(g.val, e);
 
-    if (g == 0 || isInfinity(g) || isNaN(g)) {
+    if (g == 0.0L || isInfinity(g) || isNaN(g)) {
         return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv());
     }
 
@@ -280,8 +280,10 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg log10(ulong Deg)(in GDN!Deg g)
 {
-    const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : g.d / (LN10*g.reduce());
-    return GDN!Deg(std.math.exponential.log10(g.val), df);
+    if (isNaN(g)) return g;
+
+    const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN10*g.reduce());
+    return GDN!Deg(std.math.exponential.log10(g.val), df * g.d);
 }
 
 ///
@@ -321,8 +323,10 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg log1p(ulong Deg)(in GDN!Deg g)
 {
-    const df = g <= -1 ? GDN!Deg.mkNaNDeriv() : g.d/(1+g.reduce());
-    return GDN!Deg(std.math.exponential.log1p(g.val), df);
+    if (isNaN(g)) return g;
+
+    const df = g <= -1.0L ? GDN!Deg.mkNaNDeriv() : 1.0L / (1.0L+g.reduce());
+    return GDN!Deg(std.math.exponential.log1p(g.val), df*g.d);
 }
 
 ///
@@ -492,7 +496,6 @@ unittest
 }
 
 
-// TODO: implement scalbn
 /**
  * Multiplies g by 2$(SUP n).
  *

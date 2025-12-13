@@ -6,7 +6,7 @@ module ad.core;
 
 import std.algorithm: min;
 import std.format: format;
-import std.math: abs, isFinite, isInfinity, isNaN, LN2, log, signbit;
+import std.math: abs, cmp, isFinite, isInfinity, isNaN, LN2, log, signbit;
 import std.traits: fullyQualifiedName, TemplateOf;
 
 /**
@@ -50,9 +50,10 @@ import std.traits: fullyQualifiedName, TemplateOf;
 struct GDN(ulong Degree = 1) if (Degree > 0)
 {
     /* NB:
-     * Implicit conversion isn't supported, because std.math functions have been overloaded to
-     * support GDN objects. As of D 2.098.0, implicit conversion interferes with the compiler's
-     * ability to resolve the correct overload of these functions.
+     * Implicit conversion isn't supported, because std.math functions have been
+     * overloaded to support GDN objects. As of D 2.098.0, implicit conversion
+     * interferes with the compiler's ability to resolve the correct overload of
+     * these functions.
      */
 
     /// The degree of the Generalized dual number
@@ -72,7 +73,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
             alias DerivType = real;
     }
 
-    // Constructs an object that has the same type as the derivative where all elements are NaN.
+    /* Constructs an object that has the same type as the derivative where all
+     * elements are NaN.
+     */
     package static pure nothrow @nogc @safe DerivType!1 mkNaNDeriv()
     {
         static if (Degree == 1)
@@ -81,7 +84,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
             return DerivType!1(real.nan, DerivType!1.mkNaNDeriv());
     }
 
-    // Constructs an object that has the same type as the derivative where all elements are 0.
+    /* Constructs an object that has the same type as the derivative where all
+     * elements are 0.
+     */
     package static pure nothrow @nogc @safe DerivType!1 mkZeroDeriv()
     {
         static if (Degree == 1)
@@ -133,13 +138,12 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     {
         _x = derivVals[0];
 
-        if (isNaN(_x)) {
-            _dx = mkNaNDeriv();
+        static if (Degree == 1) {
+            _dx = isNaN(_x) && !isNaN(derivVals[1]) ? real.nan : derivVals[1];
         } else {
-            static if (Degree == 1)
-                _dx = derivVals[1];
-            else
-                _dx = DerivType!1(derivVals[1 .. Degree + 1]);
+            real[Degree] dxVals = derivVals[1 .. Degree+1];
+            if (isNaN(_x) && !isNaN(dxVals[0])) dxVals[0] = real.nan;
+            _dx = DerivType!1(dxVals);
         }
     }
 
@@ -165,26 +169,53 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
             this._dx = DerivType!1(that._dx);
     }
 
-    // This constructs a generalized dual number from its value and its first derivative.
+    /* This constructs a generalized dual number from its value and its first
+     * derivative.
+     */
     package pure nothrow @nogc @safe this(in real val, in DerivType!1 derivs)
     {
         _x = val;
 
-        if (isNaN(_x)) {
-            _dx = mkNaNDeriv();
+        static if (Degree == 1) {
+            if (isNaN(_x) && !isNaN(derivs)) {
+                _dx = real.nan;
+            } else {
+                _dx = derivs;
+            }
         } else {
-            _dx = derivs;
+            if (isNaN(_x) && !isNaN(derivs.val)) {
+                _dx = DerivType!1(real.nan, derivs.d);
+            } else {
+                _dx = derivs;
+            }
         }
     }
 
-    /*
-    This constructs a generalized dual number that has all of its derivative of each order set to
-    zero.
-    */
+    /* This constructs a generalized dual number that has all of its derivative
+     * of each order set to zero.
+     */
     package static pure nothrow @nogc @safe GDN mkConst(in real val)
     {
-        return GDN(val, mkZeroDeriv());
+        return GDN(val, isNaN(val) ? mkNaNDeriv() : mkZeroDeriv());
     }
+
+    /* Combine two GDNs when one is NaN. For each derivative, choose the one
+     * that is NaN with the larger payload.
+     */
+    package static pure nothrow @nogc @safe
+    GDN!Degree nanCombine(ulong Degree)(in GDN!Degree lhs, in GDN!Degree rhs)
+    in (isNaN(lhs.val) || isNaN(rhs.val))
+    do {
+        const x = cmp(abs(lhs.val), abs(rhs.val)) < 0 ? rhs.val : lhs.val;
+
+        static if (Degree == 1)
+            const dx = cmp(abs(lhs.d), abs(rhs.d)) < 0 ? rhs.d : lhs.d;
+        else
+            const dx = nanCombine(lhs.d, rhs.d);
+
+        return GDN!Degree(x, dx);
+    }
+
 
     // PROPERTIES
 
@@ -259,7 +290,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
 
     // MEMBERS
 
-    /// This is the value of the generalized dual number.
+    /**
+     * This is the value of the generalized dual number.
+     */
     pure nothrow @nogc @safe real val() const
     {
         return _x;
@@ -299,9 +332,13 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
         return this;
     }
 
-    // This function evaluated the Dirac delta function of the generalized dual number.
+    /* This function evaluated the Dirac delta function of the generalized dual
+     * number.
+     */
     pure nothrow @nogc @safe package GDN dirac() const
     {
+        if (isNaN(_x)) return this;
+
         static if (Degree == 1)
             const df = _x != 0
                 ? 0.0L : (signbit(_x) == 1 ? real.infinity : -real.infinity);
@@ -334,25 +371,24 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
         return GDN(1 / _x, -_dx / (reduced * reduced));
     }
 
-    /*
-    Computes the natural logarithm of a generalized dual number.
-
-    It is defined in this module instead of core, because it is required to compute the derivative
-    of the ^^ operator.
-    */
+    /* Computes the natural logarithm of a generalized dual number.
+     *
+     * It is defined in this module instead of core, because it is required to
+     * compute the derivative of the ^^ operator.
+     */
     pragma(inline, true) package pure nothrow @nogc @safe GDN log() const
     {
         static import std.math;
 
-        if (signbit(_x) == 1)
-            return nan;
-        return GDN(std.math.log(_x), _dx / reduce());
+        if (isNaN(_x)) return this;
+        const x = signbit(_x) == 1 ? real.nan : std.math.log(_x);
+        return GDN(x, _dx / reduce());
     }
 
-    /*
-    This copies this generalized dual number with the copy have one degree less than the original.
-    As a result the highest order derivative is removed.
-    */
+    /* This copies this generalized dual number with the copy have one degree
+     * less than the original. As a result the highest order derivative is
+     * removed.
+     */
     package pure nothrow @nogc @safe auto reduce() const
     {
         static if (Degree > 1)
@@ -360,6 +396,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
          else
             return _x;
     }
+
 
     // OPERATOR OVERLOADING
 
@@ -665,6 +702,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     pure nothrow @nogc @safe
     GDN opBinary(string Op : "%", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
     {
+        if (isNaN(this.val) || isNaN(that.val)) return nanCombine(this, that);
+
         const x = this.reduce(), dx = this.d;
         const y = that.reduce(), dy = that.d;
         const v = this / that, dv = v.d;

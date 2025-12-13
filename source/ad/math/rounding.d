@@ -11,7 +11,7 @@ static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, CommonGDN, dirac, isGDN, isGDNOrReal, isOne, nextDown, nextUp, pow;
+    areAll, asGDN, CommonGDN, dirac, isGDN, isGDNOrReal, isOne, isNaN, nextDown, nextUp, pow;
 
 
 /**
@@ -111,6 +111,8 @@ unittest
 private pragma(inline, true) pure nothrow @nogc @safe
 GDN!Deg nearbyint_impl(string impl, ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
+
     mixin("const f = " ~ impl ~ "(g.val);");
 
     auto dfdg = GDN!Deg.mkZeroDeriv();

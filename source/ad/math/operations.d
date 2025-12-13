@@ -11,7 +11,8 @@ import std.traits: isImplicitlyConvertible, Select;
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isOne, sgn, signbit;
+import ad.math.internal:
+    areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isNaN, isOne, sgn, signbit;
 
 
 /// The default relative difference for operations
@@ -390,11 +391,8 @@ CommonGDN!(G, H) fmax(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
-    if (isNaN(gg.val) || hh > gg) {
-        return hh;
-    } else {
-        return gg;
-    }
+    if (isNaN(gg.val) || isNaN(hh.val)) return GDN!Deg.nanCombine(gg, hh);
+    return gg >= hh ? gg : hh;
 }
 
 ///
@@ -439,11 +437,8 @@ CommonGDN!(G, H) fmin(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
-    if (isNaN(gg.val) || hh < gg) {
-        return hh;
-    } else {
-        return gg;
-    }
+    if (isNaN(gg) || isNaN(hh)) return GDN!Deg.nanCombine(gg, hh);
+    return gg <= hh ? gg : hh;
 }
 
 ///

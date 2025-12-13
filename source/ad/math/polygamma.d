@@ -84,12 +84,7 @@ private static immutable real[] T = initEulerZigZag();
 // Euler Zig Zag Numbers
 private pure nothrow @nogc @safe real eulerZigZag(in ulong n)
 {
-
-    if (n < T.length) {
-        return T[n];
-    } else {
-        return real.infinity;
-    }
+    return n < T.length ? T[n] : real.infinity;
 }
 
 unittest
@@ -187,6 +182,8 @@ private pure nothrow @nogc @safe real polygammaReflectDelta(ulong n)(in real x)
 {
     static immutable coef = polygammaReflectPolyCoef(n);
 
+    if (isNaN(x)) return x;
+
     // Reduce the round-off error when PI*x = +/-PI/2
     const cs = (fabs(x)%1 == 0.5) ? 0.0L : cos(PI*x);
 
@@ -268,7 +265,7 @@ private pure nothrow @nogc @safe real polygammaAsymptoticSeries(ulong N)(in real
     static const term_1 = sign * factorial(N);
     static const max_x = (cast(real)long.max + N/2.0L) / PI;
 
-    if (isNaN(x)) return real.nan;
+    if (isNaN(x)) return x;
     if (x == real.infinity) return sign * 0;
 
     if (x > max_x) {
@@ -322,7 +319,7 @@ package pure nothrow @nogc @safe real polygamma(ulong N)(in real x) if (N > 0)
     static const odd_order = N%2 == 1;
     static const x_cut = (N + ceil(log10(1/real.epsilon))) / 2.0L;
 
-    if (isNaN(x)) return real.nan;
+    if (isNaN(x)) return x;
 
     // If x is large enough, use the asymptotic expansion
     if (x > x_cut) {

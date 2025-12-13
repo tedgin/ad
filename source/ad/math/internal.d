@@ -200,6 +200,8 @@ package pure @safe
 {
     pragma(inline, true) nothrow @nogc GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
     {
+        if (isNaN(g.val)) return g;
+
         const dfdg = signbit(g) == 1 ? GDN!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
         return GDN!Deg(core.math.sqrt(g.val), dfdg * g.d);
     }
@@ -227,8 +229,9 @@ package pure nothrow @nogc @safe
     // The implementation of log2 for GDN.
     pragma(inline,true) GDN!Deg log2(ulong Deg)(in GDN!Deg g)
     {
-        const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : g.d/(LN2 * g.reduce());
-        return GDN!Deg(std.math.exponential.log2(g.val), df);
+        if (isNaN(g.val)) return g;
+        const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN2*g.reduce());
+        return GDN!Deg(std.math.exponential.log2(g.val), df * g.d);
     }
 
     unittest
@@ -242,12 +245,10 @@ package pure nothrow @nogc @safe
     {
         alias pow_red = Select!(Deg == 1, std.math.exponential.pow, pow);
 
-        if (isNaN(g)) {
-            return GDN!Deg.nan;
-        }
+        if (isNaN(g)) return g;
 
-        const df = n == 0 ? 0.0L * g.d : n * pow_red(g.reduce(), n-1) * g.d;
-        return GDN!Deg(std.math.exponential.pow(g.val, n), df);
+        const df = n == 0 ? GDN!Deg.DerivType!1(0.0L) : n * pow_red(g.reduce(), n-1);
+        return GDN!Deg(std.math.exponential.pow(g.val, n), df * g.d);
     }
 
     unittest
@@ -280,8 +281,7 @@ package pure nothrow @nogc @safe
     // The implementation of nextDown for GDN.
     pragma(inline, true) GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
     {
-        const f = std.math.operations.nextDown(g.val);
-        return GDN!Deg(f, isNaN(f) ? GDN!Deg.mkNaNDeriv() : g.d);
+        return GDN!Deg(std.math.operations.nextDown(g.val), g.d);
     }
 
     unittest
@@ -293,8 +293,7 @@ package pure nothrow @nogc @safe
     // The implementation of nextUp for GDN.
     pragma(inline, true) GDN!Deg nextUp(ulong Deg)(in GDN!Deg g)
     {
-        const f = std.math.operations.nextUp(g.val);
-        return GDN!Deg(f, isNaN(f) ? GDN!Deg.mkNaNDeriv() : g.d);
+        return GDN!Deg(std.math.operations.nextUp(g.val), g.d);
     }
 
     unittest
@@ -317,6 +316,8 @@ package pure nothrow @nogc @safe
             pure nothrow @nogc @safe
             fn_deriv)
     {
+        if (isNaN(g.val)) return g;
+
         static if (Deg == 1)
             mixin("const f_red = std.math.rounding." ~ Fn ~ "(g.reduce());");
         else
