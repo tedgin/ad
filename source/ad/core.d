@@ -183,8 +183,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
                 _dx = derivs;
             }
         } else {
-            if (isNaN(_x) && !isNaN(derivs.val)) {
-                _dx = DerivType!1(real.nan, derivs.d);
+            if (isNaN(_x) && !isNaN(derivs._x)) {
+                _dx = DerivType!1(real.nan, derivs._dx);
             } else {
                 _dx = derivs;
             }
@@ -202,16 +202,16 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     /* Combine two GDNs when one is NaN. For each derivative, choose the one
      * that is NaN with the larger payload.
      */
-    package static pure nothrow @nogc @safe
-    GDN!Degree nanCombine(ulong Degree)(in GDN!Degree lhs, in GDN!Degree rhs)
-    in (isNaN(lhs.val) || isNaN(rhs.val))
+    package static pure nothrow @nogc @safe GDN nanCombine(in GDN lhs, in GDN rhs)
+    in (isNaN(lhs._x) || isNaN(rhs._x))
+    out (res; isNaN(res._x))
     do {
-        const x = cmp(abs(lhs.val), abs(rhs.val)) < 0 ? rhs.val : lhs.val;
+        const x = cmp(abs(lhs._x), abs(rhs._x)) < 0 ? rhs._x : lhs._x;
 
         static if (Degree == 1)
-            const dx = cmp(abs(lhs.d), abs(rhs.d)) < 0 ? rhs.d : lhs.d;
+            const dx = cmp(abs(lhs._dx), abs(rhs._dx)) < 0 ? rhs._dx : lhs._dx;
         else
-            const dx = nanCombine(lhs.d, rhs.d);
+            const dx = GDN.DerivType!1.nanCombine(lhs._dx, rhs._dx);
 
         return GDN!Degree(x, dx);
     }
@@ -922,8 +922,40 @@ unittest
     const y = GDN!1(0, 1);
     const u = GDN!1(e);
     assert(y == u && y.d == u.d, "GDN truncating not working");
+
+    const a = GDN!1.mkConst(4);
+    assert(a._x == 4 && a._dx == 0);
 }
 
+
+//
+// NaN Combination
+unittest
+{
+    import std.math: getNaNPayload, NaN;
+
+    const a = GDN!1.nanCombine(GDN!1(0), GDN!1());
+    assert(isNaN(a._x) && isNaN(a._dx));
+
+    const b = GDN!1.nanCombine(GDN!1(), GDN!1(0));
+    assert(isNaN(b._x) && isNaN(b._dx));
+
+    assert(getNaNPayload(GDN!1.nanCombine(GDN!1(NaN(2)), GDN!1(NaN(1)))._x) == 2);
+    assert(getNaNPayload(GDN!1.nanCombine(GDN!1(NaN(2)), GDN!1(NaN(3)))._x) == 3);
+
+    const c = GDN!1.nanCombine(GDN!1(0, NaN(1)), GDN!1());
+    assert(getNaNPayload(c._x) == 0 && getNaNPayload(c._dx) == 1);
+
+    const d = GDN!1.nanCombine(GDN!1(0), GDN!1(NaN(2), NaN(3)));
+    assert(getNaNPayload(d._x) == 2 && getNaNPayload(d._dx) == 3);
+
+    const e = GDN!2.nanCombine(GDN!2(NaN(1), NaN(2), NaN(5)), GDN!2(NaN(0), NaN(4), NaN(3)));
+    assert(
+        getNaNPayload(e._x) == 1 && getNaNPayload(e._dx._x) == 4 && getNaNPayload(e._dx._dx) == 5);
+}
+
+
+//
 // real properties
 unittest
 {
