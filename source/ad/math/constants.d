@@ -1,4 +1,4 @@
-/// This module extends the `std.math.constants` to support `GDN` objects.
+/// This module extends the `std.math.constants` module to support `GDN` objects.
 module ad.math.constants;
 
 static import std.math.constants;

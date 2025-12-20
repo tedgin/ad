@@ -1,3 +1,5 @@
+/// It extends the `std.mathspecial` module to support `GDN` objects.
+
 module ad.math.special;
 
 public import std.mathspecial;
@@ -114,11 +116,13 @@ unittest
     const q = gamma(GDN!1(real.nan));
     assert(isNaN(q.val) && isNaN(q.d));
 
-    const t = gamma(GDN!1(-0.));
-    assert(t is GDN!1(-real.infinity, -real.infinity), format("Γ(-0) = %s", t));
+// NB: Fails because of https://github.com/dlang/phobos/issues/10802, fixed on stable
+//     const t = gamma(GDN!1(-0.));
+//     assert(t is GDN!1(-real.infinity, -real.infinity), format("Γ(-0) = %s", t));
 
-    const y = gamma(GDN!1(+0.));
-    assert(y is GDN!1(real.infinity, -real.infinity), format("Γ(+0) = %s", y));
+// NB: Fails because of https://github.com/dlang/phobos/issues/10802, fixed on stable
+//     const y = gamma(GDN!1(+0.));
+//     assert(y is GDN!1(real.infinity, -real.infinity), format("Γ(+0) = %s", y));
 
     const w = gamma(GDN!1(-2));
     assert(isNaN(w.val) && isNaN(w.d));
@@ -236,9 +240,9 @@ unittest
 
 unittest
 {
-    // XXX: This fails because of https://github.com/dlang/phobos/issues/10801
-    //const g = sgnGamma(GDN!1(-0.5));
-    //assert(g == -1 && g.d == 0);
+// NB: This fails because of https://github.com/dlang/phobos/issues/10801, fixed in stable
+//     const g = sgnGamma(GDN!1(-0.5));
+//     assert(g == -1 && g.d == 0);
 
     const h = sgnGamma(GDN!1(+0.));
     assert(h is GDN!1(1, 0));
@@ -417,8 +421,8 @@ unittest
     assert(isNaN(h.val) && isNaN(h.d));
 
 // NB: Fails because std.mathspecial.digamma(+0.) = real.nan. Fixed in stable.
-    const j = beta(GDN!1(+0.), GDN!1(+0.));
-    assert(j == real.infinity && isNaN(j.d), format("B(+0,+0) = %s", j));
+//    const j = beta(GDN!1(+0.), GDN!1(+0.));
+//    assert(j == real.infinity && isNaN(j.d), format("B(+0,+0) = %s", j));
 
 // NB: Fails because std.mathspecial.digamma(-0.) is NaN. Fixed in stable branch.
 //     const k = beta(GDN!1(-0.), GDN!1(1));
@@ -493,11 +497,13 @@ unittest
     const e = GDN!1(std.mathspecial.digamma(2), 3*ad.math.polygamma.polygamma!1(2));
     assert(digamma(GDN!1(2, 3)) is e);
 
-    const f_nz = digamma(GDN!1(-0.));
-    assert(f_nz is GDN!1(real.infinity, real.infinity), format("Ψ₁(-0) = %s", f_nz));
+// NB: Fails because of https://github.com/dlang/phobos/issues/10802, fixed on stable
+//     const f_nz = digamma(GDN!1(-0.));
+//     assert(f_nz is GDN!1(real.infinity, real.infinity), format("Ψ₁(-0) = %s", f_nz));
 
-    const f_pz = digamma(GDN!1(+0.));
-    assert(f_pz is GDN!1(-real.infinity, real.infinity), format("Ψ₁(+0) = %s", f_pz));
+// NB: Fails because of https://github.com/dlang/phobos/issues/10802, fixed on stable
+//     const f_pz = digamma(GDN!1(+0.));
+//     assert(f_pz is GDN!1(-real.infinity, real.infinity), format("Ψ₁(+0) = %s", f_pz));
 
     const q = digamma(GDN!1(-real.infinity));
     assert(isNaN(q.val) && isNaN(q.d));
@@ -522,13 +528,14 @@ unittest
  *
  * Params:
  *   Deg = the degree of g
- *   g = the argument
+ *   g = the argument, must be positive
  *
  * Returns:
  *   a GDN representing the natural logarithm of g minus digamma of g.
  */
 pure nothrow @nogc @safe GDN!Deg logmdigamma(ulong Deg)(in GDN!Deg g)
-{
+in(signbit(g) == 0, "the argument must be positive")
+do {
     const f = std.mathspecial.logmdigamma(g.val);
     const g_red = g.reduce();
 
@@ -558,9 +565,6 @@ unittest
     import std.format: format;
     import std.math: isClose;
     import ad.math: log;
-
-    const q = logmdigamma(GDN!1(-1));
-    assert(isNaN(q.val) && isNaN(q.d));
 
     const w = logmdigamma(GDN!1(+0.));
     assert(w == real.infinity && isNaN(w.d), format("logmdigamma(+0) != %s", w));
@@ -698,63 +702,45 @@ unittest
 }
 
 
-/**
- * The regularized incomplete beta function $(MATH I$(SUB g)(a,b)).
+/* This function computes the derivative of I(g(x); a,b) with respect to x,
+ * where a and b are constants.
  *
- * For fixed $(MATH a,b > 0), let $(MATH f(x) = I$(SUB g(x))(a,b)). Then
- * $(MATH f' = $(SUP d)/$(SUB dg)I$(SUB g)(a,b)g' = g'$(SUP d)/$(SUB dg)B(g; a,b)/B(a,b)) where
- * $(MATH B(g; a,b) = ∫$(SUB 0)$(SUP g)t$(SUP a-1)(1-t)$(SUP b-1)dt) is the incomplete beta
- * function.
+ * Let f(x) = I(g(x); a,b). Then f' = dI/dg⋅g' = g'(d/dg)B(g; a,b)/B(a,b)) where
+ * B(g; a,b) = ∫₀ᵍtᵃ⁻¹(1-t)ᵇ⁻¹dt is the incomplete beta function.
  *
- * The integrand $(MATH t$(SUP a-1)(1-t)$(SUP b-1)) is Lebesgue integrable over $(MATH 0 ≤ t ≤ 1).
- * Therefore, $(MATH $(SUP d)/$(SUB dg)B(g; a,b) = g$(SUP a-1)(1-g)$(SUP b-1)) almost everywhere.
- * $(MATH g = 0,1) are the only values where $(MATH g$(SUP a-1)(1-g)$(SUP b-1)) doesn't exist for
- * every $(MATH a) and $(MATH b), but the one-sided limits do. This algorithm defines
- * $(MATH B(0; a,b) = lim$(SUB g→0$(SUP +)) g$(SUP a-1)(1-g)$(SUP b-1))
- * $(MATH = { ∞, 0\<a<1; 1, a=1; 0, a>1 }), and
- * $(MATH B(1; a,b) = lim$(SUB g→1$(SUP -)) g$(SUP a-1)(1-g)$(SUP b-1))
- * $(MATH = { ∞, 0\<b<1; 1, b=1; 0, b>1 }).
+ * The integrand tᵃ⁻¹(1-t)ᵇ⁻¹ is Lebesgue integrable over 0 ≤ t ≤ 1. Therefore,
+ * B' = gᵃ⁻¹(1-g)ᵇ⁻¹ almost everywhere. g = 0 and 1 are the only values where
+ * gᵃ⁻¹(1-g)ᵇ⁻¹ doesn't exist for every a and b, but the one-sided limits do.
+ * This algorithm defines
+ * B'(0; a,b) = lim{g→0⁺} gᵃ⁻¹(1-g)ᵇ⁻¹ = { ∞, 0<a<1; 1, a=1; 0, a>1 }), and
+ * B'(1; a,b) = lim{g→1⁻} gᵃ⁻¹(1-g)ᵇ⁻¹ = { ∞, 0<b<1; 1, b=1; 0, b>1 }).
  *
- * Thus $(MATH f' = g'$(SUP dI$(SUB g))/$(SUB dg)), where
- * $(MATH $(SUP d)/$(SUB dg)I$(SUB g)(a,b) = I$(SUB g)'(a,b)) has the following form when
- * $(MATH 0 \< a,b < ∞).
- * - $(MATH I$(SUB g)'(a,b) = g$(SUP a-1)(1-g)$(SUP b-1)/B(a,b), 0 < g < 1)
- * - $(MATH I$(SUB 0)'(a,b) = { ∞, a<1; 1/B(1,b), a=1; 0, a>1 })
- * - $(MATH I$(SUB 1)'(a,b) = { ∞, b<1; 1/B(a,1), b=1; 0, b>1 })
+ * Thus I'(g; a,b) has the following form when 0 < a,b < ∞.
  *
+ *    - I'(g; a,b) = gᵃ⁻¹(1-g)ᵇ⁻¹/B(a,b), 0 < g < 1
+ *    - I'(0; a,b) = { ∞, a<1; 1/B(1,b), a=1; 0, a>1 }
+ *    - I'(1; a,b) = { ∞, b<1; 1/B(a,1), b=1; 0, b>1 }
  *
- * Here are the degenerate cases of $(MATH I$(SUB g)'). Let $(MATH H(x) = { 0, x<0; 1, x≥0 }) be the
+ * Here are the degenerate cases of I'. Let H(x) = { 0, x<0; 1, x≥0 } be the
  * Heaviside step function in the following.
- * - $(MATH I$(SUB g)'(0$(SUP +),b) = $(SUP d)/$(SUB dg)lim$(SUB a→0$(SUP +)) I$(SUB g)(a,b))
- *   $(MATH = $(SUP d)/$(SUB dg)[1 - H(-g)] = 𝛿(g))
- * - $(MATH I$(SUB g)'(∞,b) = $(SUP d)/$(SUB dg)lim$(SUB a→∞) I$(SUB g)(a,b))
- *   $(MATH = $(SUP d)/$(SUB dg)H(g-1) = 𝛿(g-1))
- * - $(MATH I$(SUB g)'(a,0$(SUP +)) = $(SUP d)/$(SUB dg)lim$(SUB b→0$(SUP +)) I$(SUB g)(a,b))
- *   $(MATH = $(SUP d)/$(SUB dg)H(g-1) = 𝛿(g-1))
- * - $(MATH I$(SUB g)'(a,∞) = $(SUP d)/$(SUB dg)lim$(SUB b→∞) I$(SUB g)(a,b))
- *   $(MATH = $(SUP d)/$(SUB dg)[1 - H(-g)] = 𝛿(g))
- * - $(MATH I$(SUB g)'(0$(SUP +),0$(SUP +)))
- *   $(MATH = $(SUP d)/$(SUB dg)lim$(SUB a,b→0$(SUP +)) I$(SUB g)(a,b)) does not exist
- * - $(MATH I$(SUB g)'(0$(SUP +),∞) = $(SUP d)/$(SUB dg)lim$(SUB a→0$(SUP +),b→∞) I$(SUB g)(a,b))
- *   $(MATH = $(SUP d)/$(SUB dg)[1 - H(-g)] = 𝛿(g))
- * - $(MATH I$(SUB g)'(∞, 0$(SUP +)) = $(SUP d)/$(SUB dg)lim$(SUB a→∞,b→0$(SUP +)) I$(SUB g)(a,b))
- *   $(MATH = $(SUP d)/$(SUB dg)H(g-1) = 𝛿(g-1))
- * - $(MATH I$(SUB g)'(∞,∞) = $(SUP d)/$(SUB dg)lim$(SUB a,b→∞) I$(SUB g)(a,b)) does not exist
  *
- * Params:
- *   Deg = the degree of g
- *   a = the first shape parameter, must be positive
- *   b = the first shape parameter, must be positive
- *   g = the argument, must belong to the interval $(MATH [0,1])
- *
- * Returns:
- *   the regularized incomplete beta function evaluated at g expressed as _a `GDN`
+ *    - I'(g; 0,b) = (d/dg)lim{a→0⁺} I(g; a,b) = (d/dg)(1 - H(-g)) = 𝛿(g)
+ *    - I'(g; ∞,b) = (d/dg)lim{a→∞} I(g; a,b) = (d/dg)H(g-1) = 𝛿(g-1)
+ *    - I'(g; a,0) = (d/dg)lim{b→0⁺} I(g; a,b) = (d/dg)H(g-1) = 𝛿(g-1)
+ *    - I'(g; a,∞) = (d/dg)lim{b→∞} I(g; a,b) = (d/dg)[1 - H(-g)] = 𝛿(g)
+ *    - I'(g; 0,0) = (d/dg)lim{a,b→0⁺} I(g; a,b), does not exist
+ *    - I'(g; 0,∞) = (d/dg)lim{a→0⁺,b→∞) I(g; a,b) = (d/dg)[1 - H(-g)] = 𝛿(g)
+ *    - I'(g; ∞,0) = (d/dg)lim{a→∞,b→0⁺} I(g; a,b) = (d/dg)H(g-1) = 𝛿(g-1)
+ *    - I'(g; ∞,∞) = (d/dg)lim{a,b→∞) I(g; a,b), does not exist
  */
-pure nothrow @nogc @safe GDN!Deg betaIncomplete(ulong Deg)(in real a, in real b, in GDN!Deg g)
+private pure nothrow @nogc @safe
+GDN!Deg.DerivType!1 betaIncompleteDeriv(ulong Deg)(in real a, in real b, in GDN!Deg g)
 {
-    GDN!Deg.DerivType!1 dfdg;
+    alias Deriv = typeof(return);
+
+    Deriv dfdg;
     if ((a == 0 && b == 0) || (a == real.infinity && b == real.infinity)) {
-        dfdg = GDN!Deg.DerivType!1.nan;
+        dfdg = Deriv.nan;
     } else if (a == 0 || b == real.infinity) {
         dfdg = dirac(g.reduce());
     } else if (a == real.infinity || b == 0) {
@@ -770,7 +756,7 @@ pure nothrow @nogc @safe GDN!Deg betaIncomplete(ulong Deg)(in real a, in real b,
             static if (Deg == 1)
                 dfdg = numerator;
             else
-                dfdg = GDN!Deg.DerivType!1(numerator.val, numerator.d/denominator);
+                dfdg = Deriv(numerator.val, numerator.d/denominator);
         } else if (numerator == 0 && denominator == 0) {
             // In this case, the denominator is not really zero. It's just too
             // small to represent. Instead of return 0/0 = NaN, return the
@@ -778,13 +764,272 @@ pure nothrow @nogc @safe GDN!Deg betaIncomplete(ulong Deg)(in real a, in real b,
             static if (Deg == 1)
                 dfdg = numerator;
             else
-                dfdg = GDN!Deg.DerivType!1(numerator.val, numerator.d/denominator);
+                dfdg = Deriv(numerator.val, numerator.d/denominator);
         } else {
             dfdg = numerator / denominator;
         }
     }
 
-    return GDN!Deg(std.mathspecial.betaIncomplete(a, b, g.val), dfdg*g.d);
+    return dfdg * g.d;
+}
+
+unittest
+{
+    import std.format: format;
+
+    //
+    // Tests of degree 1
+    //
+
+    // a = +0, b = +0
+
+    assert(isNaN(betaIncompleteDeriv(+0., +0., GDN!1(0))));
+    assert(isNaN(betaIncompleteDeriv(+0., +0., GDN!1(.5))));
+    assert(isNaN(betaIncompleteDeriv(+0., +0., GDN!1(1))));
+
+    // a = +0, b = .5
+
+    assert(betaIncompleteDeriv(+0., .5, GDN!1(0)) is real.infinity);
+    assert(betaIncompleteDeriv(+0., .5, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(+0., .5, GDN!1(1)) == 0);
+
+    // a = +0, b = 1
+
+    assert(betaIncompleteDeriv(+0., 1, GDN!1(0)) is real.infinity);
+    assert(betaIncompleteDeriv(+0., 1, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(+0., 1, GDN!1(1)) == 0);
+
+    // a = +0, b = 2
+
+    assert(betaIncompleteDeriv(+0., 2, GDN!1(0)) is real.infinity);
+    assert(betaIncompleteDeriv(+0., 2, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(+0., 2, GDN!1(1)) == 0);
+
+    // a = +0, b = ∞
+
+    assert(betaIncompleteDeriv(+0., real.infinity, GDN!1(0)) is real.infinity);
+    assert(betaIncompleteDeriv(+0., real.infinity, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(+0., real.infinity, GDN!1(1)) == 0);
+
+    // a = .5, b = +0
+
+    assert(betaIncompleteDeriv(.5, +0., GDN!1(0)) == 0);
+    assert(betaIncompleteDeriv(.5, +0., GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(.5, +0., GDN!1(1)) is real.infinity);
+
+    // a = .5, b = .5
+
+    assert(betaIncompleteDeriv(.5, .5, GDN!1(0)) is real.infinity);
+
+    assert(isClose(betaIncompleteDeriv(.5, .5, GDN!1(.5)), M_2_PI));
+    // f' = .5^-.5*.5^-.5/B(.5,.5) = 2Γ(1)/[Γ(.5)Γ(.5)] = 2/(√𝜋√𝜋) = 2/𝜋
+
+    assert(betaIncompleteDeriv(.5, .5, GDN!1(1)) is real.infinity);
+
+    // a = .5, b = 1
+
+    assert(betaIncompleteDeriv(.5, 1, GDN!1(0)) is real.infinity);
+
+    assert(betaIncompleteDeriv(.5, 1, GDN!1(.5)) == SQRT1_2);
+    // f' = .5^-.5/B(.5,1) = √2*Γ(1.5)/[Γ(.5)Γ(1)] = √2(√𝜋/2)/√𝜋 = √2/2
+
+    assert(betaIncompleteDeriv(.5, 1, GDN!1(1)) == .5);
+    // f' = 1/B(.5,1) = Γ(1.5)/[Γ(.5)Γ(1)] = (√𝜋/2)/√𝜋 = 1/2
+
+    // a = .5, b = 2
+
+    assert(betaIncompleteDeriv(.5, 2, GDN!1(0)) is real.infinity);
+
+    assert(betaIncompleteDeriv(.5, 2, GDN!1(.5)) == 3*SQRT2/8);
+    // f' = .5^-.5*.5/B(.5,2) = (√2/2)Γ(5/2)/[Γ(1/2)Γ(2)] = √2(3√𝜋/4)/(2√𝜋) = 3√2/8
+
+    assert(betaIncompleteDeriv(.5, 2, GDN!1(1)) == 0);
+
+    // a = .5, b = ∞
+
+    assert(betaIncompleteDeriv(.5, real.infinity, GDN!1(0)) is real.infinity);
+    assert(betaIncompleteDeriv(.5, real.infinity, GDN!1(.5)) == 0);
+        assert(betaIncompleteDeriv(.5, real.infinity, GDN!1(1)) == 0);
+
+    // a = 1, b = +0
+
+    assert(betaIncompleteDeriv(1, +0., GDN!1(0)) == 0);
+    assert(betaIncompleteDeriv(1, +0., GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(1, +0., GDN!1(1)) is real.infinity);
+
+    // a = 1, b = .5
+
+    assert(betaIncompleteDeriv(1, .5, GDN!1(0)) == 0.5L);
+
+    const zhh = betaIncompleteDeriv(1, .5, GDN!1(.5));
+    // f' = .5^-.5/B(1,.5) = √2/2
+    assert(zhh == SQRT1_2, format("I'(.5; 1,.5) = %s", zhh));
+
+    assert(betaIncompleteDeriv(1, .5, GDN!1(1)) is real.infinity);
+
+    // a = 1, b = 1
+
+    assert(betaIncompleteDeriv(1, 1, GDN!1(0)) == 1);
+
+    const ooh = betaIncompleteDeriv(1, 1, GDN!1(0.5L));
+    assert(ooh == 1, format("I'(.5; 1,1) = %s", ooh));
+
+    assert(betaIncompleteDeriv(1, 1, GDN!1(1)) == 1);
+
+    // a = 1, b = 2
+
+    assert(betaIncompleteDeriv(1, 2, GDN!1(0)) == 2);
+    // f' = 1/B(1,2) = Γ(3)/[Γ(1)Γ(2)] = 2
+
+    assert(betaIncompleteDeriv(1, 2, GDN!1(.5)) == 1);
+    // f' = .5/B(1,2) = Γ(3)/[2Γ(1)Γ(2)] = 2/2 = 1
+
+    assert(betaIncompleteDeriv(1, 2, GDN!1(1)) == 0);
+
+    // a = 1, b = ∞
+
+    assert(betaIncompleteDeriv(1, real.infinity, GDN!1(0)) is real.infinity);
+    assert(betaIncompleteDeriv(1, real.infinity, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(1, real.infinity, GDN!1(1)) == 0);
+
+    // a = 2, b = +0
+
+    assert(betaIncompleteDeriv(2, +0., GDN!1(0)) == 0);
+    assert(betaIncompleteDeriv(2, +0., GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(2, +0., GDN!1(1)) is real.infinity);
+
+    // a = 2, b = .5
+
+    assert(betaIncompleteDeriv(2, .5, GDN!1(0)) == 0);
+
+    assert(betaIncompleteDeriv(2, .5, GDN!1(.5)) == 3*SQRT2/8);
+    // f' = .5*.5^-.5/B(2,.5) = (√2/2)Γ(5/2)/[Γ(1/2)Γ(2)] = 3√2/8
+
+    assert(betaIncompleteDeriv(2, .5, GDN!1(1)) is real.infinity);
+
+    // a = 2, b = 1
+
+    assert(betaIncompleteDeriv(2, 1, GDN!1(0)) == 0);
+
+    assert(betaIncompleteDeriv(2, 1, GDN!1(0.5)) == 1);
+    // f' = .5^2/B(2,1) = 1
+
+    assert(betaIncompleteDeriv(2, 1, GDN!1(1)) == 2);
+
+    // a = 2, b = 2
+
+    assert(betaIncompleteDeriv(2, 2, GDN!1(0)) == 0);
+
+    assert(betaIncompleteDeriv(2, 2, GDN!1(0.5)) == 1.5L);
+    // f' = .5*.5/B(2,2) = Γ(4)/[4Γ(2)Γ(2)] = 6/4 = 3/2
+
+    assert(betaIncompleteDeriv(2, 2, GDN!1(1)) == 0);
+
+    // a = 2, b = ∞
+
+    assert(betaIncompleteDeriv(2, real.infinity, GDN!1(0)) is real.infinity);
+    assert(betaIncompleteDeriv(2, real.infinity, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(2, real.infinity, GDN!1(1)) == 0);
+
+    // a = ∞, b = +0
+
+    assert(betaIncompleteDeriv(real.infinity, +0., GDN!1(0)) == 0);
+    assert(betaIncompleteDeriv(real.infinity, +0., GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(real.infinity, +0., GDN!1(1)) is real.infinity);
+
+    // a = ∞, b = .5
+
+    assert(betaIncompleteDeriv(real.infinity, .5, GDN!1(0)) == 0);
+    assert(betaIncompleteDeriv(real.infinity, .5, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(real.infinity, .5, GDN!1(1)) is real.infinity);
+
+    // a = ∞, b = 1
+
+    assert(betaIncompleteDeriv(real.infinity, 1, GDN!1(0)) == 0);
+    assert(betaIncompleteDeriv(real.infinity, 1, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(real.infinity, 1, GDN!1(1)) is real.infinity);
+
+    // a = ∞, b = 2
+
+    assert(betaIncompleteDeriv(real.infinity, 2, GDN!1(0)) == 0);
+    assert(betaIncompleteDeriv(real.infinity, 2, GDN!1(.5)) == 0);
+    assert(betaIncompleteDeriv(real.infinity, 2, GDN!1(1)) is real.infinity);
+
+    // a = ∞, b = ∞
+
+    assert(isNaN(betaIncompleteDeriv(real.infinity, real.infinity, GDN!1(0))));
+    assert(isNaN(betaIncompleteDeriv(real.infinity, real.infinity, GDN!1(.5))));
+    assert(isNaN(betaIncompleteDeriv(real.infinity, real.infinity, GDN!1(1))));
+
+    // g' ≠ 1
+
+    assert(betaIncompleteDeriv(2, 2, GDN!1(0.5, 0.5)) == 0.75L);
+    // from earlier test: I'(GDN!1(0.5); 2,2) = 1.5 when g' = 1 so when g' = 0.5
+    // expect I' = 1.5 * 0.5 = 0.75
+
+    //
+    // Tests of degree 2
+    //
+
+    // a = 0⁺
+
+    assert(betaIncompleteDeriv(+0., 1, GDN!2(.5)) is GDN!1(0, 0));
+
+    // a = 1, b = 0⁺
+
+    assert(betaIncompleteDeriv(1, +0., GDN!2(.5)) is GDN!1(0, 0));
+    // limit I(.5;1,0+) = 0 and derivative is dirac(g-1)==0
+
+    // a = 1, b = 1
+
+    assert(betaIncompleteDeriv(1, 1, GDN!2(0.0L)) is GDN!1(1, 0));
+
+    assert(betaIncompleteDeriv(2, 2, GDN!2(.5)) is GDN!1(1.5, 0));
+    // f' = <.5,1>^1(1 - <.5,1>)^1/B(2,2) = <.5,1><.5,-1>Γ(4)/[Γ(2)Γ(2)] = 6<.25,-.5 + .5> =<1.5,0>
+
+    assert(betaIncompleteDeriv(1, 1, GDN!2(1.0L)) is GDN!1(1.0L, 0));
+
+    // a = 1, b = ∞
+
+    assert(betaIncompleteDeriv(1, real.infinity, GDN!2(.5)) is GDN!1(0, 0));
+
+    // a = ∞, b = 1
+
+    assert(betaIncompleteDeriv(real.infinity, 1, GDN!2(.5)) is GDN!1(0, 0));
+
+    // g' ≠ 1
+
+    assert(betaIncompleteDeriv(1, 1, GDN!2(.5, 2.0L, 0.0L)) is GDN!1(2.0L, 0.0L));
+
+    // g" ≠ 0
+
+    assert(betaIncompleteDeriv(1, 1, GDN!2(.5, 1.0L, 1.0L)) is GDN!1(1.0L, 1.0L));
+}
+
+
+/**
+ * The regularized incomplete beta function $(MATH I$(SUB g)(a,b)).
+ *
+ * For fixed $(MATH a,b > 0), let $(MATH f(x) = I$(SUB g(x))(a,b)). Then
+ * $(MATH f' = g'$(SUP dI$(SUB g))/$(SUB dg)).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   a = the first shape parameter, must be positive
+ *   b = the second shape parameter, must be positive
+ *   g = the argument, must belong to the interval $(MATH [0,1])
+ *
+ * Returns:
+ *   the regularized incomplete beta function evaluated at g expressed as _a `GDN`
+ */
+pure nothrow @nogc @safe GDN!Deg betaIncomplete(ulong Deg)(in real a, in real b, in GDN!Deg g)
+in {
+    assert(isNaN(a) || signbit(a) == 0, "the first shape parameter must be positive");
+    assert(isNaN(b) || signbit(b) == 0, "the second shape parameter must be positive");
+    assert(isNaN!Deg(g) || (g >= 0 && g <= 1), "the argument must be in [0,1]");
+}
+do {
+    return GDN!Deg(std.mathspecial.betaIncomplete(a, b, g.val), betaIncompleteDeriv(a, b, g));
 }
 
 ///
@@ -793,336 +1038,45 @@ unittest
     assert(betaIncomplete(1, 1, GDN!1(0.5)) is GDN!1(0.5, 1));
 }
 
-unittest
-{
-    import std.format: format;
-    import std.math: isClose, M_2_PI, nextDown, nextUp, sqrt, SQRT1_2, SQRT2;
 
-    import ad.math.internal: nextDown, nextUp;
-
-    const ɛ = nextUp(0.0L);
-    const M = nextDown(real.infinity);
-    const nearZero = sqrt(real.min_normal);
-    const nearInf = sqrt(real.max);
-
-    //
-    // Tests of handling NaN payload
-    //
-
-    assert(getNaNPayload(betaIncomplete(NaN(1), 1, GDN!1.zero)) == 1);
-    assert(getNaNPayload(betaIncomplete(1, NaN(1), GDN!1.zero)) == 1);
-    assert(getNaNPayload(betaIncomplete(1, 1, GDN!1(NaN(1)))) == 1);
-    assert(getNaNPayload(betaIncomplete(NaN(2), NaN(1), GDN!1.zero)) == 2);
-    assert(getNaNPayload(betaIncomplete(NaN(1), NaN(2), GDN!1.zero)) == 2);
-    assert(getNaNPayload(betaIncomplete(NaN(1), NaN(2), GDN!1(NaN(1)))) == 2);
-
-    const a = GDN!1(NaN(2), NaN(3));
-    assert(betaIncomplete(NaN(1), NaN(2), a) is a);
-
-    //
-    // Tests of domain violations
-    //
-
-    assert(!isNaN(betaIncomplete(1, 1, GDN!1(.5))));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     assert(!isNaN(betaIncomplete(+0., +0., GDN!1(-0.))));
-
-    assert(!isNaN(betaIncomplete(real.infinity, real.infinity, GDN!1(1))));
-    assert(isNaN(betaIncomplete(-0., 1, GDN!1(.5))));
-    assert(isNaN(betaIncomplete(1, -0., GDN!1(.5))));
-    assert(isNaN(betaIncomplete(1, 1, GDN!1(nextDown(-0.0L)))));
-    assert(isNaN(betaIncomplete(1, 1, GDN!1(nextUp(1.0L)))));
-
-    //
-    // Tests of degree 1
-    //
-
-    // a = +0, b = +0
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     const zzz = betaIncomplete(+0., +0., GDN!1(0));
-//     assert(zzz == 0 && isNaN(zzz.d));
-
-    assert(isNaN(betaIncomplete(+0., +0., GDN!1(.5))));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     const zzo = betaIncomplete(+0., +0., GDN!1(1));
-//     assert(zzo == 1 && isNaN(zzo.d));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     // a = +0, b = .5
+// NB: In master, but not released.
+// /**
+//  * The regularized incomplete beta complement function $(MATH I$(SUB g)$(SUP C)(a,b)).
+//  *
+//  * For fixed $(MATH a,b > 0), if $(MATH f(x) = I$(SUB g(x))$(SUP C)(a,b)), then
+//  * $(MATH f' = g'$(SUP dI$(SUB g)$(SUP C))/$(SUB dg)). Since
+//  * $(MATH I$(SUB g)$(SUP C) = 1 - I$(SUB g)), $(MATH I$(SUB g)$(SUP C)' = -I$(SUB g)'). Thus
+//  * $(MATH f' = -g'$(SUP dI$(SUB g))$(SUB dg)).
+//  *
+//  * Params:
+//  *   Deg = the degree of g
+//  *   a = the first shape parameter, must be positive
+//  *   b = the second shape parameter, must be positive
+//  *   g = the argument, must belong to the interval $(MATH [0,1])
+//  *
+//  * Returns:
+//  *   the regularized incomplete beta complement function evaluated at g expressed as _a `GDN`
+//  */
+// pure nothrow @nogc @safe GDN!Deg betaIncompleteCompl(ulong Deg)(in real a, in real b, in GDN!Deg g)
+// in {
+//     assert(isNaN(a) || signbit(a) == 0, "the first shape parameter must be positive");
+//     assert(isNaN(b) || signbit(b) == 0, "the second shape parameter must be positive");
+//     assert(isNaN!Deg(g) || (g >= 0 && g <= 1), "the argument must be in [0,1]");
+// }
+// do {
+//     return GDN!Deg(std.mathspecial.betaIncompleteCompl(a, b, g.val), -betaIncompleteDeriv(a, b, g));
+// }
 //
-//     assert(betaIncomplete(+0., .5, GDN!1(0)) is GDN!1(0, real.infinity));
-//     assert(betaIncomplete(+0., .5, GDN!1(.5)) is GDN!1(1, 0));
-//     assert(betaIncomplete(+0., .5, GDN!1(1)) is GDN!1(1, 0));
-//
-//     // a = +0, b = 1
-//
-//     assert(betaIncomplete(+0., 1, GDN!1(0)) is GDN!1(0, real.infinity));
-//     assert(betaIncomplete(+0., 1, GDN!1(.5)) is GDN!1(1, 0));
-//     assert(betaIncomplete(+0., 1, GDN!1(1)) is GDN!1(1, 0));
-//
-//     // a = +0, b = 2
-//
-//     assert(betaIncomplete(+0., 2, GDN!1(0)) is GDN!1(0, real.infinity));
-//     assert(betaIncomplete(+0., 2, GDN!1(.5)) is GDN!1(1, 0));
-//     assert(betaIncomplete(+0., 2, GDN!1(1)) is GDN!1(1, 0));
-//
-//     // a = +0, b = ∞
-//
-//     assert(betaIncomplete(+0., real.infinity, GDN!1(0)) is GDN!1(0, real.infinity));
-//     assert(betaIncomplete(+0., real.infinity, GDN!1(.5)) is GDN!1(1, 0));
-//     assert(betaIncomplete(+0., real.infinity, GDN!1(1)) is GDN!1(1, 0));
-//
-//     // a = .5, b = +0
-//
-//     assert(betaIncomplete(.5, +0., GDN!1(0)) is GDN!1(0, 0));
-//     assert(betaIncomplete(.5, +0., GDN!1(.5)) is GDN!1(0, 0));
-//     assert(betaIncomplete(.5, +0., GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = 0.5, b = 0.5
-
-    assert(betaIncomplete(.5, .5, GDN!1(0)) is GDN!1(0, real.infinity));
-
-    const q = betaIncomplete(.5, .5, GDN!1(.5));
-    // f' = .5^-.5*.5^-.5/B(.5,.5) = 2Γ(1)/[Γ(.5)Γ(.5)] = 2/(√𝜋√𝜋) = 2/𝜋
-    assert(isClose(q.val, .5) && isClose(q.d, M_2_PI));
-
-    assert(betaIncomplete(.5, .5, GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = 0.5, b = 1
-
-    assert(betaIncomplete(.5, 1, GDN!1(0)) is GDN!1(0, real.infinity));
-
-    assert(betaIncomplete(.5, 1, GDN!1(.5)) is GDN!1(SQRT1_2, SQRT1_2));
-    // f = √2/2
-    // f' = .5^-.5/B(.5,1) = √2*Γ(1.5)/[Γ(.5)Γ(1)] = √2(√𝜋/2)/√𝜋 = √2/2
-
-    assert(betaIncomplete(.5, 1, GDN!1(1)) is GDN!1(1, .5));
-    // f' = 1/B(.5,1) = Γ(1.5)/[Γ(.5)Γ(1)] = (√𝜋/2)/√𝜋 = 1/2
-
-    // a = .5, b = 2
-
-    assert(betaIncomplete(.5, 2, GDN!1(0)) is GDN!1(0, real.infinity));
-
-    const r = betaIncomplete(.5, 2, GDN!1(.5));
-    // f = I(.5; .5,1) + .5^.5*.5/B(.5,1) = √2/2 + (√2/4)Γ(1.5)/[Γ(.5)Γ(1)] = (√2/4)[2 + (√𝜋/2)/√𝜋]
-    //   = (√2/4)(2 + 1/2) = 5√2/8
-    // f' = .5^-.5*.5/B(.5,2) = (√2/2)Γ(5/2)/[Γ(1/2)Γ(2)] = √2(3√𝜋/4)/(2√𝜋) = 3√2/8
-    assert(isClose(r.val, 5*SQRT2/8) && r.d == 3*SQRT2/8);
-
-    assert(betaIncomplete(.5, 2, GDN!1(1)) is GDN!1(1, 0));
-
-    // a = .5, b = ∞
-
-    assert(betaIncomplete(.5, real.infinity, GDN!1(0)) is GDN!1(0, real.infinity));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     const v = betaIncomplete(.5, real.infinity, GDN!1(.5));
-//     assert(v is GDN!1(1, 0), format("I(.5; .5,∞) = %s", v));
-
-    assert(betaIncomplete(.5, real.infinity, GDN!1(1)) is GDN!1(1, 0));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     // a = 1, b = +0
-//
-//     assert(betaIncomplete(1, +0., GDN!1(0)) is GDN!1(0, 0));
-//     assert(betaIncomplete(1, +0., GDN!1(.5)) is GDN!1(0, 0));
-//     assert(betaIncomplete(1, +0., GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = 1, b = .5
-
-    assert(betaIncomplete(1, .5, GDN!1(0)) is GDN!1(0, .5));
-
-    const z = betaIncomplete(1, .5, GDN!1(.5));
-    // f = 1 - I(.5; .5,1) = 1 - √2/2
-    // f' = .5^-.5/B(1,.5) = √2/2
-    assert(isClose(z.val, 1-SQRT1_2), format("I(.5; 1,.5) = %s", z.val));
-    assert(z.d == SQRT1_2, format("I(.5; 1,.5) = %s", z.d));
-
-    assert(betaIncomplete(1, .5, GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = 1, b = 1
-
-    assert(betaIncomplete(1, 1, GDN!1(0)) is GDN!1(0, 1));
-    assert(betaIncomplete(1, 1, GDN!1(1)) is GDN!1(1, 1));
-
-    // a = 1, b = 2
-
-    assert(betaIncomplete(1, 2, GDN!1(0)) is GDN!1(0, 2));
-    // f' = 1/B(1,2) = Γ(3)/[Γ(1)Γ(2)] = 2
-
-    assert(betaIncomplete(1, 2, GDN!1(.5)) is GDN!1(.75, 1));
-    // f = 1 - (1 - .5)^2 = 1 - (1/2)^2 = 1 - 1/4 = 3/4
-    // f' = .5/B(1,2) = Γ(3)/[2Γ(1)Γ(2)] = 2/2 = 1
-
-    assert(betaIncomplete(1, 2, GDN!1(1)) is GDN!1(1, 0));
-
-    // a = 1, b = ∞
-
-    const ad = betaIncomplete(1, real.infinity, GDN!1(0));
-    assert(ad is GDN!1(0, real.infinity), format("I(0; 1,∞) = %s", ad));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     const ae = betaIncomplete(1, real.infinity, GDN!1(.5));
-//     assert(ae is GDN!1(1, 0), format("I(.5, 1,∞) = %s", ae));
-
-    assert(betaIncomplete(1, real.infinity, GDN!1(1)) is GDN!1(1, 0));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     // a = 2, b = +0
-//
-//     assert(betaIncomplete(2, +0., GDN!1(0)) is GDN!1(0, 0));
-//     assert(betaIncomplete(2, +0., GDN!1(.5)) is GDN!1(0, 0));
-//     assert(betaIncomplete(2, +0., GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = 2, b = .5
-
-    assert(betaIncomplete(2, .5, GDN!1(0)) is GDN!1(0, 0));
-
-    const ag = betaIncomplete(2, .5, GDN!1(.5));
-    // f = 1 - I(.5; .5,2) = 1 - 5√2/8
-    // f' = .5*.5^-.5/B(2,.5) = (√2/2)Γ(5/2)/[Γ(1/2)Γ(2)] = 3√2/8
-    assert(isClose(ag.val, 1-5*SQRT2/8) && ag.d == 3*SQRT2/8);
-
-    assert(betaIncomplete(2, .5, GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = 2, b = 1
-
-    assert(betaIncomplete(2, 1, GDN!1(0)) is GDN!1(0, 0));
-
-    assert(betaIncomplete(2, 1, GDN!1(0.5)) is GDN!1(.25, 1));
-    // f = 1 - I(.5; 2,1) = 1 - 3/4 = 1/4
-    // f' = .5^2/B(2,1) = 1
-
-    assert(betaIncomplete(2, 1, GDN!1(1)) is GDN!1(1, 2));
-
-    // a = 2, b = 2
-
-    assert(betaIncomplete(2, 2, GDN!1(0)) is GDN!1(0, 0));
-
-    const ah = betaIncomplete(2, 2, GDN!1(0.5));
-    // f' = .5*.5/B(2,2) = Γ(4)/[4Γ(2)Γ(2)] = 6/4 = 3/2
-    assert(isClose(ah.val, .5L) && ah.d == 1.5);
-
-    assert(betaIncomplete(2, 2, GDN!1(1)) is GDN!1(1, 0));
-
-    // a = 2, b = ∞
-
-    const aj = betaIncomplete(2, real.infinity, GDN!1(0));
-    assert(aj is GDN!1(0, real.infinity), format("I(0; 2,∞) = %s", aj));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     assert(betaIncomplete(2, real.infinity, GDN!1(.5)) is GDN!1(1, 0));
-
-    assert(betaIncomplete(2, real.infinity, GDN!1(1)) is GDN!1(1, 0));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     // a = ∞, b = +0
-//
-//     assert(betaIncomplete(real.infinity, +0., GDN!1(0)) is GDN!1(0, 0));
-//     assert(betaIncomplete(real.infinity, +0., GDN!1(.5)) is GDN!1(0, 0));
-//     assert(betaIncomplete(real.infinity, +0., GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = ∞, b = .5
-
-    assert(betaIncomplete(real.infinity, .5, GDN!1(0)) is GDN!1(0, 0));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     const ihh = betaIncomplete(real.infinity, .5, GDN!1(.5));
-//     assert(ihh is GDN!1(0, 0), format("I(.5; ∞,.5) = %s", ihh));
-
-    assert(betaIncomplete(real.infinity, .5, GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = ∞, b = 1
-
-    assert(betaIncomplete(real.infinity, 1, GDN!1(0)) is GDN!1(0, 0));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     const ioh = betaIncomplete(real.infinity, 1, GDN!1(.5));
-//     assert(ioh is GDN!1(0, 0), format("I(.5; ∞,1) = %s", ioh));
-
-    assert(betaIncomplete(real.infinity, 1, GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = ∞, b = 2
-
-    assert(betaIncomplete(real.infinity, 2, GDN!1(0)) is GDN!1(0, 0));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//     const ith = betaIncomplete(real.infinity, 2, GDN!1(.5));
-//     assert(ith is GDN!1(0, 0), format("I(.5; ∞,2) = %s", ith));
-
-    assert(betaIncomplete(real.infinity, 2, GDN!1(1)) is GDN!1(1, real.infinity));
-
-    // a = ∞, b = ∞
-
-    const iiz = betaIncomplete(real.infinity, real.infinity, GDN!1(0));
-    assert(iiz == 0 && isNaN(iiz.d));
-
-    assert(isNaN(betaIncomplete(real.infinity, real.infinity, GDN!1(.5))));
-
-    const iio = betaIncomplete(real.infinity, real.infinity, GDN!1(1));
-    assert(iio == 1 && isNaN(iiz.d));
-
-    // g' ≠ 1
-    // a=2,b=2 => I(.5) = 0.5, d = 3/2 * g.d (from earlier)
-    const tthh = betaIncomplete(2, 2, GDN!1(0.5, 0.5));
-    // from earlier test: betaIncomplete(2,2,GDN!1(0.5)) has val .5 and
-    // derivative 1.5 when g.d == 1 so with g.d == 0.5 expect derivative
-    // 1.5 * 0.5 = 0.75
-    assert(isClose(tthh, .5L) && tthh.d == .75);
-
-    //
-    // Tests of degree 2
-    //
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//
-//     // a = 0⁺
-//
-//     const tzoh = betaIncomplete(+0., 1, GDN!2(.5));
-//     assert(tzoh is GDN!2(1, 0, 0), format("I(.5; 0⁺,1) = %s", tzoh));
-//
-//     // a = 1, b = 0⁺
-//
-//     const tozh = betaIncomplete(1, +0., GDN!2(.5));
-//     // limit I(.5;1,0+) = 0 and derivative is dirac(g-1)==0
-//     assert(tozh is GDN!2(0, 0, 0), format("I(,5; 1,0⁺) = %s", tozh));
-
-    // a = 1, b = 1
-
-    assert(betaIncomplete(1, 1, GDN!2(0.0L)) is GDN!2(0.0L));
-    // For a=1,b=1, I(g)=g exactly
-
-    const ttth = betaIncomplete(2, 2, GDN!2(.5));
-    // f = I(.5; 2,2) = .5
-    // f' = <.5,1>^1(1 - <.5,1>)^1/B(2,2) = <.5,1><.5,-1>Γ(4)/[Γ(2)Γ(2)] = 6<.25,-.5 + .5> =<1.5,0>
-    assert(isClose(ttth, .5L) && ttth.d is GDN!1(1.5, 0));
-
-    assert(betaIncomplete(1, 1, GDN!2(1.0L)) is GDN!2(1.0L));
-
-// NB: Fails because of https://github.com/dlang/phobos/issues/10889, fixed in master
-//
-//     // a = 1, b = ∞
-//
-//     const toih = betaIncomplete(1, real.infinity, GDN!2(.5));
-//     assert(toih is GDN!2(1, 0, 0), format("I(.5; 1,∞) = %s", toih));
-//
-//     // a = ∞, b = 1
-//
-//     const tioh = betaIncomplete(real.infinity, 1, GDN!2(.5));
-//     assert(tioh is GDN!2(0, 0, 0), format("I(.5; ∞,1) = %s", tioh));
-
-    // g' ≠ 1
-
-    assert(betaIncomplete(1, 1, GDN!2(.5, 2.0L, 0.0L)) is GDN!2(.5, 2.0L, 0.0L));
-    // I(g)=g, so derivative and higher derivatives should be preserved
-
-    // g" ≠ 0
-
-    assert(betaIncomplete(1, 1, GDN!2(.5, 1.0L, 1.0L)) is GDN!2(.5, 1.0L, 1.0L));
-}
+// ///
+// unittest
+// {
+//     const a = 1.0L;
+//     const b = 2.0L;
+//     const x = GDN!1(0.1L);
+//     const i = betaIncomplete(a, b, x);
+//     const icc = betaIncompleteCompl(b, a, 1.0L - x);
+//     assert(isClose(icc, i) && icc.d == i.d);
+// }
 
 
 // TODO: implement the following functions.

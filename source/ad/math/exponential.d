@@ -1,4 +1,4 @@
-/// It extends `std.math.exponential` to support `GDN` objects.
+/// It extends `std.math.exponential` module to support `GDN` objects.
 module ad.math.exponential;
 
 static import core.math;

@@ -1,4 +1,4 @@
-/// It extends the `std.math.remainder` to support `GDN` objects.
+/// It extends the `std.math.remainder` module to support `GDN` objects.
 module ad.math.remainder;
 
 static import std.math.remainder;

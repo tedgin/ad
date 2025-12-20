@@ -1,4 +1,4 @@
-/// It extends the `std.math.trigonometry` to support `GDN` objects.
+/// It extends the `std.math.trigonometry` module to support `GDN` objects.
 module ad.math.trigonometry;
 
 static import core.math;

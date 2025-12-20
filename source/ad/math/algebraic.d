@@ -1,4 +1,4 @@
-/// It extends the `std.math.algebraic` to support `GDN` objects.
+/// It extends the `std.math.algebraic` module to support `GDN` objects.
 module ad.math.algebraic;
 
 static import core.math;

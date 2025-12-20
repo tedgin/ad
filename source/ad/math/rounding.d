@@ -1,4 +1,4 @@
-/// It extends `std.math.rounding` to support `GDN` objects.
+/// It extends `std.math.rounding` module to support `GDN` objects.
 module ad.math.rounding;
 
 static import core.math;

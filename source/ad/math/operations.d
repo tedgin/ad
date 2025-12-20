@@ -1,4 +1,4 @@
-/// This module extends `std.math.operations` to support `GDN` objects.
+/// This module extends `std.math.operations` module to support `GDN` objects.
 module ad.math.operations;
 
 static import std.math.operations;

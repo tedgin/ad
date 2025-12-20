@@ -1,4 +1,4 @@
-/// It extends `std.math.traits` to support `GDN` objects.
+/// It extends `std.math.traits` module to support `GDN` objects.
 module ad.math.traits;
 
 static import std.math.traits;
