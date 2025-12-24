@@ -702,75 +702,72 @@ unittest
 }
 
 
-/* This function computes the derivative of I(g(x); a,b) with respect to x,
- * where a and b are constants.
+/* This function computes the derivative of the regularized incomplete beta
+ * function I(x; a,b) with respect to x, where a and b are constants.
  *
- * Let f(x) = I(g(x); a,b). Then f' = dI/dg⋅g' = g'(d/dg)B(g; a,b)/B(a,b)) where
- * B(g; a,b) = ∫₀ᵍtᵃ⁻¹(1-t)ᵇ⁻¹dt is the incomplete beta function.
+ * I'(x; a,b) = (d/dx)B(x; a,b)/B(a,b)) where B(x; a,b) = ∫₀ˣtᵃ⁻¹(1-t)ᵇ⁻¹dt is
+ * the incomplete beta function.
  *
  * The integrand tᵃ⁻¹(1-t)ᵇ⁻¹ is Lebesgue integrable over 0 ≤ t ≤ 1. Therefore,
- * B' = gᵃ⁻¹(1-g)ᵇ⁻¹ almost everywhere. g = 0 and 1 are the only values where
- * gᵃ⁻¹(1-g)ᵇ⁻¹ doesn't exist for every a and b, but the one-sided limits do.
+ * B' = xᵃ⁻¹(1-x)ᵇ⁻¹ almost everywhere. x = 0 and 1 are the only values where
+ * xᵃ⁻¹(1-x)ᵇ⁻¹ doesn't exist for every a and b, but the one-sided limits do.
  * This algorithm defines
- * B'(0; a,b) = lim{g→0⁺} gᵃ⁻¹(1-g)ᵇ⁻¹ = { ∞, 0<a<1; 1, a=1; 0, a>1 }), and
- * B'(1; a,b) = lim{g→1⁻} gᵃ⁻¹(1-g)ᵇ⁻¹ = { ∞, 0<b<1; 1, b=1; 0, b>1 }).
+ * B'(0; a,b) = lim{x→0⁺} xᵃ⁻¹(1-x)ᵇ⁻¹ = { ∞, 0<a<1; 1, a=1; 0, a>1 }), and
+ * B'(1; a,b) = lim{x→1⁻} xᵃ⁻¹(1-x)ᵇ⁻¹ = { ∞, 0<b<1; 1, b=1; 0, b>1 }).
  *
- * Thus I'(g; a,b) has the following form when 0 < a,b < ∞.
+ * Thus I'(x; a,b) has the following form when 0 < a,b < ∞.
  *
- *    - I'(g; a,b) = gᵃ⁻¹(1-g)ᵇ⁻¹/B(a,b), 0 < g < 1
+ *    - I'(x; a,b) = xᵃ⁻¹(1-x)ᵇ⁻¹/B(a,b), 0 < x < 1
  *    - I'(0; a,b) = { ∞, a<1; 1/B(1,b), a=1; 0, a>1 }
  *    - I'(1; a,b) = { ∞, b<1; 1/B(a,1), b=1; 0, b>1 }
  *
  * Here are the degenerate cases of I'. Let H(x) = { 0, x<0; 1, x≥0 } be the
  * Heaviside step function in the following.
  *
- *    - I'(g; 0,b) = (d/dg)lim{a→0⁺} I(g; a,b) = (d/dg)(1 - H(-g)) = 𝛿(g)
- *    - I'(g; ∞,b) = (d/dg)lim{a→∞} I(g; a,b) = (d/dg)H(g-1) = 𝛿(g-1)
- *    - I'(g; a,0) = (d/dg)lim{b→0⁺} I(g; a,b) = (d/dg)H(g-1) = 𝛿(g-1)
- *    - I'(g; a,∞) = (d/dg)lim{b→∞} I(g; a,b) = (d/dg)[1 - H(-g)] = 𝛿(g)
- *    - I'(g; 0,0) = (d/dg)lim{a,b→0⁺} I(g; a,b), does not exist
- *    - I'(g; 0,∞) = (d/dg)lim{a→0⁺,b→∞) I(g; a,b) = (d/dg)[1 - H(-g)] = 𝛿(g)
- *    - I'(g; ∞,0) = (d/dg)lim{a→∞,b→0⁺} I(g; a,b) = (d/dg)H(g-1) = 𝛿(g-1)
- *    - I'(g; ∞,∞) = (d/dg)lim{a,b→∞) I(g; a,b), does not exist
+ *    - I'(x; 0,b) = (d/dx)lim{a→0⁺} I(x; a,b) = (d/dx)(1 - H(-x)) = 𝛿(x)
+ *    - I'(x; ∞,b) = (d/dx)lim{a→∞} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
+ *    - I'(x; a,0) = (d/dx)lim{b→0⁺} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
+ *    - I'(x; a,∞) = (d/dx)lim{b→∞} I(x; a,b) = (d/dx)[1 - H(-x)] = 𝛿(x)
+ *    - I'(x; 0,0) = (d/dx)lim{a,b→0⁺} I(x; a,b), does not exist
+ *    - I'(x; 0,∞) = (d/dx)lim{a→0⁺,b→∞) I(x; a,b) = (d/dx)[1 - H(-x)] = 𝛿(x)
+ *    - I'(x; ∞,0) = (d/dx)lim{a→∞,b→0⁺} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
+ *    - I'(x; ∞,∞) = (d/dx)lim{a,b→∞) I(x; a,b), does not exist
  */
 private pure nothrow @nogc @safe
-GDN!Deg.DerivType!1 betaIncompleteDeriv(ulong Deg)(in real a, in real b, in GDN!Deg g)
+GDN!Deg.DerivType!1 betaIncompleteDeriv(ulong Deg)(in real a, in real b, in GDN!Deg x)
 {
     alias Deriv = typeof(return);
 
-    Deriv dfdg;
     if ((a == 0 && b == 0) || (a == real.infinity && b == real.infinity)) {
-        dfdg = Deriv.nan;
+        return Deriv.nan;
     } else if (a == 0 || b == real.infinity) {
-        dfdg = dirac(g.reduce());
+        return dirac(x.reduce());
     } else if (a == real.infinity || b == 0) {
-        dfdg = dirac(g.reduce() - 1);
+        return dirac(x.reduce() - 1);
     } else {
-        const g_red = g.reduce();
-        const numerator = g_red^^(a - 1) * (1 - g_red)^^(b - 1);
+        const x_red = x.reduce();
+        const numerator = x_red^^(a - 1) * (1 - x_red)^^(b - 1);
         const denominator = std.mathspecial.beta(a, b);
         if (numerator == real.infinity && denominator == real.infinity) {
             // In this case, the denominator is not really infinite. It's just
             // larger than real.max. Instead of returning ∞/∞ = NaN, return the
-            // numerator. The derivatives still need to be scaled.
+            // numerator.
             static if (Deg == 1)
-                dfdg = numerator;
+                return numerator;
             else
-                dfdg = Deriv(numerator.val, numerator.d/denominator);
+                return  Deriv(numerator.val, numerator.d/denominator);
         } else if (numerator == 0 && denominator == 0) {
             // In this case, the denominator is not really zero. It's just too
             // small to represent. Instead of return 0/0 = NaN, return the
-            // numerator. The derivatives still need to be scaled.
+            // numerator.
             static if (Deg == 1)
-                dfdg = numerator;
+                return numerator;
             else
-                dfdg = Deriv(numerator.val, numerator.d/denominator);
+                return Deriv(numerator.val, numerator.d/denominator);
         } else {
-            dfdg = numerator / denominator;
+            return numerator / denominator;
         }
     }
-
-    return dfdg * g.d;
 }
 
 unittest
@@ -963,9 +960,7 @@ unittest
 
     // g' ≠ 1
 
-    assert(betaIncompleteDeriv(2, 2, GDN!1(0.5, 0.5)) == 0.75L);
-    // from earlier test: I'(GDN!1(0.5); 2,2) = 1.5 when g' = 1 so when g' = 0.5
-    // expect I' = 1.5 * 0.5 = 0.75
+    assert(betaIncompleteDeriv(2, 2, GDN!1(0.5, 0.5)) == 1.5L);
 
     //
     // Tests of degree 2
@@ -996,14 +991,6 @@ unittest
     // a = ∞, b = 1
 
     assert(betaIncompleteDeriv(real.infinity, 1, GDN!2(.5)) is GDN!1(0, 0));
-
-    // g' ≠ 1
-
-    assert(betaIncompleteDeriv(1, 1, GDN!2(.5, 2.0L, 0.0L)) is GDN!1(2.0L, 0.0L));
-
-    // g" ≠ 0
-
-    assert(betaIncompleteDeriv(1, 1, GDN!2(.5, 1.0L, 1.0L)) is GDN!1(1.0L, 1.0L));
 }
 
 
@@ -1029,7 +1016,7 @@ in {
     assert(isNaN!Deg(g) || (g >= 0 && g <= 1), "the argument must be in [0,1]");
 }
 do {
-    return GDN!Deg(std.mathspecial.betaIncomplete(a, b, g.val), betaIncompleteDeriv(a, b, g));
+    return GDN!Deg(std.mathspecial.betaIncomplete(a, b, g.val), betaIncompleteDeriv(a, b, g)*g.d);
 }
 
 ///
@@ -1038,6 +1025,15 @@ unittest
     assert(betaIncomplete(1, 1, GDN!1(0.5)) is GDN!1(0.5, 1));
 }
 
+unittest
+{
+    import std.format: format;
+
+    const g = GDN!1(0.5L, 0.5L);
+    const a = betaIncomplete(2, 2, g);
+    assert(isClose(a, 0.5L), format("I(%s; 2,2) = %s", g, a));
+    assert(a.d == 0.75L);
+}
 
 // NB: In master, but not released.
 // /**
@@ -1064,7 +1060,8 @@ unittest
 //     assert(isNaN!Deg(g) || (g >= 0 && g <= 1), "the argument must be in [0,1]");
 // }
 // do {
-//     return GDN!Deg(std.mathspecial.betaIncompleteCompl(a, b, g.val), -betaIncompleteDeriv(a, b, g));
+//     return GDN!Deg(
+//         std.mathspecial.betaIncompleteCompl(a, b, g.val), -betaIncompleteDeriv(a, b, g)*g.d);
 // }
 //
 // ///
@@ -1077,10 +1074,79 @@ unittest
 //     const icc = betaIncompleteCompl(b, a, 1.0L - x);
 //     assert(isClose(icc, i) && icc.d == i.d);
 // }
+//
+// unittest
+// {
+//     assert(betaIncompleteCompl(1, 1, GDN!1(0.5L, 2)) is GDN!1(0.5L, -2));
+// }
+
+
+/**
+ * The inverse of the regularized incomplete beta function.
+ *
+ * If $(MATH f(x) = I$(SUB g(x))(a,b)), then $(MATH g = f$(SUP -1)(f)). For fixed $(MATH a,b > 0),
+ * $(MATH f' = g'$(SUP dI$(SUB g))/$(SUB dg)). Thus $(MATH g' = f'/$(SUP dI$(SUB g))/$(SUB dg)).
+ *
+ * Params:
+ *   Deg = the degree of Ig
+ *   a = the first shape parameter, must be positive
+ *   b = the second shape parameter, must be positive
+ *   Ig = $(MATH I$(SUB g)(a,b)), must belong to the interval $(MATH [0,1])
+ *
+ * Returns:
+ *   the inverse of the regularized incomplete beta function evaluated at Ig expressed as _a `GDN`
+ */
+pure nothrow @nogc @safe
+GDN!Deg betaIncompleteInverse(ulong Deg)(in real a, in real b, in GDN!Deg Ig)
+in {
+    assert(isNaN(a) || signbit(a) == 0, "the first shape parameter must be positive");
+    assert(isNaN(b) || signbit(b) == 0, "the second shape parameter must be positive");
+    assert(isNaN!Deg(Ig) || (Ig >= 0 && Ig <= 1), "the argument must be in [0,1]");
+}
+do {
+    static if (Deg == 1)
+        alias Ig_inv = std.mathspecial.betaIncompleteInverse;
+    else
+        alias Ig_inv = betaIncompleteInverse;
+
+    const g_red = Ig_inv(a, b, Ig.reduce());
+    return GDN!Deg(asReal(g_red), Ig.d/betaIncompleteDeriv(a, b, asGDN!Deg(g_red)));
+}
+
+///
+unittest
+{
+    const a = 1;
+    const b = 1;
+    const x = GDN!1(0.5L);
+    assert(betaIncompleteInverse(a, b, betaIncomplete(a, b, x)) is x);
+}
+
+unittest
+{
+    import std.format: format;
+
+    const a = betaIncompleteInverse(0.5L, 1, GDN!1(0, real.infinity));
+    assert(a == 0.0L && isNaN(a.d));
+
+    const b = GDN!1(0, 0.5L);
+    const c = betaIncompleteInverse(1, 2, b);
+    // dI_g/dg = 1/B(1,2) = Γ(1+2)/(Γ(1)Γ(2)) = 2
+    // g' = .5/2 = .25
+    assert(c is GDN!1(0, 0.25L), format("I⁻¹(%s; 1,2) = %s", b, c));
+
+    const a2 = 2.0L;
+    const b2 = 1.0L;
+    const x2 = GDN!2(0.5, 2, -1);
+    // f = 0.25
+    // f' = <2,-1><.5,2>/B(2,1) = <1,-.5+4>Γ(1+2)/(Γ(1)Γ(2)) = 2<1,3.5> = <2,7>
+    const y2 = GDN!2(0.25L, 2, 7);
+    const d = betaIncompleteInverse(a2, b2, y2);
+    assert(d is x2, format("I⁻¹(%s; 2,1) = %s", y2, d));
+}
 
 
 // TODO: implement the following functions.
-// betaIncompleteInverse
 // gammaIncomplete
 // gammaIncompleteCompl
 // gammaIncompleteComplInverse
