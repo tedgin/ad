@@ -226,8 +226,27 @@ package pure @safe
  */
 package pure nothrow @nogc @safe
 {
+    // The implementation of exp for GDN.
+    pragma(inline, true) GDN!Deg exp(ulong Deg)(in GDN!Deg g)
+    {
+        static if (Deg == 1)
+            alias exp_fn = std.math.exponential.exp;
+        else
+            alias exp_fn = exp;
+
+        const f_red = exp_fn(g.reduce());
+        return GDN!Deg(asReal(f_red), f_red * g.d);
+    }
+
+    unittest
+    {
+        assert(exp(GDN!1.nan) is GDN!1.nan);
+        assert(exp(GDN!1.zero) is GDN!1.one);
+        assert(exp(-GDN!2.infinity) is GDN!2(0, -0., 0));
+    }
+
     // The implementation of log2 for GDN.
-    pragma(inline,true) GDN!Deg log2(ulong Deg)(in GDN!Deg g)
+    pragma(inline, true) GDN!Deg log2(ulong Deg)(in GDN!Deg g)
     {
         if (isNaN(g.val)) return g;
         const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN2*g.reduce());

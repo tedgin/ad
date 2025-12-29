@@ -29,30 +29,13 @@ import ad.math.internal:
  */
 nothrow pure @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        alias exp_fn = std.math.exponential.exp;
-    else
-        alias exp_fn = exp;
-
-    const f_red = exp_fn(g.reduce());
-    return GDN!Deg(asReal(f_red), f_red * g.d);
+    return ad.math.internal.exp(g);
 }
 
 ///
 unittest
 {
     assert(exp(GDN!1(0, 3)) is GDN!1(1, 3));
-}
-
-unittest
-{
-    import std.format;
-
-    assert(exp(GDN!1.nan) is GDN!1.nan);
-    assert(exp(GDN!1.zero) is GDN!1.one);
-
-    const e = exp(-GDN!2.infinity);
-    assert(e is GDN!2(0, -0., 0), format("exp(-inf) != %s", e));
 }
 
 
