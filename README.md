@@ -7,7 +7,25 @@ This is an automatic differentiation library written in D supporting one-dimensi
 * supports all of D's arithmetic operators
 * supports the same set of functions as `core.math`
 * supports the same set of functions as `std.math`
-* supports the same set of functions as `std.mathspecial` (not implemented yet)
+* supports the same set of functions as `std.mathspecial`
+  * beta
+  * betaIncomplete
+  <!-- NB: In phobos master, but not released
+  * betaIncompleteCompl -->
+  * betaIncompleteInverse
+  * digamma
+  * *erf (not implemented yet)*
+  * *erfc (not implemented yet)*
+  * gamma
+  * *gammaIncomplete (not implemented yet)*
+  * *gammaIncompleteCompl (not implemented yet)*
+  * *gammaIncompleteComplInverse (not implemented yet)*
+  * logGamma
+  * logmdigamma
+  * logmdigammaInverse
+  * *normalDistribution (not implemented yet)*
+  * *normalDistributionInverse (not implemented yet)*
+  * sgnGamma
 * supports arbitrary order differentiation, must be fixed at compile time
 
 ## Examples
