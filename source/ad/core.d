@@ -6,7 +6,7 @@ module ad.core;
 
 import std.algorithm: min;
 import std.format: format;
-import std.math: abs, cmp, isFinite, isInfinity, isNaN, LN2, log, signbit;
+import std.math: abs, cmp, copysign, isFinite, isInfinity, isNaN, LN2, log, signbit;
 import std.traits: fullyQualifiedName, TemplateOf;
 
 /**
@@ -332,20 +332,26 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
         return this;
     }
 
-    /* This function evaluated the Dirac delta function of the generalized dual
-     * number.
+    /* This function evaluates the Dirac delta function, 𝛿, of the generalized
+     * dual number. 𝛿(g) = { ∞, g=0; 0, g≠0 } with ∫𝛿(g)dg = 1.
+     *
+     * g𝛿'(g) = -𝛿(g), or 𝛿'(g) = -𝛿(g)/g. See
+     * https://en.wikipedia.org/wiki/Dirac_delta_function#Derivatives.
+     *
+     * If f(x) = 𝛿(g(x)), then f' = (d𝛿/dg)g' = -𝛿(g)g'/g
      */
-    pure nothrow @nogc @safe package GDN dirac() const
-    {
+    package pure nothrow @nogc @safe GDN dirac() const
+    do {
         if (isNaN(_x)) return this;
 
-        static if (Degree == 1)
-            const df = _x != 0
-                ? 0.0L : (signbit(_x) == 1 ? real.infinity : -real.infinity);
-        else
-            const df = reduce().dirac() * (signbit(_x) == 1 ? 1 : -1);
+        static if (Degree == 1) {
+            const df = _x == 0.0L ? copysign(real.infinity, -_x) : 0.0L;
+        } else {
+            const red = reduce();
+            const df = -red.dirac() / red;
+        }
 
-        return GDN(_x == 0 ? real.infinity : 0, df * _dx);
+        return GDN(_x == 0.0L ? real.infinity : 0.0L, df * _dx);
     }
 
     /**
