@@ -4,14 +4,16 @@ module ad.math.special;
 
 public import std.mathspecial;
 
+import std.algorithm: any;
 import std.math: getNaNPayload, isInfinity, isNaN, signbit, trunc;
+import std.range: only;
 import std.traits: select;
 
 static import ad.math.polygamma;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, asReal, CommonGDN, dirac, getNaNPayload, isGDN, isGDNOrReal, isOne, isNaN,
+    areAll, asGDN, asReal, CommonGDN, dirac, exp, getNaNPayload, isGDN, isGDNOrReal, isOne, isNaN,
     signbit, sgn;
 
 
@@ -702,6 +704,239 @@ unittest
 }
 
 
+/** The regularized lower incomplete gamma function $(MATH P(s,g)).
+ *
+ * Let $(MATH f(x) = P(s,g(x))). Then $(MATH f' = $(SUP ∂P)/$(SUB ∂g)(s,g)g').
+ * $(MATH P(s,g) = 𝛾(s,g)/𝛤(s)), where $(MATH 𝛾(s,g) = ∫$(SUB 0)$(SUP g)t$(SUP s-1)e$(SUP -t)dt) is
+ * the lower incomplete gamma function.
+ *
+ * The integrand $(MATH t$(SUP s-1)e$(SUP -t)) is Lebesgue integrable over $(MATH 0 ≤ t ≤ ∞).
+ * Therefore, $(MATH $(SUP ∂𝛾)/$(SUB ∂g) = g$(SUP s-1)e$(SUP -g)) almost everywhere. $(MATH g = 0)
+ * is the only value where $(MATH g$(SUP s-1)e$(SUP -g)) doesn't exist for every positive $(MATH s),
+ * but the one-sided limit does. This algorithm defines
+ * $(MATH $(SUP ∂𝛾)/$(SUB ∂g)(s,0) = lim$(SUB g→0$(SUP +)) g$(SUP s-1)e$(SUP -g))
+ * $(MATH = { ∞, 0\<s\<1; 1, s=1; 0, s>1 }).
+ *
+ * Thus $(MATH $(SUP ∂P)/$(SUB ∂g)) has the following form when $(MATH 0 < s < ∞).
+ * - $(MATH $(SUP ∂P)/$(SUB ∂g)(s,g) = g$(SUP s-1)e$(SUP -g)/𝛤(s), g > 0).
+ * - $(MATH $(SUP ∂P)/$(SUB ∂g)(s,0) = { ∞, 0\<s\<1; 1, s=1; 0, s>1 }).
+ *
+ *
+ * Define $(MATH P(0,g) = lim$(SUB s→0⁺) P(s,g)). $(MATH P(s,0) = 0) for all $(MATH s), so
+ * $(MATH lim$(SUB s→0⁺) P(s,0) = 0) Now assume $(MATH g > 0).
+ * $(MATH lim$(SUB s→0⁺) P(s,g) = lim$(SUB s→0⁺) ∫$(SUB 0)$(SUP g)t$(SUP s-1)e$(SUP -t)dt/𝛤(s)).
+ * $(MATH ∫$(SUB 0)$(SUP g)t$(SUP s-1)e$(SUP -t)dt/𝛤(s))
+ * $(MATH = ∫$(SUB 0)$(SUP 𝜖)t$(SUP s-1)e$(SUP -t)dt/𝛤(s) + ∫$(SUB 𝜖)$(SUP g)t$(SUP s-1)e$(SUP -t)dt/𝛤(s)),
+ * where $(MATH 0 < 𝜖 < g).
+ * $(MATH lim$(SUB s→0⁺) ∫$(SUB 𝜖)$(SUP g)t$(SUP s-1)e$(SUP -t)dt)
+ * $(MATH = ∫$(SUB 𝜖)$(SUP g)(lim$(SUB s→0⁺)t$(SUP s-1)e$(SUP -t))dt)
+ * $(MATH = ∫$(SUB 𝜖)$(SUP g)(e$(SUP -t)/t)dt)
+ * $(MATH < 𝜖∫$(SUB 𝜖)$(SUP g)e$(SUP -t)dt)
+ * $(MATH = -𝜖e$(SUP -t)⏐$(SUB 𝜖)$(SUP g) = -𝜖e$(SUP -g) + 𝜖e$(SUP -𝜖) = 𝜖(e$(SUP -𝜖) - e$(SUP -g)))
+ * $(MATH < 𝜖e$(SUP -𝜖) < 𝜖).
+ * $(MATH lim$(SUB s→0⁺) 𝛤(s) = ∞). Thus
+ * $(MATH lim$(SUB s→0⁺) ∫$(SUB 𝜖)$(SUP g)t$(SUP s-1)e$(SUP -t)dt/𝛤(s) = 0). Since
+ * $(MATH P(s,∞) = 1), $(MATH lim$(SUB s→0⁺) ∫$(SUB 0)$(SUP 𝜖)t$(SUP s-1)e$(SUP -t)dt/𝛤(s) = 1).
+ * Thus $(MATH P(0,g) = 1 - H(-g)), where $(MATH H) is the Heaviside step function.
+ *
+ * Define $(MATH P(∞,g) = lim$(SUB s→∞) P(s,g)). $(MATH P(s,∞) = 1), for all $(MATH s), so
+ * $(MATH P(∞,∞) = 1). Now assume $(MATH g < ∞). $(MATH P(∞,g) = lim$(SUB s→∞) 𝛾(s,g)/𝛤(s)). Since
+ * $(MATH 𝛾(s,g) = 𝛤(s)g$(SUP s)e$(SUP -g)𝛴$(SUB k=0)$(SUP ∞)g$(SUP k)/𝛤(s+k+1)). The series
+ * converges uniformly for all $(MATH s,g).
+ * $(MATH P(∞,g) = e$(SUP -g)𝛴$(SUB k=0)$(SUP ∞)lim$(SUB s→∞)g$(SUP s+k)/𝛤(s+k+1)).
+ * $(MATH lim$(SUB s→∞) g$(SUP s+k)/𝛤(s+k+1))
+ * $(MATH = lim$(SUB s→∞) [eg/(s+k)]$(SUP s+k)/√[2𝜋(s+k)]).
+ * There exists $(MATH s$(SUB k)) such that when $(MATH s > s$(SUB k)), $(MATH eg/(s+k) < 1). Thus
+ * $(MATH lim$(SUB s→∞) [eg/(s+k)]$(SUP s+k) = 0). Since $(MATH lim$(SUB s→∞) √[2𝜋(s+k)] = ∞),
+ * $(MATH lim$(SUB s→∞) g$(SUP s+k)/𝛤(s+k+1) = 0), and
+ * $(MATH P(∞,g) = e$(SUP -g)𝛴$(SUB k=0)$(SUP ∞)0 = 0) when $(MATH g < ∞). This means that
+ * $(MATH P(∞,g) = { 0, 0≤g<∞; 1, g=∞ }).
+ *
+ * For the degenerate cases $(MATH s = 0,∞), $(MATH $(SUP ∂P)/$(SUB ∂g)) has the following forms.
+ * - $(MATH $(SUP ∂P)/$(SUB ∂g)(0,g) = $(SUP ∂P)/$(SUB ∂g)(1 - H(-g)) = 𝛿(-g) = 𝛿(g)).
+ * - $(MATH $(SUP ∂P)/$(SUB ∂g)(∞,g) = $(SUP ∂P)/$(SUB ∂g){ 0, 0≤g<∞; 1, g=∞ })
+ *   $(MATH = { 0, 0≤g<∞; ∞, g=∞ }).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   s = the shape parameter, must be positive
+ *   g = the argument, must be $(MATH ≥ 0).
+ *
+ * Returns:
+ *   a GDN representing the regularized lower incomplete gamma function of g.
+ */
+pure nothrow @nogc @safe GDN!Deg gammaIncomplete(ulong Deg)(in real s, in GDN!Deg g)
+in {
+    if (!any!(std.math.isNaN)(only(s, g.val))) {
+        assert(signbit(s) == 0, "the shape parameter must be positive");
+        assert(g >= 0, "the argument must greater than or equal to 0");
+    }
+}
+out(res; isNaN!Deg(res) || (res >= 0 && res <= 1), "result should be in [0,1]")
+do {
+    if (any!(std.math.isNaN)(only(s, g.val))) return GDN!Deg.nanCombine(g, asGDN!Deg(s));
+
+    const g_red = g.reduce();
+
+    GDN!Deg.DerivType!1 dPdg;
+    if (s is +0.0L) {
+        dPdg = dirac(g_red);
+    } else if (s is real.infinity) {
+        dPdg = g.val is real.infinity ? dirac(GDN!Deg(-0.0L, g.d)).reduce() : GDN!Deg.zero.reduce();
+    } else {
+        // Ensure that g = -0 is treated like g = +0
+        static if (Deg == 1) {
+            alias e = std.math.exponential.exp;
+            const g_red_pos = g_red is -0.0L ? +0.0L : g_red;
+        } else {
+            alias e = exp;
+            const g_red_pos = GDN!Deg.DerivType!1(g_red.val is -0.0L ? +0.0L : g_red.val, g_red.d);
+        }
+
+        if (g.val is real.infinity) {
+            dPdg = GDN!Deg.one.d;
+        } else {
+            dPdg = g_red_pos^^(s-1) / (e(g_red_pos) * std.mathspecial.gamma(s));
+        }
+    }
+
+    return GDN!Deg(std.mathspecial.gammaIncomplete(s, g.val), dPdg*g.d);
+}
+///
+unittest {
+    import std.math: E;
+
+    assert(gammaIncomplete(1.0L, GDN!1(1)) is GDN!1(1-1/E, 1/E));
+}
+unittest {
+    import std.format: format;
+
+    const a = gammaIncomplete(NaN(0x1UL), GDN!1(0, NaN(0x2UL)));
+    assert(isNaN(a) && getNaNPayload(a) == 0x1UL && getNaNPayload(a.d) == 0x2UL);
+
+    const b = gammaIncomplete(+0.0L, GDN!1(-0.0L));
+    assert(!isNaN(b) && !isNaN(b.d), format("P(+0,-0) = %s", b));
+
+// NB: Fails in std.mathspecial.gammaIncomplete fixed in master
+//     const c = gammaIncomplete(real.infinity, GDN!1(real.infinity));
+//     assert(!isNaN(c) && !isNaN(c.d), format("P(∞,∞) = %s", c));
+
+    const d_act = gammaIncomplete(.5L, GDN!1(.25L));
+    const d_exp = GDN!1(0.520_499_878L, 2/(E^^.25L*sqrt(PI)));
+    assert(isClose(d_act, d_exp, 1e-9L), format("P(.5,.25) = %.9f ≠ %.9f", d_act.val, d_exp.val));
+    assert(isClose(d_act.d, d_exp.d), format("(∂P/∂g)(.5,.25) = %s ≠ %s", d_act.d, d_exp.d));
+
+    const e_act = gammaIncomplete(.5L, GDN!1(1));
+    const e_exp = GDN!1(0.842_700_793L, 1/(E*sqrt(PI)));
+    assert(isClose(e_act, e_exp), format("P(.5,1) = %s ≠ %s", e_act.val, e_exp.val));
+    assert(isClose(e_act.d, e_exp.d), format("(∂P/∂g)(.5,1) = %s ≠ %s", e_act.d, e_exp.d));
+
+    const f_act = gammaIncomplete(.5L, GDN!1(9));
+    const f_exp = GDN!1(0.999_977_910L, 1/(3*E^^9*sqrt(PI)));
+    assert(isClose(f_act, f_exp, 1e-9L), format("P(.5,9) = %.9f ≠ %.9f", f_act.val, f_exp.val));
+    assert(isClose(f_act.d, f_exp.d), format("(∂P/∂g)(.5,9) = %s ≠ %s", f_act.d, f_exp.d));
+
+    assert(gammaIncomplete(.1L, GDN!1(real.infinity)) is GDN!1(1, 0));
+
+    const g_act = gammaIncomplete(1, GDN!1(.1L));
+    const g_exp = GDN!1(1-(1/E^^.1L), 1/E^^.1L);
+    assert(isClose(g_act, g_exp), format("P(1,.1) = %s ≠ %s", g_act.val, g_exp.val));
+    assert(g_act.d == g_exp.d, format("(∂P/∂g)(1,.1) = %s ≠ %s", g_act.d, g_exp.d));
+
+    const h_act = gammaIncomplete(1, GDN!1(10));
+    const h_exp = GDN!1(1-(1/E^^10.0L), 1/E^^10.0L);
+    assert(h_act == h_exp, format("P(1,10) = %s ≠ %s", h_act.val, h_exp.val));
+    assert(isClose(h_act.d, h_exp.d), format("(∂P/∂g)(1,10) = %s ≠ %s", h_act.d, h_exp.d));
+
+    assert(gammaIncomplete(1, GDN!1(real.infinity)) is GDN!1(1, 0));
+
+    const j_act = gammaIncomplete(2, GDN!1(.1L));
+    // f = 1 - 𝛤(2, .1)/𝛤(2) = 1 - 1!(exp(-.1)(.1⁰/0! + .1¹/1!) = 1 - 1.1/exp(.1)
+    // f' = .1exp(-.1)/𝛤(2) = 1/(10*exp(.1))
+    const j_exp = GDN!1(1-1.1L/E^^.1L, 1/(10.0L*E^^.1L));
+    assert(isClose(j_act, j_exp), format("P(2,.1) = %s ≠ %s", j_act.val, j_exp.val));
+    assert(j_act.d == j_exp.d, format("(∂P/∂g)(2,.1) = %s ≠ %s", j_act.d, j_exp.d));
+
+    const k_act = gammaIncomplete(3,GDN!1(1));
+    const k_exp = GDN!1(1-5/(2*E), 1/(2*E));
+    assert(isClose(k_act, k_exp), format("P(3,1) = %s ≠ %s", k_act.val, k_exp.val));
+    assert(k_act.d == k_exp.d, format("(∂P/∂g)(3,1) = %s ≠ %s", k_act.d, k_exp.d));
+
+    assert(gammaIncomplete(4, GDN!1(10.0L)) is GDN!1(1-683.0L/(3*E^^10.0L), 500.0L/(3*E^^10.0L)));
+    // f = 1 - 𝛤(4, 10)/𝛤(4) = 1 - e⁻¹⁰(1/1 + 10/1 + 100/2 + 1000/6) = 1 - e⁻¹⁰(61 + 500/3)
+    //   = 1 - 683/(3e¹⁰)
+    // f' = 10³e⁻¹⁰/𝛤(4)) = 500/(3e¹⁰)
+
+    const l = gammaIncomplete(10.0L, GDN!1(real.infinity));
+    assert(l is GDN!1(1, 0), format("P(10,∞) = %s", l));
+
+    assert(gammaIncomplete(.1L, GDN!1(-0.)) is GDN!1(0, real.infinity));
+    assert(gammaIncomplete(1, GDN!1(-0.)) is GDN!1(0, 1));
+
+    const m = gammaIncomplete(10.0L, GDN!1(-0.));
+    assert(m is GDN!1(0, 0), format("P(10,0) = %s", m));
+
+    const n = gammaIncomplete(+0., GDN!1(0));
+    assert(n is GDN!1(0, real.infinity), format("P(0⁺,0) = %s", n));
+
+// NB: Fails in std.mathspecial.gammaIncomplete fixed in master
+//     const o = gammaIncomplete(+0., GDN!1(1));
+//     assert(o is GDN!1(1, 0), format("P(0⁺,1) = %s", o));
+//
+//     const p = gammaIncomplete(real.infinity, GDN!1(1));
+//     assert(p is GDN!1(0, 0), format("P(∞,1) = %s", p));
+//
+//     const q = gammaIncomplete(real.infinity, GDN!1(real.infinity));
+//     assert(q is GDN!1(1, real.infinity), format("P(∞,∞) = %s", q));
+
+    const r_g = GDN!1(2, 2);
+    const r_act = gammaIncomplete(1, r_g);
+    const r_exp = GDN!1(1-1/E^^2, 2/E^^2);
+    assert(r_act is r_exp, format("P(1, %s) = %s ≠ %s", r_g, r_act, r_exp));
+
+    const s = gammaIncomplete(0.5, GDN!2(-0.));
+    // <f',f"> = <1,0><0,1>^-.5⋅exp(-<0,1>)/𝛤(.5) = <1,0><∞,-.5>exp(<0,-1>)/√𝜋 = <∞,NaN><1,-1>/√𝜋
+    //    = <∞,NaN>/√𝜋 = <∞,NaN>
+    assert(s == 0 && s.d.val is real.infinity && isNaN(s.d!2));
+
+    assert(gammaIncomplete(1, GDN!2(-0.)) is GDN!2(0, 1, -1));
+    // <f',f"> = <1,0><0,1>^0⋅exp(-<0,1>)/𝛤(1) = <1,0><1,0>exp(<0,-1>)/1 = <1,0><1,-1> = <1,-1>
+
+    assert(gammaIncomplete(2, GDN!2(-0.)) is GDN!2(0, 0, 1));
+    // <f',f"> = <1,0><0,1>^1⋅exp(-<0,1>)/𝛤(2) = <1,0><0,1>exp(<0,-1>)/1 = <0,1><1,-1> = <0,1>
+
+    const t = gammaIncomplete(1, GDN!2(1));
+    // <f',f"> = <1,0><1,1>^0⋅exp(-<1,1>)/𝛤(1) = exp(<-1,-1>)/1 = <1/e,-1/e>
+    assert(t is GDN!2(1-1/E, 1/E, -1/E), format("P(1,1) = %s", t));
+
+    const u = gammaIncomplete(+0., GDN!2(-0.));
+    // <f',f"> = <1,0>𝛿(<0,1>) = <𝛿(0),-𝛿(0)> = <∞,-∞>
+    assert(u == 0 && u.d.val is real.infinity && isNaN(u.d!2), format("P(0,0) = %s", u));
+
+// NB: Fails in std.mathspecial.gammaIncomplete fixed in master
+//     const v = gammaIncomplete(+0., GDN!2(1));
+//     assert(v == 1 && v.d == 0 && v.d!2 == 0, format("P(0,1) = %s", v));
+//
+//     const w = gammaIncomplete(real.infinity, GDN!2(1));
+//     assert(w is GDN!2(0, 0, 0), format("P(∞,1) = %s", w));
+//
+//     const x = gammaIncomplete(real.infinity, GDN!2(real.infinity));
+//     // <f',f"> = ∂P/∂g(∞,<∞,1>)<1,0> = 𝛿(<∞,1>-<∞,0>)<1,0> = 𝛿(<0,1>)<1,0> = <𝛿(0),-𝛿(0)0/0>
+//     //         = <∞,NaN>
+//     assert(x == 1 && x.d.val is real.infinity && isNaN(x.d!2), format("P(∞,∞) = %s", x));
+
+    assert(gammaIncomplete(1, GDN!2(1, 1, 1)) is GDN!2(1-1/E, 1/E, 0));
+    // <f',f"> = <1,1><1,1>^0⋅exp(-<1,1>)/𝛤(1) = <1,1>exp(<-1,-1>) = <1,1><1/e,-1/e>
+    //    = <1/e,1/e + -1/e> = <1/e,0>
+
+    assert(gammaIncomplete(1, GDN!2(1, 2, 0)) is GDN!2(1-1/E, 2/E, -4/E));
+    // <f',f"> = <2,0><1,2>^0⋅exp(-<1,2>)/𝛤(1) = <2,0>exp(<-1,-2>) = <2,0><1/E,-2/E> = <2/E,-4/E>
+
+    assert(gammaIncomplete(1, GDN!2(1, 0, 1)) is GDN!2(1-1/E, 0, 1/E));
+    // <f',f"> = <0,1><1,0>^0⋅exp(-<1,0>)/𝛤(1) = <0,1>exp(<-1,0>) = <0,1><1/E,0> = <0,1/E>
+}
+
+
 /* This function computes the derivative of the regularized incomplete beta
  * function I(x; a,b) with respect to x, where a and b are constants.
  *
@@ -1147,7 +1382,6 @@ unittest
 
 
 // TODO: implement the following functions.
-// gammaIncomplete
 // gammaIncompleteCompl
 // gammaIncompleteComplInverse
 // erf
