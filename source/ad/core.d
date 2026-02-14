@@ -335,10 +335,11 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     /* This function evaluates the Dirac delta function, 𝛿, of the generalized
      * dual number. 𝛿(g) = { ∞, g=0; 0, g≠0 } with ∫𝛿(g)dg = 1.
      *
-     * g𝛿'(g) = -𝛿(g), or 𝛿'(g) = -𝛿(g)/g. See
-     * https://en.wikipedia.org/wiki/Dirac_delta_function#Derivatives.
+     * x𝛿'(x) = -𝛿(x). See
+     * https://en.wikipedia.org/wiki/Dirac_delta_function#Derivatives. This
+     * means 𝛿'(x) = { ∞, x=0⁻; -∞, x=0⁺; 0, x≠0 }.
      *
-     * If f(x) = 𝛿(g(x)), then f' = (d𝛿/dg)g' = -𝛿(g)g'/g
+     * If f(x) = 𝛿(g(x)), then f' = (d𝛿/dg)g'.
      */
     package pure nothrow @nogc @safe GDN dirac() const
     do {
