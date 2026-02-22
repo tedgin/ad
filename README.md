@@ -18,8 +18,8 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * *erfc (not implemented yet)*
   * gamma
   * gammaIncomplete
-  * *gammaIncompleteCompl (not implemented yet)*
-  * *gammaIncompleteComplInverse (not implemented yet)*
+  * gammaIncompleteCompl
+  * gammaIncompleteComplInverse
   * logGamma
   * logmdigamma
   * logmdigammaInverse
