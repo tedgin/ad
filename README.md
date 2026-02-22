@@ -14,7 +14,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * betaIncompleteCompl -->
   * betaIncompleteInverse
   * digamma
-  * *erf (not implemented yet)*
+  * erf
   * *erfc (not implemented yet)*
   * gamma
   * gammaIncomplete

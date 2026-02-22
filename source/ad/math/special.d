@@ -5,7 +5,7 @@ module ad.math.special;
 public import std.mathspecial;
 
 import std.algorithm: any;
-import std.math: getNaNPayload, isInfinity, isNaN, signbit, trunc;
+import std.math: exp, getNaNPayload, isInfinity, isNaN, M_2_SQRTPI, signbit, trunc;
 import std.range: only;
 import std.traits: select;
 
@@ -1553,8 +1553,59 @@ unittest
 }
 
 
+/** the error function
+ *
+ * Let $(MATH f(x) = erf(g(x))).
+ * $(MATH f' = g'$(SUP d)/$(SUB dg)erf(g))
+ * $(MATH = g'$(SUP d)/$(SUB dg)(2/√𝜋)∫$(SUB 0)$(SUP g)e$(SUP -t$(SUP 2))dt)
+ * $(MATH = 2g'e$(SUP -g$(SUP 2))/√𝜋).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the GDN argument
+ *
+ * Returns:
+ *   $(MATH erf(g)) expressed as a GDN
+ */
+pure nothrow @nogc @safe GDN!Deg erf(ulong Deg)(in GDN!Deg g)
+out(f; isNaN(f) || (f >= -1.0L && f <= 1.0L))
+do {
+    if (isNaN(g)) return g;
+    return GDN!Deg(std.mathspecial.erf(g.val), M_2_SQRTPI*g.d*exp(-g.reduce()^^2));
+}
+///
+unittest {
+    import std.math: M_2_SQRTPI;
+
+    assert(erf(GDN!1(0)) is GDN!1(0, M_2_SQRTPI));
+}
+unittest {
+    import std.format: format;
+
+    assert(erf(GDN!1(NaN(0x1UL))) is GDN!1(NaN(0x1UL)));
+    assert(erf(GDN!1(-real.infinity)) is GDN!1(-1.0L, 0.0L));
+    assert(erf(GDN!1(real.infinity)) is GDN!1(1.0L, 0.0L));
+
+    const a_act = erf(GDN!1(1.0L, 2.0L));
+    // f = erf(1) ≈ 0.842,700,793 (Wikipedia)
+    // f' = (2/√𝜋)exp(-(1)^2)2 = (4/√𝜋)exp(-1) = 4/(e√𝜋)
+    const a_exp = GDN!1(0.842_700_793L, 4.0L/(E*sqrt(PI)));
+    assert(isClose(a_act, a_exp));
+    assert(isClose(a_act.d, a_exp.d), format("(d/dg)erf(<1,2>) = %s ≠ %s", a_act.d, a_exp.d));
+
+    const b_act = erf(GDN!2(2.0L));
+    // f = erf(2) ≈ 0.995,322,265 (Wikipedia)
+    // <f',f"> = <1,0>(2/√𝜋)exp(-<2,1>^2) = (2/√𝜋)<1,0>exp(-<4,4>) = (2/√𝜋)<1,0>exp(<-4,-4>)
+    //    = 2/(√𝜋)<1,0><1/e^4,-4/e^4> = 2/(e^4√𝜋)<1,0><1,-4> = 2/(e^4√𝜋)<1,-4>
+    //    = <2/(e^4√𝜋),-8/(e^4√𝜋)>
+    const b_exp = GDN!2(0.995_322_265L, M_2_SQRTPI/E^^4, -8.0L/(E^^4*sqrt(PI)));
+    assert(isClose(b_act, b_exp));
+    assert(isClose(b_exp.d, b_act.d), format("(d/dg)erf(2) = %s ≠ %s", b_act.d.val, b_exp.d.val));
+    assert(isClose(b_exp.d!2, b_act.d!2), format("(d²/dg²)erf(2) = %s ≠ %s", b_act.d!2, b_exp.d!2));
+}
+
+
 // TODO: implement the following functions.
-// erf
 // erfc
 // normalDistribution
 // normalDistributionInverse
