@@ -934,7 +934,7 @@ unittest {
  *
  * $(MATH Q(a,g) = 𝛤(a,g)/𝛤(a)), where $(MATH 𝛤(a,g) = ∫$(SUB g)$(SUP ∞)t$(SUP a-1)e$(SUP -t)dt) is
  * the upper incomplete gamma function. Notice that $(MATH Q(a,g) = 1 - P(a,g)).
-
+ *
  * Let $(MATH f(x) = Q(a,g(x))).
  * Then $(MATH f' = $(SUP ∂Q)/$(SUB ∂g)g' = -g'g$(SUP a-1)e$(SUP -g)/𝛤(a)).
  *
@@ -1003,6 +1003,109 @@ unittest {
     assert(d == 3.0L/E^^2);
     assert(d.d == .0L);
     assert(d.d!2 == 2.0L/E^^2);
+}
+
+
+/** The inverse regularized upper incomplete gamma function $(MATH Q$(SUP -1)(a,q)), fixed $(MATH a)
+ *
+ * If $(MATH q(x) = Q(a,g(x))), then $(MATH g = q$(SUP -1)(q)). $(MATH q' = $(SUP ∂Q)/$(SUB ∂g)g').
+ * Thus $(MATH g' = q'/$(SUP ∂Q)/$(SUB ∂g)).
+ *
+ * Params:
+ *   a = the shape parameter, must be positive
+ *   q = $(MATH Q(a,x)), must be in the interval $(MATH [0,1])
+ *
+ * Returns:
+ *   the inverse of the regularized upper incomplete gamma function evaluated at q expressed as _a
+ *   `GDN`
+ */
+pure nothrow @nogc @safe GDN!Deg gammaIncompleteComplInverse(ulong Deg)(in real a, in GDN!Deg q)
+in {
+    if (!any!(std.math.isNaN)(only(a, q.val))) {
+        assert(signbit(a) == 0, "the shape parameter must be positive");
+        assert(q >= 0.0L && q <= 1.0L, "the argument must in [0,1]");
+    }
+}
+out(x; isNaN!Deg(x) || x >= 0.0L, "result should be in [0,1]")
+do {
+    if (any!(std.math.isNaN)(only(a, q.val))) return GDN!Deg.nanCombine(q, asGDN!Deg(a));
+
+    static if (Deg == 1)
+        alias Q_inv = std.mathspecial.gammaIncompleteComplInverse;
+    else
+        alias Q_inv = gammaIncompleteComplInverse;
+
+    const g_red = Q_inv(a, q.reduce());
+    return GDN!Deg(asReal(g_red), -q.d/gammaIncompleteDeriv(a, asGDN!Deg(g_red)));
+}
+///
+unittest {
+    import std.math: isClose;
+
+    const x = GDN!1(2);
+    const res = gammaIncompleteComplInverse(1, gammaIncompleteCompl(1, x));
+    assert(isClose(res, x) && isClose(res.d, x.d));
+}
+unittest {
+    import std.format: format;
+    import std.math: SQRT2;
+
+    const a = gammaIncompleteComplInverse(NaN(0x1UL), GDN!1(0, NaN(0x3UL)));
+    assert(isNaN(a) && getNaNPayload(a) == 0x1UL && getNaNPayload(a.d) == 0x3UL);
+
+// NB: broken in std.mathspecial.gammaIncompleteComplInverse. fixed in master
+//     const b = gammaIncompleteComplInverse(2.0L, GDN!1(1.0L));
+//     // Q(2,0) = 𝛤(2,0)/𝛤(2) = 1
+//     // g = Q⁻¹(2,1) = Q⁻¹(2, Q(2,0)) = 0
+//     // g' = -1/Qₓ(2,0) = 1/0 = -∞
+//     assert(b == 0.0L, format("Q⁻¹(2,1) = %s", b.val));
+//     assert(b.d is -real.infinity);
+
+    assert(gammaIncompleteComplInverse(1.0L, GDN!1(1.0L/E, 2.0L)) is GDN!1(1.0L, -2.0L*E));
+    // Q(1,1) = exp(-1)/𝛤(1) = 1/e
+    // g = Q⁻¹(1,1/e) = Q⁻¹(1, Q(1,1)) = 1
+    // g' = -2/Qₓ(1,1) = -2𝛤(1)/(1^(1-1)exp(-1)) = -2/exp(-1) = -2e
+
+    const c_act = gammaIncompleteComplInverse(.5L, GDN!2(erfc(SQRT2), 1.0L, 1.0L));
+    // Q(.5,2) = √π⋅erfc(√2)/𝛤(.5) = √π⋅erfc(√2)/√π = erfc(√2)
+    // g = Q⁻¹(.5, erfc(√2)) = Q⁻¹(.5, Q(.5,2)) = 2
+    // g' = -1/Qₓ(.5,2) = -1⋅𝛤(.5)/(2^(.5-1)exp(-2)) = -√π/(2^-.5⋅e^-2) = -√(2π)e^2
+    // <g',g"> = -<1,1>/Qₓ(.5, <2,g'>) = -<1,1>/(<2,g'>^(.5-1)exp(-<2,g'>)/𝛤(.5))
+    //    = -𝛤(.5)<1,1><2,g'>^.5⋅exp(<2,g'>) = -√π<1,1><√2, g'/(2√2)><e^2, g'e^2>
+    //    = -√πe^2<√2, √2 + g'/(2√2)><1,g'> = -√(2π)e^2<1, 1+g'/4><1,g'> = g'<1, 1+g'/4 + g'>
+    //    = <g', g' + 5(g')^2/4> = <g', -√(2π)e^2 + (5/4)(-√(2π)e^2)^2>
+    //    =  <g', -√(2π)e^2 + (5π/2)e^4>
+    const c_exp = GDN!2(2.0L, -sqrt(2.0L*PI)*E^^2, 2.5L*PI*E^^4 - sqrt(2.0L*PI)*E^^2);
+    assert(
+        isClose(c_act, c_exp) && isClose(c_act.d, c_exp.d) && c_act.d!2 == c_exp.d!2,
+        format("Q⁻¹(.5, <erfc(√2),1,1>) = %s ≠ %s", c_act, c_exp));
+
+    const d = gammaIncompleteComplInverse(2.0L, GDN!2(2.0L/E, -2.0L, 1.0L));
+    // Q(2,1) = ⌊e⋅(2-1)!⌋/e/𝛤(2) = ⌊e⋅1!⌋/e = ⌊e⌋/e = 2/e
+    // g = Q⁻¹(2, 2/e) = Q⁻¹(2, Q(2,1)) = 1
+    // g' = -(-2)/Qₓ(2,1) = 2/(1^(2-1)exp(-1)/𝛤(2)) = 2e/1^1 = 2e
+    // <g',g"> = -<-2,1>/Qₓ(2,<1,g'>) = <2,-1>/(<1,g'>exp(-<1,g'>)) = <2,-1>exp(<1,g'>)/<1,g'>
+    //    = <2,-1><e, g'e>/<1,g'> = <2e,-e+2eg'>/<1,g'> = e<2,2g'-1>/<1,g'>
+    //    = e<2,(2g' - 1 - 2g')/1^2> = <2e, e(-1)>
+    //    = <g',-e>
+    assert(
+        isClose(d, 1.0L) && d.d == 2.0L*E && isClose(d.d!2, -E),
+        format("Q⁻¹(2, <2/e,-2,1>) = %s", d));
+
+    const e_act = gammaIncompleteComplInverse(2.0L, GDN!2(3.0L/E^^2, 1.0L, -1.0L));
+    // Q(2,2) = 1!exp(-2)[1/1 + 2/1]/1 = 3/e^2
+    // g = Q⁻¹(2, 3/e^2) =  Q⁻¹(2, Q(2,2)) = 2
+    // g' = -1/Qₓ(2,2) = -1/(2^(2-1)exp(-2)/𝛤(2)( = -1(e^2⋅1)/2^1 = -e^2/2
+    // <g',g"> = -<1,-1>/Qₓ(2,<2,g'>) = <-1,1>exp(<2,g'>)𝛤(2)/<2,g'>^(2-1)
+    //    = <-1,1><e^2,g'e^2>/<2,g'> = e^2<-1,1><1,g'>/<2,g'> = e^2<-1,1-g'>/<2,g'>
+    //    = e^2<-1/2, ((1-g')2 - -g')/2^2> = e^2<-1/2, (2 - g')/4> = e^2<-1/2, 1/2 - g'/4>
+    //    = <-e^2/2, e^2(1/2 - g'/4)> = <g', e^2/2 - g'e^2/4>
+    //    = <g', e^2/2 + e^4/8>
+    const e_exp = GDN!2(2.0L, -E^^2/2.0L, E^^2/2.0L + E^^4/8.0L);
+    assert(e_act == e_exp && isClose(e_act.d, e_exp.d));
+    assert(
+        isClose(e_act.d!2, e_exp.d!2),
+        format("(∂²/∂q²)Q⁻¹(2, <3/e²,1,-1>) = %s ≠ %s", e_act.d!2, e_exp.d!2));
 }
 
 
@@ -1451,7 +1554,6 @@ unittest
 
 
 // TODO: implement the following functions.
-// gammaIncompleteComplInverse
 // erf
 // erfc
 // normalDistribution
