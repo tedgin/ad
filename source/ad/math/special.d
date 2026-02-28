@@ -1066,7 +1066,7 @@ unittest {
     // g = Q⁻¹(1,1/e) = Q⁻¹(1, Q(1,1)) = 1
     // g' = -2/Qₓ(1,1) = -2𝛤(1)/(1^(1-1)exp(-1)) = -2/exp(-1) = -2e
 
-    const c_act = gammaIncompleteComplInverse(.5L, GDN!2(erfc(SQRT2), 1.0L, 1.0L));
+    const c_act = gammaIncompleteComplInverse(.5L, GDN!2(std.mathspecial.erfc(SQRT2), 1.0L, 1.0L));
     // Q(.5,2) = √π⋅erfc(√2)/𝛤(.5) = √π⋅erfc(√2)/√π = erfc(√2)
     // g = Q⁻¹(.5, erfc(√2)) = Q⁻¹(.5, Q(.5,2)) = 2
     // g' = -1/Qₓ(.5,2) = -1⋅𝛤(.5)/(2^(.5-1)exp(-2)) = -√π/(2^-.5⋅e^-2) = -√(2π)e^2
@@ -1605,7 +1605,63 @@ unittest {
 }
 
 
+/** The complementary error function
+ *
+ * Let $(MATH f(x) = erfc(g(x))). $(MATH f' = g'$(SUP d)/$(SUB dg)erfc(g)). Since
+ * $(MATH erfc(g) = 1 - erf(g)),
+ * $(MATH f' = -g'$(SUP d)/$(SUB dg)erf(g) = -2g'e$(SUP -g$(SUP 2))/√𝜋).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the `GDN` argument
+ *
+ * Returns:
+ *   $(MATH erfc(g)) expressed as a `GDN`.
+ */
+pure nothrow @nogc @safe GDN!Deg erfc(ulong Deg)(in GDN!Deg g)
+out(f; isNaN(f) || (f >= 0.0L && f <= 2.0L))
+do {
+    if (isNaN(g)) return g;
+    return GDN!Deg(std.mathspecial.erfc(g.val), -M_2_SQRTPI*g.d*exp(-g.reduce()^^2));
+}
+///
+unittest {
+    const g = GDN!1(1);
+    const f1 = erfc(g);
+    const f2 = 1.0L - erf(g);
+    assert(isClose(f1, f2) && f1.d == f2.d);
+}
+unittest {
+    import std.format : format;
+
+    const a = GDN!1(NaN(0x1UL));
+    assert(erfc(a) is a);
+
+    assert(erfc(GDN!1(-real.infinity)) is GDN!1(2.0L, -0.0L));
+    assert(erfc(GDN!1(+real.infinity)) is GDN!1(+0.0L, -0.0L));
+    assert(erfc(GDN!1(0.0L)) is GDN!1(1.0L, -M_2_SQRTPI));
+
+    const b_act = erfc(GDN!1(1.0L, -1.0L));
+    const b_exp = GDN!1(0.157_299_207L, M_2_SQRTPI/E);  // erfc(1) = 0.157,299,207 from Wikipedia
+    assert(isClose(b_act, b_exp, 0, 1E-9L));
+    assert(b_act.d == b_exp.d, format("(d/dg)erfc(<1,-1>) = %s ≠ %s", b_act.d, b_exp.d));
+
+    const c_act = erfc(GDN!2(2.0L));
+    // f = 0.004,677,735 according to Wikipedia
+    // <f',f"> = -2<1,0>exp(-<2,1>^2)/√𝜋 = (-2/√𝜋)<1,0>exp(-<4,4>) = (-2/√𝜋)<1,0>exp(<-4,-4>)
+    //    = (-2/√𝜋)<1,0><1/e^4,-4/e^4> = (-2/√𝜋)<1/e^4,-4/e^4>
+    //    = <-2/(e^4√𝜋), 8/(e^4√𝜋)>
+    const c_exp = GDN!2(0.004_677_735L, -M_2_SQRTPI/E^^4, 4.0L*M_2_SQRTPI/E^^4);
+    assert(isClose(c_act, c_exp, 0, 1E-9L));
+    assert(
+        isClose(c_act.d,c_exp.d),
+        format("(d/dg)erfc(<2,1,0>) = %s ≠ %s", c_act.d.val, c_exp.d.val));
+    assert(
+        isClose(c_act.d!2, c_exp.d!2),
+        format("(d²/dg²)erfc(<2,1,0>) = %s ≠ %s", c_act.d!2, c_exp.d!2));
+}
+
+
 // TODO: implement the following functions.
-// erfc
 // normalDistribution
 // normalDistributionInverse
