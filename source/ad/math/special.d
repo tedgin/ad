@@ -1662,6 +1662,66 @@ unittest {
 }
 
 
+/** the standard normal distribution function $(MATH 𝛷) of a `GDN`
+ *
+ * Let $(MATH f(x) = 𝛷(g(x))), then ($MATH f' = 𝛷'(g)g'). Since $(MATH 𝛷(g) = (1 + erf(g/√2))/2),
+ * $(MATH f' = g'$(SUP d)/$(SUB dg)erf(g/√2)/2 = (g'/2)(2/√𝜋)e$(SUP -g$(SUP 2)/2)/√2)
+ * $(MATH = g'e$(SUP -g$(SUP 2)/2)/√(2𝜋)).
+ *
+ * Params:
+ *   Deg = the degree of g
+ *   g = the `GDN` argument
+ *
+ * Returns:
+ *   $(MATH 𝛷(g)) as a `GDN`
+ */
+pure nothrow @nogc @safe GDN!Deg normalDistribution(ulong Deg)(in GDN!Deg g)
+out(f; isNaN(f) || (f >= 0.0L && f <= 1.0L))
+do {
+    if (isNaN(g)) return g;
+
+    return GDN!Deg(
+        std.mathspecial.normalDistribution(g.val), g.d*exp(-g.reduce()^^2/2.0L)/sqrt(2.0L*PI));
+}
+///
+unittest {
+    import std.math: PI;
+
+    assert(normalDistribution(GDN!1(0)) is GDN!1(0.5, 1/sqrt(2*PI)));
+}
+unittest {
+    import std.format : format;
+
+    const a = GDN!1(NaN(0x1UL));
+    assert(normalDistribution(a) is a);
+
+// NB: std.mathspecial.normalDistribution(-real.infinity) should be 0, fixed in stable
+//     const b = normalDistribution(GDN!1(-real.infinity));
+//     assert(b is GDN!1(0.0L, 0.0L), format("𝛷(-∞) = %s", b));
+
+// NB: std.mathspecial.normalDistribution(real.infinity) should be 1, fixed in stable
+//     const c = normalDistribution(GDN!1(real.infinity));
+//     assert(c is GDN!1(1.0L, 0.0L), format("𝛷(∞) = %s", c));
+
+    const d = normalDistribution(GDN!1(1.0L, 2.0L));
+    // f ≈ 0.841,344,746,068,542,9 (according to Octave's normcdf)
+    // f' = 2exp(-1^2/2)/√(2𝜋) = √(2/𝜋)/√e = √(2/(𝜋e))
+    assert(isClose(d, 0.841_344_746_068_542_9L) && d.d == sqrt(2.0L/(PI*E)));
+
+    const e_act = normalDistribution(GDN!2(-1.0L));
+    // f ≈ 0.158,655,253,931,457,1 (according to Octave's normcdf)
+    // <f',f"> = <1,0>exp(-<-1,1>^2/2)/√(2𝜋) = <1,0>exp(-<1,-2>/2)/√(2𝜋) = <1,0>exp(<-1/2,1>)/√(2𝜋)
+    //    = <1,0><1/√e,1/√e>/√(2𝜋) = <1/√e,1/√e>/√(2𝜋)
+    //    = <1/√(2𝜋e),1/√(2𝜋e)>
+    const e_exp = GDN!2(0.158_655_253_931_457_1L, 1.0L/sqrt(2*PI*E), 1.0L/sqrt(2*PI*E));
+    assert(isClose(e_act, e_exp));
+    assert(
+        isClose(e_act.d, e_exp.d), format("𝛷'(<-1,1,0>) = %s ≠ %s", e_act.d.val, e_exp.d.val));
+    assert(
+        isClose(e_act.d!2, e_exp.d!2),
+        format("𝛷%s(<-1,1,0>) = %s ≠ %s", '"', e_act.d!2, e_exp.d!2));
+}
+
+
 // TODO: implement the following functions.
-// normalDistribution
 // normalDistributionInverse

@@ -23,7 +23,7 @@ This is an automatic differentiation library written in D supporting one-dimensi
   * logGamma
   * logmdigamma
   * logmdigammaInverse
-  * *normalDistribution (not implemented yet)*
+  * normalDistribution
   * *normalDistributionInverse (not implemented yet)*
   * sgnGamma
 * supports arbitrary order differentiation, must be fixed at compile time
