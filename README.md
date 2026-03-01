@@ -8,24 +8,6 @@ This is an automatic differentiation library written in D supporting one-dimensi
 * supports the same set of functions as `core.math`
 * supports the same set of functions as `std.math`
 * supports the same set of functions as `std.mathspecial`
-  * beta
-  * betaIncomplete
-  <!-- NB: In phobos master, but not released
-  * betaIncompleteCompl -->
-  * betaIncompleteInverse
-  * digamma
-  * erf
-  * erfc
-  * gamma
-  * gammaIncomplete
-  * gammaIncompleteCompl
-  * gammaIncompleteComplInverse
-  * logGamma
-  * logmdigamma
-  * logmdigammaInverse
-  * normalDistribution
-  * *normalDistributionInverse (not implemented yet)*
-  * sgnGamma
 * supports arbitrary order differentiation, must be fixed at compile time
 
 ## Examples

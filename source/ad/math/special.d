@@ -1662,7 +1662,7 @@ unittest {
 }
 
 
-/** the standard normal distribution function $(MATH 𝛷) of a `GDN`
+/** the standard normal CDF $(MATH 𝛷) of a `GDN`
  *
  * Let $(MATH f(x) = 𝛷(g(x))), then ($MATH f' = 𝛷'(g)g'). Since $(MATH 𝛷(g) = (1 + erf(g/√2))/2),
  * $(MATH f' = g'$(SUP d)/$(SUB dg)erf(g/√2)/2 = (g'/2)(2/√𝜋)e$(SUP -g$(SUP 2)/2)/√2)
@@ -1723,5 +1723,66 @@ unittest {
 }
 
 
-// TODO: implement the following functions.
-// normalDistributionInverse
+/** The inverse of the standard normal CDF, $(MATH 𝛷$(SUP -1)).
+ *
+ * Let $(MATH f(x) = 𝛷(g(x))), then $(MATH f' = 𝛷'(g)g') and $(MATH g' = f'/ 𝛷'(g)). Since
+ * $(MATH 𝛷(g) = (1 + erf(g/√2))/2), $(MATH 𝛷' = e$(SUP -g$(SUP 2)/2)/√(2𝜋)). Thus
+ * $(MATH g' = √(2𝜋)f'e$(SUP g$(SUP 2)/2)).
+ *
+ * Params:
+ *   Deg = the degree of f
+ *   f = the probability that $(MATH X ≤ g), where $(MATH X ~ 𝓝(0,1)) and $(MATH g = 𝛷$(SUP -1)(f))
+ *
+ * Returns:
+ *   The value $(MATH g) such that $(MATH f = 𝛷(g)).
+ */
+pure nothrow @nogc @safe GDN!Deg normalDistributionInverse(ulong Deg)(in GDN!Deg f)
+in(isNaN(f) || (f >= 0.0L && f <= 1.0L), "the argument must be in the interval [0,1]")
+do {
+    if (isNaN(f)) return f;
+
+    static if (Deg == 1)
+        alias phi_inv = std.mathspecial.normalDistributionInverse;
+    else
+        alias phi_inv = normalDistributionInverse;
+
+    const g_red = phi_inv(f.reduce());
+    return GDN!Deg(asReal(g_red), sqrt(2.0L*PI)*f.d*exp(g_red^^2/2.0L));
+}
+/***/ unittest {
+    import std.math : sqrt, PI;
+
+    assert(normalDistributionInverse(GDN!1(0.5)) is GDN!1(0.0L, sqrt(2.0L*PI)));
+}
+unittest {
+    import std.format : format;
+
+    const a = GDN!1(NaN(0x1UL));
+    assert(normalDistributionInverse(a) is a);
+
+    assert(normalDistributionInverse(GDN!1(-0.0L)) is normalDistributionInverse(GDN!1(+0.0L)));
+
+    const b = normalDistributionInverse(GDN!1(0.0L));
+    assert(b is GDN!1(-real.infinity, real.infinity), format("𝛷⁻¹(0) = %s", b));
+
+    assert(normalDistributionInverse(GDN!1(1.0L)) is GDN!1(real.infinity, real.infinity));
+
+    const c_act = normalDistributionInverse(GDN!1(0.1L, -2.0L));
+    // g ≈ -1.281,551,565,544,601 (according to Octave's norminv)
+    // g' = -2√(2𝜋)exp(g^2/2)
+    const c_exp_val = -1.281_551_565_544_601L;
+    const c_exp = GDN!1(c_exp_val, -2.0L*sqrt(2.0L*PI)*exp(c_exp_val^^2/2.0L));
+    assert(isClose(c_act, c_exp) && isClose(c_act.d, c_exp.d));
+
+    const d_act = normalDistributionInverse(GDN!2(0.2L));
+    // g ≈ -0.841,621,233,572,914,3 (according to Octave's norminv)
+    // g' = √(2𝜋)1exp(g^2/2) = √(2𝜋)exp(g^2/2)
+    // <g',g"> = √(2𝜋)<1,0>exp(<g,g'>^2/2) = √(2𝜋)<1,0>exp(<g^2,2gg'>/2)
+    //    = √(2𝜋)<1,0>exp(<g^2/2,gg'>) = √(2𝜋)<1,0><exp(g^2/2),exp(g^2/2)gg'>
+    //    = √(2𝜋)<exp(g^2/2),exp(g^2/2)gg'> = √(2𝜋)exp(g^2/2)<1,gg'> = g'<1,gg'> = <g',g(g')^2>
+    // g" = g(g')^2 = g2𝜋exp(g^2) = 2𝜋g⋅exp(g^2)
+    const d_exp_val = -0.841_621_233_572_914_3L;
+    const d_exp = GDN!2(
+        d_exp_val, sqrt(2.0L*PI)*exp(d_exp_val^^2/2.0L), 2.0L*PI*d_exp_val*exp(d_exp_val^^2));
+    assert(isClose(d_act, d_exp) && isClose(d_act.d, d_exp.d) && isClose(d_act.d!2, d_exp.d!2));
+}
