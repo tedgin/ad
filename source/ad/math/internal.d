@@ -17,33 +17,28 @@ import ad.core;
 /*
  * General shared internals
  */
-package pure nothrow @nogc @safe
+package
 {
     // Exposes the GDN.dirac method as a function to help with overload resolution.
-    pragma(inline, true) GDN!Deg dirac(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg dirac(ulong Deg)(in GDN!Deg g)
+    do {
         return g.dirac();
     }
 
     // The Dirac delta function for a `real`.
-    real dirac(in real g)
-    {
-        if (isNaN(g)) {
-            return real.nan;
-        }
-
+    pure nothrow @nogc @safe real dirac(in real g)
+    do {
+        if (isNaN(g)) return real.nan;
         return g == 0 ? real.infinity : 0;
     }
-
-    unittest
-    {
+    unittest {
         assert(dirac(0) == real.infinity);
         assert(dirac(1) == 0);
         assert(isNaN(dirac(real.nan)));
     }
 
-    // Determines the minimum GDN degree for a sequence of types. Only GDN types are considered. If
-    // no GDN types are present, the result is 0.
+    // Determines the minimum GDN degree for a sequence of types. Only GDN types
+    // are considered. If no GDN types are present, the result is 0.
     enum minDeg(T...) = {
         bool foundGDN = false;
         ulong commonDeg = ulong.max;
@@ -55,9 +50,7 @@ package pure nothrow @nogc @safe
         }
         return foundGDN ? commonDeg : 0;
     }();
-
-    unittest
-    {
+    unittest {
         static assert(minDeg!(GDN!2) == 2);
         static assert(minDeg!char == 0);
         static assert(minDeg!(GDN!32, GDN!2, real) == 2);
@@ -68,7 +61,7 @@ package pure nothrow @nogc @safe
 /*
  * std.math.traits shared internals
  */
-package pure nothrow @nogc @safe
+package
 {
     // The implementation of areAll
     enum bool areAll(alias Test, TS...) = {
@@ -93,63 +86,57 @@ package pure nothrow @nogc @safe
     enum bool isGDNOrReal(T) = isGDN!T || isImplicitlyConvertible!(T, real);
 
     // Converts a GDN to a GDN of the specified degree.
-    pragma(inline, true) GDN!Deg asGDN(ulong Deg, T)(in T t) if (isGDN!T)
-    {
+    pure nothrow @nogc @safe GDN!Deg asGDN(ulong Deg, T)(in T t) if (isGDN!T)
+    do {
         return cast(GDN!Deg) t;
     }
-
-    unittest
-    {
+    unittest {
         assert(asGDN!1(GDN!2(3)) is GDN!1(3));
         assert(asGDN!2(GDN!2(3)) is GDN!2(3));
         assert(asGDN!3(GDN!2(3)) is GDN!3(3));
     }
 
     // Converts a real to a constant GDN of the specified degree.
-    pragma(inline, true) GDN!Deg asGDN(ulong Deg)(in real t)
-    {
+    pure nothrow @nogc @safe GDN!Deg asGDN(ulong Deg)(in real t)
+    do {
         return GDN!Deg.mkConst(t);
     }
-
-    unittest
-    {
+    unittest {
         assert(asGDN!2(3) is GDN!2(3, 0, 0));
     }
 
 
     // Converts a GDN or something implicitly convertible to a real to a real.
-    pragma(inline, true) real asReal(F)(in F f) if (isGDNOrReal!F)
-    {
+    pure nothrow @nogc @safe real asReal(F)(in F f) if (isGDNOrReal!F)
+    do {
         static if (isGDN!F)
             return f.val;
         else
             return f;
     }
-
-    unittest
-    {
+    unittest {
         assert(asReal(GDN!2(3)) is 3.0L);
         assert(asReal(1) is 1.0L);
     }
 
 
     // The implementation of isFinite
-    pragma(inline, true) bool isFinite(ulong Deg)(in GDN!Deg f)
-    {
+    pure nothrow @nogc @safe bool isFinite(ulong Deg)(in GDN!Deg f)
+    do {
         return std.math.traits.isFinite(f.val);
     }
 
 
     // The implementation of isInfinity
-    pragma(inline, true) bool isInfinity(ulong Deg)(in GDN!Deg f)
-    {
+    pure nothrow @nogc @safe bool isInfinity(ulong Deg)(in GDN!Deg f)
+    do {
         return std.math.traits.isInfinity(f.val);
     }
 
 
     // The implementation of isNaN
-    pragma(inline, true) bool isNaN(ulong Deg)(in GDN!Deg f)
-    {
+    pure nothrow @nogc @safe bool isNaN(ulong Deg)(in GDN!Deg f)
+    do {
         return std.math.traits.isNaN(f.val);
     }
 
@@ -164,19 +151,18 @@ package pure nothrow @nogc @safe
 
 
     // The implementation of CommonGDN
-    template CommonGDN(G...) if (isOne!(isGDN, G) && areAll!(isGDNOrReal, G)) {
+    template CommonGDN(G...) if (isOne!(isGDN, G) && areAll!(isGDNOrReal, G))
+    {
         alias CommonGDN = GDN!(minDeg!G);
     }
 
 
     // The implementation of sgn
-    pragma(inline, true) GDN!Deg sgn(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg sgn(ulong Deg)(in GDN!Deg g)
+    do {
         return GDN!Deg(std.math.traits.sgn(g.val), 2*dirac(g.reduce())*g.d);
     }
-
-    unittest
-    {
+    unittest {
         assert(sgn(GDN!1()) is GDN!1.nan);
         assert(sgn(GDN!1(0, real.nan)) is GDN!1(0, real.nan));
         assert(sgn(GDN!2(1.0L, 2.0L, real.nan)) is GDN!2(1.0L, 0.0L, real.nan));
@@ -186,8 +172,8 @@ package pure nothrow @nogc @safe
     }
 
     // The implementation of signbit
-    pragma(inline, true) int signbit(ulong Deg)(in GDN!Deg f)
-    {
+    pure nothrow @nogc @safe int signbit(ulong Deg)(in GDN!Deg f)
+    do {
         return std.math.traits.signbit(f.val);
     }
 }
@@ -196,18 +182,16 @@ package pure nothrow @nogc @safe
 /*
  * std.math.algebraic shared internals
  */
-package pure @safe
+package
 {
-    pragma(inline, true) nothrow @nogc GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe  GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
+    do {
         if (isNaN(g.val)) return g;
 
         const dfdg = signbit(g) == 1 ? GDN!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
         return GDN!Deg(core.math.sqrt(g.val), dfdg * g.d);
     }
-
-    unittest
-    {
+    unittest {
         import std.format: format;
         import ad.math.traits: isNaN;
 
@@ -224,11 +208,13 @@ package pure @safe
 /*
  * std.math.exponential shared internals
  */
-package pure nothrow @nogc @safe
+package
 {
     // The implementation of exp for GDN.
-    pragma(inline, true) GDN!Deg exp(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
+    do {
+        if (isNaN(g.val)) return g;
+
         static if (Deg == 1)
             alias exp_fn = std.math.exponential.exp;
         else
@@ -237,31 +223,28 @@ package pure nothrow @nogc @safe
         const f_red = exp_fn(g.reduce());
         return GDN!Deg(asReal(f_red), f_red * g.d);
     }
-
-    unittest
-    {
+    unittest {
         assert(exp(GDN!1.nan) is GDN!1.nan);
         assert(exp(GDN!1.zero) is GDN!1.one);
         assert(exp(-GDN!2.infinity) is GDN!2(0, -0., 0));
     }
 
     // The implementation of log2 for GDN.
-    pragma(inline, true) GDN!Deg log2(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg log2(ulong Deg)(in GDN!Deg g)
+    do {
         if (isNaN(g.val)) return g;
+
         const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN2*g.reduce());
         return GDN!Deg(std.math.exponential.log2(g.val), df * g.d);
     }
-
-    unittest
-    {
+    unittest {
         assert(log2(GDN!2(1)) is GDN!2(0, 1/LN2, -1/LN2));
         assert(log2(GDN!1(1, -1)) is GDN!1(0, -1/LN2));
     }
 
     // The implement of pow for GDN where the exponent is an integer
-    pragma(inline, true) GDN!Deg pow(I, ulong Deg)(in GDN!Deg g, in I n) if (isIntegral!I)
-    {
+    pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in GDN!Deg g, in I n) if (isIntegral!I)
+    do {
         alias pow_red = Select!(Deg == 1, std.math.exponential.pow, pow);
 
         if (isNaN(g)) return g;
@@ -269,9 +252,7 @@ package pure nothrow @nogc @safe
         const df = n == 0 ? GDN!Deg.DerivType!1(0.0L) : n * pow_red(g.reduce(), n-1);
         return GDN!Deg(std.math.exponential.pow(g.val, n), df * g.d);
     }
-
-    unittest
-    {
+    unittest {
         import std.format: format;
 
         assert(isNaN(pow(GDN!1.nan, 1)));
@@ -289,34 +270,31 @@ package pure nothrow @nogc @safe
 /*
  * std.math.operations shared internals
  */
-package pure nothrow @nogc @safe
+package
 {
     // The implementation of getNaNPayload for GDN.
-    pragma(inline, true) ulong getNaNPayload(ulong Deg)(in GDN!Deg f)
-    {
+    pure nothrow @nogc @safe ulong getNaNPayload(ulong Deg)(in GDN!Deg f)
+    do {
         return std.math.operations.getNaNPayload(f.val);
     }
 
+
     // The implementation of nextDown for GDN.
-    pragma(inline, true) GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
+    do {
         return GDN!Deg(std.math.operations.nextDown(g.val), g.d);
     }
-
-    unittest
-    {
+    unittest {
         assert(isNaN(nextDown(GDN!1.nan)));
     }
 
 
     // The implementation of nextUp for GDN.
-    pragma(inline, true) GDN!Deg nextUp(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg nextUp(ulong Deg)(in GDN!Deg g)
+    do {
         return GDN!Deg(std.math.operations.nextUp(g.val), g.d);
     }
-
-    unittest
-    {
+    unittest {
         assert(isNaN(nextUp(GDN!1.nan)));
     }
 }
@@ -325,16 +303,16 @@ package pure nothrow @nogc @safe
 /*
  * std.math.rounding shared internals
  */
-package pure nothrow @nogc @safe
+package
 {
-    pragma(inline,true) private
+    private pure nothrow @nogc @safe
     GDN!Deg
     round_impl(string Fn, ulong Deg)(
         in GDN!Deg g,
         in GDN!Deg.DerivType!1 delegate(in GDN!Deg.DerivType!1, in GDN!Deg.DerivType!1)
             pure nothrow @nogc @safe
             fn_deriv)
-    {
+    do {
         if (isNaN(g.val)) return g;
 
         static if (Deg == 1)
@@ -349,9 +327,7 @@ package pure nothrow @nogc @safe
 
         return GDN!Deg(asReal(f_red), df);
     }
-
-    unittest
-    {
+    unittest {
         real sub(in real f, in real g) { return f - g; }
         assert(round_impl!("ceil", 1)(GDN!1(3.5), &sub) is GDN!1(4, 0.5));
 
@@ -362,17 +338,15 @@ package pure nothrow @nogc @safe
 
 
     // The implementation of ceil for GDN.
-    pragma(inline, true) GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
+    do {
         auto dfn(in GDN!Deg.DerivType!1 f_red, in GDN!Deg.DerivType!1 g_red) {
             return dirac(g_red - f_red);
         }
 
         return round_impl!("ceil", Deg)(g, &dfn);
     }
-
-    unittest
-    {
+    unittest {
         import std.math: LN2;
 
         assert(ceil(GDN!1.nan) is GDN!1.nan);
@@ -384,17 +358,15 @@ package pure nothrow @nogc @safe
 
 
     // The implementation of floor for GDN
-    pragma(inline, true) GDN!Deg floor(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg floor(ulong Deg)(in GDN!Deg g)
+    do {
         auto dfn(in GDN!Deg.DerivType!1 f_red, in GDN!Deg.DerivType!1 g_red) {
             return dirac(g_red - f_red);
         }
 
         return round_impl!("floor", Deg)(g, &dfn);
     }
-
-    unittest
-    {
+    unittest {
         import std.math: LN2;
 
         assert(floor(GDN!1.nan) is GDN!1.nan);
@@ -406,33 +378,29 @@ package pure nothrow @nogc @safe
 
 
     // The implementation of round for GDN
-    pragma(inline, true) GDN!Deg round(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg round(ulong Deg)(in GDN!Deg g)
+    do {
         auto dfn(in GDN!Deg.DerivType!1 f_red, in GDN!Deg.DerivType!1 g_red) {
             return dirac(abs(g_red - f_red) - 0.5);
         }
 
         return round_impl!("round", Deg)(g, &dfn);
     }
-
-    unittest
-    {
+    unittest {
         assert(round(GDN!2(5.4)) is GDN!2(5, 0, 0));
     }
 
 
     // The implementation of trunc for GDN
-    pragma(inline, true) GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
-    {
+    pure nothrow @nogc @safe GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
+    do {
         auto dfn(in GDN!Deg.DerivType!1 f_red, in GDN!Deg.DerivType!1 g_red) {
             return dirac(abs(g_red - f_red));
         }
 
         return round_impl!("trunc", Deg)(g, &dfn);
     }
-
-    unittest
-    {
+    unittest {
         assert(trunc(GDN!2(0.5)) is GDN!2(0, 0, 0));
     }
 }
