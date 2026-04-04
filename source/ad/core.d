@@ -4,10 +4,11 @@
  */
 module ad.core;
 
-import std.algorithm: min;
+import std.algorithm: fold, map, min;
 import std.format: format;
-import std.math: abs, cmp, copysign, isFinite, isInfinity, isNaN, LN2, log, signbit;
-import std.traits: fullyQualifiedName, TemplateOf;
+import std.math: abs, cmp, copysign, getNaNPayload, isFinite, isInfinity, isNaN, LN2, log, signbit;
+import std.range: ElementType, isInputRange;
+import std.traits: fullyQualifiedName, TemplateOf, Unqual;
 
 /**
  * This data structure implements a <em>generalized dual number</em>, a generalization of the dual
@@ -77,7 +78,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * elements are NaN.
      */
     package static pure nothrow @nogc @safe DerivType!1 mkNaNDeriv()
-    {
+    do {
         static if (Degree == 1)
             return real.nan;
         else
@@ -88,7 +89,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * elements are 0.
      */
     package static pure nothrow @nogc @safe DerivType!1 mkZeroDeriv()
-    {
+    do {
         static if (Degree == 1)
             return 0;
         else
@@ -113,7 +114,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   val = The value of the variable.
      */
     pure nothrow @nogc @safe this(in real val)
-    {
+    do {
         _x = val;
 
         if (isNaN(_x)) {
@@ -135,7 +136,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *       `[$(MATH f(x₀)), $(MATH f$(SUP (1))(x₀)), $(MATH f$(SUP (2))(x₀)), $(MATH …)]`.
      */
     pure nothrow @nogc @safe this(in real[Degree + 1] derivVals...)
-    {
+    do {
         _x = derivVals[0];
 
         static if (Degree == 1) {
@@ -158,7 +159,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   that = the generalized dual number being copied
      */
     pure nothrow @nogc @safe this(ulong ThatDegree)(in GDN!ThatDegree that)
-    {
+    do {
         this._x = that._x;
 
         static if (ThatDegree < Degree && ThatDegree == 1)
@@ -173,7 +174,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * derivative.
      */
     package pure nothrow @nogc @safe this(in real val, in DerivType!1 derivs)
-    {
+    do {
         _x = val;
 
         static if (Degree == 1) {
@@ -195,25 +196,33 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * of each order set to zero.
      */
     package static pure nothrow @nogc @safe GDN mkConst(in real val)
-    {
+    do {
         return GDN(val, isNaN(val) ? mkNaNDeriv() : mkZeroDeriv());
     }
 
-    /* Combine two GDNs when one is NaN. For each derivative, choose the one
-     * that is NaN with the larger payload.
+    /* Combine multiple GDNs when one is NaN. For each derivative, choose the
+     * one that is NaN with the larger payload.
      */
-    package static pure nothrow @nogc @safe GDN nanCombine(in GDN lhs, in GDN rhs)
-    in (isNaN(lhs._x) || isNaN(rhs._x))
+    package static pure nothrow @nogc @safe GDN nanCombine(in GDN[] args...)
     out (res; isNaN(res._x))
     do {
-        const x = cmp(abs(lhs._x), abs(rhs._x)) < 0 ? rhs._x : lhs._x;
+        return nanCombine_impl(args);
+    }
+
+    private static pure nothrow @nogc @safe GDN nanCombine_impl(Range)(Range gdns)
+    if (isInputRange!(Unqual!Range) && is(Unqual!(ElementType!Range) == GDN))
+    do {
+        alias largestPayload = fold!((l,s) => cmp(abs(l), abs(s)) < 0 ? s : l);
+
+        auto x = largestPayload(gdns.map!(g => g.val), 0.0L);
+        if (!isNaN(x)) x = real.nan;
 
         static if (Degree == 1)
-            const dx = cmp(abs(lhs._dx), abs(rhs._dx)) < 0 ? rhs._dx : lhs._dx;
+            const dx = largestPayload(gdns.map!(g => g.d), 0.0L);
         else
-            const dx = GDN.DerivType!1.nanCombine(lhs._dx, rhs._dx);
+            const dx = DerivType!1.nanCombine_impl(gdns.map!(g => g.d));
 
-        return GDN!Degree(x, dx);
+        return GDN(x, dx);
     }
 
 
@@ -275,7 +284,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * supports real numbers.
      */
     pure nothrow @safe @nogc GDN re() const
-    {
+    do {
         return this;
     }
 
@@ -284,7 +293,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * numbers.
      */
     pure nothrow @nogc @safe GDN im() const
-    {
+    do {
         return GDN.zero;
     }
 
@@ -294,7 +303,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * This is the value of the generalized dual number.
      */
     pure nothrow @nogc @safe real val() const
-    {
+    do {
         return _x;
     }
 
@@ -319,7 +328,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   ```
      */
     pure nothrow @nogc @safe DerivType!Ord d(ulong Ord = 1)() const if (0 < Ord && Ord <= Degree)
-    {
+    do {
         static if (Ord == 1)
             return _dx;
         else
@@ -328,7 +337,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
 
     /// ditto
     pure nothrow @nogc @safe GDN d(ulong Ord : 0)() const
-    {
+    do {
         return this;
     }
 
@@ -373,7 +382,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   ```
      */
     pure nothrow @nogc @safe GDN inv() const
-    {
+    do {
         const reduced = reduce();
         return GDN(1 / _x, -_dx / (reduced * reduced));
     }
@@ -383,8 +392,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * It is defined in this module instead of core, because it is required to
      * compute the derivative of the ^^ operator.
      */
-    pragma(inline, true) package pure nothrow @nogc @safe GDN log() const
-    {
+    package pure nothrow @nogc @safe GDN log() const
+    do {
         static import std.math;
 
         if (isNaN(_x)) return this;
@@ -397,7 +406,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      * removed.
      */
     package pure nothrow @nogc @safe auto reduce() const
-    {
+    do {
         static if (Degree > 1)
             return GDN!(Degree - 1)(_x, _dx.reduce);
          else
@@ -424,8 +433,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   assert(y == x && typeof(y).DEGREE == 2);
      *   ```
      */
-    pragma(inline, true) pure nothrow @nogc @safe T opCast(T)() const
-    if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN") {
+    pure nothrow @nogc @safe T opCast(T)() const
+    if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN")
+    do {
         static if (T.DEGREE == Degree)
             return this;
         else
@@ -453,13 +463,13 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   ```
      */
     pure nothrow @nogc @safe bool opEquals(ulong ThatDeg)(in GDN!ThatDeg that) const
-    {
+    do {
         return this._x == that._x;
     }
 
     /// ditto
     pure nothrow @nogc @safe bool opEquals(in real val) const
-    {
+    do {
         return _x == val;
     }
 
@@ -484,13 +494,13 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   ```
      */
     pure nothrow @nogc @safe int opCmp(ulong ThatDeg)(in GDN!ThatDeg that) const
-    {
+    do {
         return opCmp(that._x);
     }
 
     /// ditto
     pure nothrow @nogc @safe int opCmp(in real val) const
-    {
+    do {
         if (_x < val)
             return -1;
         if (_x > val)
@@ -509,7 +519,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   the generalized dual number
      */
     pure nothrow @nogc @safe GDN opUnary(string Op : "+")() const
-    {
+    do {
         return this;
     }
 
@@ -523,7 +533,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *  the negated generalized dual number
      */
     pure nothrow @nogc @safe GDN opUnary(string Op : "-")() const
-    {
+    do {
         return GDN(-_x, -_dx);
     }
 
@@ -541,8 +551,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      */
     pure nothrow @nogc @safe
     GDN!(min(ThatDegree, Degree)) opBinary(string Op, ulong ThatDegree)(in GDN!ThatDegree that)
-    const
-    if (ThatDegree != Degree) {
+    const if (ThatDegree != Degree)
+    do {
         alias Res = typeof(return);
         return (cast(Res) this).opBinary!Op(cast(Res) that);
     }
@@ -573,7 +583,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      */
     pure nothrow @nogc @safe
     GDN opBinary(string Op : "+", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
-    {
+    do {
+        if (isNaN(this.val) || isNaN(that.val)) return nanCombine(this, that);
         return GDN(this.val + that.val, this.d + that.d);
     }
 
@@ -603,7 +614,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      */
     pure nothrow @nogc @safe
     GDN opBinary(string Op : "-", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
-    {
+    do {
         return this + -that;
     }
 
@@ -633,12 +644,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      */
     pure nothrow @nogc @safe
     GDN opBinary(string Op : "*", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
-    {
-        const prod = this._x * that._x;
-
-        if (isNaN(prod))
-            return nan;
-        return GDN(prod, this._dx * that.reduce() + this.reduce() * that._dx);
+    do {
+        if (isNaN(this.val) || isNaN(that.val)) return nanCombine(this, that);
+        return GDN(this._x * that._x, this._dx * that.reduce() + this.reduce() * that._dx);
     }
 
     /** <b>g / h</b>
@@ -668,7 +676,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      */
     pure nothrow @nogc @safe
     GDN opBinary(string Op : "/", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
-    {
+    do {
+        if (isNaN(this.val) || isNaN(that.val)) return nanCombine(this, that);
         return this * that.inv();
     }
 
@@ -708,7 +717,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
     */
     pure nothrow @nogc @safe
     GDN opBinary(string Op : "%", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
-    {
+    do {
         if (isNaN(this.val) || isNaN(that.val)) return nanCombine(this, that);
 
         const x = this.reduce(), dx = this.d;
@@ -760,7 +769,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      */
     pure nothrow @nogc @safe
     GDN opBinary(string Op : "^^", ulong ThatDegree : Degree)(in GDN!ThatDegree that) const
-    {
+    do {
+        if (isNaN(this.val) || isNaN(that.val)) return nanCombine(this, that);
+
         const g = this.reduce();
         const gp = this._dx;
         const h = that.reduce();
@@ -781,12 +792,9 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
 
     /// ditto
     pure nothrow @nogc @safe GDN opBinary(string Op : "^^")(in real c) const
-    {
-        if (c == 0)
-        {
-            return GDN.one;
-        }
-
+    do {
+        if (isNaN(this.val) || isNaN(c)) return nanCombine(this, GDN.mkConst(c));
+        if (c == 0) return GDN.one;
         return GDN(_x ^^ c, c * reduce() ^^ (c - 1) * _dx);
     }
 
@@ -803,8 +811,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   the GDN resulting from the of the operation
      */
     pure nothrow @nogc @safe GDN opBinary(string Op)(in real val) const
-    {
-        return mixin("this " ~ Op ~ " GDN(val, mkZeroDeriv())");
+    do {
+        return mixin("this " ~ Op ~ " GDN.mkConst(val)");
     }
 
     /**
@@ -820,8 +828,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   the GDN resulting from the of the operation
      */
     pure nothrow @nogc @safe GDN opBinaryRight(string Op)(in real val) const
-    {
-        return mixin("GDN(val, mkZeroDeriv()) " ~ Op ~ " this");
+    do {
+        return mixin("GDN.mkConst(val) " ~ Op ~ " this");
     }
 
     /**
@@ -831,16 +839,13 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   the hash of the generalized dual number
      */
     pure nothrow @nogc @trusted hash_t toHash() const
-    {
+    do {
         auto buf = cast(const(ubyte)*)&_x;
 
         hash_t res = 0;
-        for (auto i = 0; i < real.sizeof; i += hash_t.sizeof)
-        {
-            for (auto j = 0; j < hash_t.sizeof; j++)
-            {
-                if (i + j < real.sizeof)
-                {
+        for (auto i = 0; i < real.sizeof; i += hash_t.sizeof) {
+            for (auto j = 0; j < hash_t.sizeof; j++) {
+                if (i + j < real.sizeof) {
                     res += cast(hash_t) buf[i + j] << 8 * j;
                 }
             }
@@ -864,14 +869,14 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      *   ```
      */
     pure @safe string toString() const
-    {
+    do {
         return toString(0);
     }
 
     // Generates the string representation of the generalized dual number with a given derivative
     // order and higher.
     private pure @safe string toString(ulong derivOrd) const
-    {
+    do {
         static if (Degree == 1)
             const tail = format("%s%s", fmtNum(_dx), fmtDerivSuffix(derivOrd + 1));
         else
@@ -882,8 +887,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
 }
 
 // .init
-unittest
-{
+unittest {
     const GDN!2 w;
     assert(isNaN(w._x), "_x doesn't default init to NaN");
     assert(isNaN(w._dx._x), "_dx doesn't default init to NaN");
@@ -892,8 +896,7 @@ unittest
 }
 
 // DerivType
-unittest
-{
+unittest {
     assert(is(GDN!1.DerivType!1 == real), "The degree 1 derivative type should be real");
     assert(is(GDN!2.DerivType!1 == GDN!1), "The degree 2 derivative type should be a degree 1 GDN");
     assert(isNaN(GDN!1.mkNaNDeriv), "The degree 1 derivative NaN should be a real NaN");
@@ -904,8 +907,7 @@ unittest
 }
 
 // constructors
-unittest
-{
+unittest {
     const n = GDN!1();
     assert(isNaN(n._x), "The default GDN has value NaN");
     assert(isNaN(n._dx), "The default GDN has derivative NaN");
@@ -935,37 +937,49 @@ unittest
 }
 
 
-//
 // NaN Combination
-unittest
-{
-    import std.math: getNaNPayload, NaN;
+unittest {
+    import std.math: NaN;
 
-    const a = GDN!1.nanCombine(GDN!1(0), GDN!1());
+    // nanCombine_impl
+
+    const a = GDN!1.nanCombine_impl([GDN!1(0), GDN!1()]);
     assert(isNaN(a._x) && isNaN(a._dx));
 
-    const b = GDN!1.nanCombine(GDN!1(), GDN!1(0));
+    const b = GDN!1.nanCombine_impl([GDN!1(), GDN!1(0)]);
     assert(isNaN(b._x) && isNaN(b._dx));
 
-    assert(getNaNPayload(GDN!1.nanCombine(GDN!1(NaN(2)), GDN!1(NaN(1)))._x) == 2);
-    assert(getNaNPayload(GDN!1.nanCombine(GDN!1(NaN(2)), GDN!1(NaN(3)))._x) == 3);
+    assert(getNaNPayload(GDN!1.nanCombine_impl([GDN!1(NaN(2)), GDN!1(NaN(1))])._x) == 2);
+    assert(getNaNPayload(GDN!1.nanCombine_impl([GDN!1(NaN(2)), GDN!1(NaN(3))])._x) == 3);
 
-    const c = GDN!1.nanCombine(GDN!1(0, NaN(1)), GDN!1());
+    const c = GDN!1.nanCombine_impl([GDN!1(0, NaN(1)), GDN!1()]);
     assert(getNaNPayload(c._x) == 0 && getNaNPayload(c._dx) == 1);
 
-    const d = GDN!1.nanCombine(GDN!1(0), GDN!1(NaN(2), NaN(3)));
+    const d = GDN!1.nanCombine_impl([GDN!1(0), GDN!1(NaN(2), NaN(3))]);
     assert(getNaNPayload(d._x) == 2 && getNaNPayload(d._dx) == 3);
 
-    const e = GDN!2.nanCombine(GDN!2(NaN(1), NaN(2), NaN(5)), GDN!2(NaN(0), NaN(4), NaN(3)));
+    const e = GDN!2.nanCombine_impl([GDN!2(NaN(1), NaN(2), NaN(5)), GDN!2(NaN(0), NaN(4), NaN(3))]);
     assert(
         getNaNPayload(e._x) == 1 && getNaNPayload(e._dx._x) == 4 && getNaNPayload(e._dx._dx) == 5);
+
+    const f = GDN!1.nanCombine_impl(
+        [GDN!1(NaN(6), NaN(7)), GDN!1(NaN(8), NaN(1)), GDN!1(NaN(0), NaN(9))]);
+    assert(getNaNPayload(f._x) == 8 && getNaNPayload(f._dx) == 9);
+
+    GDN!1[] g = [];
+    assert(isNaN(GDN!1.nanCombine_impl(g)._x));
+
+    assert(isNaN(GDN!1.nanCombine_impl([GDN!1.zero])._x));
+    assert(getNaNPayload(GDN!1.nanCombine_impl([GDN!1(NaN(1))])._x));
+
+    // nanCombine
+
+    assert(getNaNPayload(GDN!1.nanCombine(GDN!1(), GDN!1(0), GDN!1(NaN(1)))._x) == 1);
 }
 
 
-//
 // real properties
-unittest
-{
+unittest {
     assert(isInfinity(GDN!1.infinity._x), "infinity should be a variable of value infinity");
     assert(GDN!1.infinity._dx == 0, "infinity should have a derivative of 0");
 
@@ -978,8 +992,7 @@ unittest
 }
 
 // d
-unittest
-{
+unittest {
     const q = GDN!3(3, GDN!2(2, GDN!1(1, 0)));
     assert(q is q.d!0);
 
@@ -989,8 +1002,7 @@ unittest
 }
 
 // dirac
-unittest
-{
+unittest {
     const x = GDN!1(3, 4).dirac();
     assert(x.val == 0 && x.d == 0);
 
@@ -1011,8 +1023,7 @@ unittest
 }
 
 // inv
-unittest
-{
+unittest {
     const x = GDN!1(3, 4);
     const res = x.inv;
     assert(res.val == 1. / 3 && res.d == -4. / 9, "x.inv is incorrect");
@@ -1027,8 +1038,7 @@ unittest
 }
 
 // log
-unittest
-{
+unittest {
     const e = GDN!1(-0.);
     const q = e.log();
     assert(isNaN(q.val) && isNaN(q.d), "log(-0) should be NaN");
@@ -1039,8 +1049,7 @@ unittest
 }
 
 // comparison operations
-unittest
-{
+unittest {
     const q = GDN!1(4, 2);
     assert(q == 4, "GDN!1(4, 2) should equal 4");
     assert(q > 1, "GDN!1(4, 2) should be greater than 1");
@@ -1061,8 +1070,7 @@ unittest
 }
 
 // opUnary
-unittest
-{
+unittest {
     const q = GDN!1(2, 1);
     assert(q is +q, "+q should be the identical to q");
     assert(GDN!1(-2, -1) is -q, "-q should be the negation of q and all its derivatives");
@@ -1077,8 +1085,7 @@ unittest
 }
 
 // opBinary(+)
-unittest
-{
+unittest {
     const gdn1 = GDN!1(4, 5);
     const gdn2 = GDN!2(1, 2, 3);
     const sum = GDN!1(5, 7);
@@ -1096,14 +1103,12 @@ unittest
 }
 
 // opBinary(-)
-unittest
-{
+unittest {
     assert(GDN!1(1, -1) is GDN!1(2, 1) - GDN!1(1, 2), "GDN - GDN not working");
 }
 
 // opBinary(*)
-unittest
-{
+unittest {
     const q = GDN!1(2, -3);
     const w = GDN!1(5, 7);
     const nz = GDN!1(-0.);
@@ -1145,8 +1150,7 @@ unittest
 }
 
 // opBinary(/)
-unittest
-{
+unittest {
     const q = GDN!1(6);
     const w = GDN!1(2);
     const r = q / w;
@@ -1155,8 +1159,7 @@ unittest
 }
 
 // opBinary(%)
-unittest
-{
+unittest {
     const x = GDN!1(2, 3);
     const s = GDN!1(5, 4);
     const e = GDN!1(-0., 1);
@@ -1200,8 +1203,7 @@ unittest
 }
 
 // opBinary(^^)
-unittest
-{
+unittest {
     const a1 = GDN!1(2, -1);
     const a2 = GDN!1(-2, 3);
     const nz = GDN!1(-0.);
@@ -1377,16 +1379,14 @@ unittest
 }
 
 // toHash
-unittest
-{
+unittest {
     auto q = GDN!1(0.1L, 0.2L);
     auto w = GDN!1(0.1L, 0.0L);
     assert(q.toHash() == w.toHash(), "toHash isn't working correctly");
 }
 
 // toString
-unittest
-{
+unittest {
     const x = GDN!1(0, -1).toString;
     assert(x == "+0 + -1dx", format("GDN!1(0,-1).toString != '%s'", x));
 
@@ -1395,114 +1395,109 @@ unittest
 }
 
 
-private pure @safe
-{
-    // Formats a number, either the value or the value of a derivative, into a string
-    string fmtNum(in real num)
-    {
-        if (isNaN(num))
-            return "NaN";
-        if (isInfinity(num))
-            return (signbit(num) == 0 ? "" : "-") ~ "\u221E";
-        if (num == 0)
-            return signbit(num) == 0 ? "+0" : "-0";
-        return format("%g", num);
+// Formats a number, either the value or the value of a derivative, into a string
+private pure @safe string fmtNum(in real num)
+do {
+    if (isNaN(num)) {
+        const sign = signbit(num) == 0 ? "" : "-";
+        const payload = getNaNPayload(num) == 0 ? "" : format("(%#x)", getNaNPayload(num));
+        return format("%sNaN%s", sign, payload);
     }
 
-    unittest
-    {
-        string num;
+    if (isInfinity(num)) return (signbit(num) == 0 ? "" : "-") ~ "\u221E";
+    if (num == 0) return signbit(num) == 0 ? "+0" : "-0";
+    return format("%g", num);
+}
+unittest {
+    import std.math: NaN;
 
-        num = fmtNum(1);
-        assert(num == "1", "formatted 1 incorrectly");
+    string num;
 
-        num = fmtNum(-23.4);
-        assert(num == "-23.4", "formatted -23.4 incorrectly");
+    num = fmtNum(1);
+    assert(num == "1", "formatted 1 incorrectly");
 
-        num = fmtNum(+0.);
-        assert(num == "+0", "formatted +0 incorrectly");
+    num = fmtNum(-23.4);
+    assert(num == "-23.4", "formatted -23.4 incorrectly");
 
-        num = fmtNum(-0.);
-        assert(num == "-0", "formatted -0 incorrectly");
+    num = fmtNum(+0.);
+    assert(num == "+0", "formatted +0 incorrectly");
 
-        num = fmtNum(real.infinity);
-        assert(num == "∞", "formatted +∞ incorrectly");
+    num = fmtNum(-0.);
+    assert(num == "-0", "formatted -0 incorrectly");
 
-        num = fmtNum(-real.infinity);
-        assert(num == "-∞", "formatted -∞ incorrectly");
+    num = fmtNum(real.infinity);
+    assert(num == "∞", "formatted +∞ incorrectly");
 
-        num = fmtNum(real.nan);
-        assert(num == "NaN", "formatted NaN incorrectly");
+    num = fmtNum(-real.infinity);
+    assert(num == "-∞", "formatted -∞ incorrectly");
 
-        num = fmtNum(-real.nan);
-        assert(num == "NaN", "formatted -NaN incorrectly");
+    num = fmtNum(real.nan);
+    assert(num == "NaN", format("formatted NaN incorrectly, got %s", num));
+
+    num = fmtNum(-real.nan);
+    assert(num == "-NaN", format("formatted -NaN incorrectly, got %s", num));
+
+    num = fmtNum(NaN(3));
+    assert(num == "NaN(0x3)");
+}
+
+// Formats the derivative identifier of a given order
+private pure @safe string fmtDerivSuffix(in ulong ord)
+do {
+    switch (ord) {
+    case 0:
+        return "";
+    case 1:
+        return "dx";
+    default:
+        return format("(dx)%s", fmtDerivOrd(ord));
     }
+}
+unittest {
+    assert(fmtDerivSuffix(0) == "", "fmtDerivSuffix(0) is incorrect");
+    assert(fmtDerivSuffix(1) == "dx", "fmtDerivSuffix(1) is incorrect");
+    assert(fmtDerivSuffix(3) == "(dx)³", "fmtDerivSuffix(3) is incorrect");
+}
 
-    // Formats the derivative identifier of a given order
-    string fmtDerivSuffix(in ulong ord)
-    {
-        switch (ord)
-        {
-        case 0:
-            return "";
-        case 1:
-            return "dx";
-        default:
-            return format("(dx)%s", fmtDerivOrd(ord));
-        }
+// Formats the order of a derivative into a string
+private pure nothrow @safe string fmtDerivOrd(in ulong ord) {
+    switch (ord) {
+    case 0:
+        return "\u2070";
+    case 1:
+        return "\u00B9";
+    case 2:
+        return "\u00B2";
+    case 3:
+        return "\u00B3";
+    case 4:
+        return "\u2074";
+    case 5:
+        return "\u2075";
+    case 6:
+        return "\u2076";
+    case 7:
+        return "\u2077";
+    case 8:
+        return "\u2078";
+    case 9:
+        return "\u2079";
+    default:
+        return fmtDerivOrd(ord / 10) ~ fmtDerivOrd(ord % 10);
     }
-
-    unittest
-    {
-        assert(fmtDerivSuffix(0) == "", "fmtDerivSuffix(0) is incorrect");
-        assert(fmtDerivSuffix(1) == "dx", "fmtDerivSuffix(1) is incorrect");
-        assert(fmtDerivSuffix(3) == "(dx)³", "fmtDerivSuffix(3) is incorrect");
-    }
-
-    // Formats the order of a derivative into a string
-    nothrow string fmtDerivOrd(in ulong ord)
-    {
-        switch (ord)
-        {
-        case 0:
-            return "\u2070";
-        case 1:
-            return "\u00B9";
-        case 2:
-            return "\u00B2";
-        case 3:
-            return "\u00B3";
-        case 4:
-            return "\u2074";
-        case 5:
-            return "\u2075";
-        case 6:
-            return "\u2076";
-        case 7:
-            return "\u2077";
-        case 8:
-            return "\u2078";
-        case 9:
-            return "\u2079";
-        default:
-            return fmtDerivOrd(ord / 10) ~ fmtDerivOrd(ord % 10);
-        }
-    }
-
-    unittest
-    {
-        assert(fmtDerivOrd(0) == "⁰", "fmtDerivOrd(0) should be ⁰");
-        assert(fmtDerivOrd(1) == "¹", "fmtDerivOrd(1) should be ¹");
-        assert(fmtDerivOrd(2) == "²", "fmtDerivOrd(2) should be ²");
-        assert(fmtDerivOrd(3) == "³", "fmtDerivOrd(3) should be ³");
-        assert(fmtDerivOrd(4) == "⁴", "fmtDerivOrd(4) should be ⁴");
-        assert(fmtDerivOrd(5) == "⁵", "fmtDerivOrd(5) should be ⁵");
-        assert(fmtDerivOrd(6) == "⁶", "fmtDerivOrd(6) should be ⁶");
-        assert(fmtDerivOrd(7) == "⁷", "fmtDerivOrd(7) should be ⁷");
-        assert(fmtDerivOrd(8) == "⁸", "fmtDerivOrd(8) should be ⁸");
-        assert(fmtDerivOrd(9) == "⁹", "fmtDerivOrd(9) should be ⁹");
-        assert(fmtDerivOrd(10) == "¹⁰", "fmtDerivOrd(10) should be ¹⁰");
-        assert(fmtDerivOrd(25) == "²⁵", "fmtDerivOrd(25) should be ²⁵");
-        assert(fmtDerivOrd(3000) == "³⁰⁰⁰", "fmtDerivOrd(3000) should be ³⁰⁰⁰");
-    }
+}
+unittest {
+    assert(fmtDerivOrd(0) == "⁰", "fmtDerivOrd(0) should be ⁰");
+    assert(fmtDerivOrd(1) == "¹", "fmtDerivOrd(1) should be ¹");
+    assert(fmtDerivOrd(2) == "²", "fmtDerivOrd(2) should be ²");
+    assert(fmtDerivOrd(3) == "³", "fmtDerivOrd(3) should be ³");
+    assert(fmtDerivOrd(4) == "⁴", "fmtDerivOrd(4) should be ⁴");
+    assert(fmtDerivOrd(5) == "⁵", "fmtDerivOrd(5) should be ⁵");
+    assert(fmtDerivOrd(6) == "⁶", "fmtDerivOrd(6) should be ⁶");
+    assert(fmtDerivOrd(7) == "⁷", "fmtDerivOrd(7) should be ⁷");
+    assert(fmtDerivOrd(8) == "⁸", "fmtDerivOrd(8) should be ⁸");
+    assert(fmtDerivOrd(9) == "⁹", "fmtDerivOrd(9) should be ⁹");
+    assert(fmtDerivOrd(10) == "¹⁰", "fmtDerivOrd(10) should be ¹⁰");
+    assert(fmtDerivOrd(25) == "²⁵", "fmtDerivOrd(25) should be ²⁵");
+    assert(fmtDerivOrd(3000) == "³⁰⁰⁰", "fmtDerivOrd(3000) should be ³⁰⁰⁰");
 }
