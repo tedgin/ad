@@ -50,8 +50,7 @@ enum GDN!Deg SQRT2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.SQRT2);
 /// $(MATH √½)
 enum GDN!Deg SQRT1_2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.SQRT1_2);
 
-unittest
-{
+unittest {
     assert(E!1 == std.math.constants.E, "E broken");
     assert(PI!1 == std.math.constants.PI, "PI broken");
     assert(PI_2!1 == std.math.constants.PI_2, "PI_2 broken");
