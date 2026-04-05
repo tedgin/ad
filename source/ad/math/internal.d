@@ -85,23 +85,25 @@ package
     // The implementation of isGDNOrReal
     enum bool isGDNOrReal(T) = isGDN!T || isImplicitlyConvertible!(T, real);
 
-    // Converts a GDN to a GDN of the specified degree.
-    pure nothrow @nogc @safe GDN!Deg asGDN(ulong Deg, T)(in T t) if (isGDN!T)
-    do {
-        return cast(GDN!Deg) t;
+    template asGDN(ulong Deg)
+    {
+        // Converts a GDN to a GDN of the specified degree.
+        pure nothrow @nogc @safe GDN!Deg asGDN(T)(in T t) if (isGDN!T)
+        do {
+            return cast(GDN!Deg) t;
+        }
+
+        // Converts a real to a constant GDN of the specified degree.
+        pure nothrow @nogc @safe GDN!Deg asGDN(in real t)
+        do {
+            return GDN!Deg.mkConst(t);
+        }
     }
     unittest {
         assert(asGDN!1(GDN!2(3)) is GDN!1(3));
         assert(asGDN!2(GDN!2(3)) is GDN!2(3));
         assert(asGDN!3(GDN!2(3)) is GDN!3(3));
-    }
 
-    // Converts a real to a constant GDN of the specified degree.
-    pure nothrow @nogc @safe GDN!Deg asGDN(ulong Deg)(in real t)
-    do {
-        return GDN!Deg.mkConst(t);
-    }
-    unittest {
         assert(asGDN!2(3) is GDN!2(3, 0, 0));
     }
 
