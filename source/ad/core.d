@@ -6,7 +6,7 @@ module ad.core;
 
 import std.algorithm: fold, map, min;
 import std.format: format;
-import std.math: abs, cmp, copysign, getNaNPayload, isFinite, isInfinity, isNaN, LN2, log, signbit;
+import std.math: abs, cmp, copysign, getNaNPayload, isInfinity, isNaN, LN2, log, signbit;
 import std.range: ElementType, isInputRange;
 import std.traits: fullyQualifiedName, TemplateOf, Unqual;
 
