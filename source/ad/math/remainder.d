@@ -119,7 +119,7 @@ if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
-    if (isNaN(gg) || isNaN(hh)) return GDN!Deg.nanCombine(gg, hh);
+    if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
 
     if (gg == 0 && hh != 0) {
         n = 0;

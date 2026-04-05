@@ -893,7 +893,7 @@ in {
 }
 out(res; isNaN!Deg(res) || (res >= 0 && res <= 1), "result should be in [0,1]")
 do {
-    if (any!(std.math.isNaN)(only(a, g.val))) return GDN!Deg.nanCombine(g, asGDN!Deg(a));
+    if (any!(std.math.isNaN)(only(a, g.val))) return nanCombine(g, asGDN!Deg(a));
     return GDN!Deg(std.mathspecial.gammaIncomplete(a, g.val), g.d*gammaIncompleteDeriv(a, g));
 }
 ///
@@ -955,7 +955,7 @@ in {
 }
 out(res; isNaN!Deg(res) || (res >= 0 && res <= 1), "result should be in [0,1]")
 do {
-    if (any!(std.math.isNaN)(only(a, g.val))) return GDN!Deg.nanCombine(g, asGDN!Deg(a));
+    if (any!(std.math.isNaN)(only(a, g.val))) return nanCombine(g, asGDN!Deg(a));
     return GDN!Deg(std.mathspecial.gammaIncompleteCompl(a, g.val), -g.d*gammaIncompleteDeriv(a, g));
 }
 ///
@@ -1028,7 +1028,7 @@ in {
 }
 out(x; isNaN!Deg(x) || x >= 0.0L, "result should be in [0,1]")
 do {
-    if (any!(std.math.isNaN)(only(a, q.val))) return GDN!Deg.nanCombine(q, asGDN!Deg(a));
+    if (any!(std.math.isNaN)(only(a, q.val))) return nanCombine(q, asGDN!Deg(a));
 
     static if (Deg == 1)
         alias Q_inv = std.mathspecial.gammaIncompleteComplInverse;

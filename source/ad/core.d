@@ -200,31 +200,6 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
         return GDN(val, isNaN(val) ? mkNaNDeriv() : mkZeroDeriv());
     }
 
-    /* Combine multiple GDNs when one is NaN. For each derivative, choose the
-     * one that is NaN with the larger payload.
-     */
-    package static pure nothrow @nogc @safe GDN nanCombine(in GDN[] args...)
-    out (res; isNaN(res._x))
-    do {
-        return nanCombine_impl(args);
-    }
-
-    private static pure nothrow @nogc @safe GDN nanCombine_impl(Range)(Range gdns)
-    if (isInputRange!(Unqual!Range) && is(Unqual!(ElementType!Range) == GDN))
-    do {
-        alias largestPayload = fold!((l,s) => cmp(abs(l), abs(s)) < 0 ? s : l);
-
-        auto x = largestPayload(gdns.map!(g => g.val), 0.0L);
-        if (!isNaN(x)) x = real.nan;
-
-        static if (Degree == 1)
-            const dx = largestPayload(gdns.map!(g => g.d), 0.0L);
-        else
-            const dx = DerivType!1.nanCombine_impl(gdns.map!(g => g.d));
-
-        return GDN(x, dx);
-    }
-
 
     // PROPERTIES
 
@@ -551,7 +526,8 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
      */
     pure nothrow @nogc @safe
     GDN!(min(ThatDegree, Degree)) opBinary(string Op, ulong ThatDegree)(in GDN!ThatDegree that)
-    const if (ThatDegree != Degree)
+    const
+    if (ThatDegree != Degree)
     do {
         alias Res = typeof(return);
         return (cast(Res) this).opBinary!Op(cast(Res) that);
@@ -935,48 +911,6 @@ unittest {
     const a = GDN!1.mkConst(4);
     assert(a._x == 4 && a._dx == 0);
 }
-
-
-// NaN Combination
-unittest {
-    import std.math: NaN;
-
-    // nanCombine_impl
-
-    const a = GDN!1.nanCombine_impl([GDN!1(0), GDN!1()]);
-    assert(isNaN(a._x) && isNaN(a._dx));
-
-    const b = GDN!1.nanCombine_impl([GDN!1(), GDN!1(0)]);
-    assert(isNaN(b._x) && isNaN(b._dx));
-
-    assert(getNaNPayload(GDN!1.nanCombine_impl([GDN!1(NaN(2)), GDN!1(NaN(1))])._x) == 2);
-    assert(getNaNPayload(GDN!1.nanCombine_impl([GDN!1(NaN(2)), GDN!1(NaN(3))])._x) == 3);
-
-    const c = GDN!1.nanCombine_impl([GDN!1(0, NaN(1)), GDN!1()]);
-    assert(getNaNPayload(c._x) == 0 && getNaNPayload(c._dx) == 1);
-
-    const d = GDN!1.nanCombine_impl([GDN!1(0), GDN!1(NaN(2), NaN(3))]);
-    assert(getNaNPayload(d._x) == 2 && getNaNPayload(d._dx) == 3);
-
-    const e = GDN!2.nanCombine_impl([GDN!2(NaN(1), NaN(2), NaN(5)), GDN!2(NaN(0), NaN(4), NaN(3))]);
-    assert(
-        getNaNPayload(e._x) == 1 && getNaNPayload(e._dx._x) == 4 && getNaNPayload(e._dx._dx) == 5);
-
-    const f = GDN!1.nanCombine_impl(
-        [GDN!1(NaN(6), NaN(7)), GDN!1(NaN(8), NaN(1)), GDN!1(NaN(0), NaN(9))]);
-    assert(getNaNPayload(f._x) == 8 && getNaNPayload(f._dx) == 9);
-
-    GDN!1[] g = [];
-    assert(isNaN(GDN!1.nanCombine_impl(g)._x));
-
-    assert(isNaN(GDN!1.nanCombine_impl([GDN!1.zero])._x));
-    assert(getNaNPayload(GDN!1.nanCombine_impl([GDN!1(NaN(1))])._x));
-
-    // nanCombine
-
-    assert(getNaNPayload(GDN!1.nanCombine(GDN!1(), GDN!1(0), GDN!1(NaN(1)))._x) == 1);
-}
-
 
 // real properties
 unittest {
@@ -1392,6 +1326,80 @@ unittest {
 
     const y = GDN!2(-1, 1, -2).toString(0);
     assert(y == "-1 + 1dx + -2(dx)²", format("GDN!2(-1, 1, -2).toString(0) != '%s'", y));
+}
+
+
+/* Combine multiple GDNs when one is NaN. For each derivative, choose the one
+ * that is NaN with the larger payload.
+ */
+package pure nothrow @nogc @safe GDN!Deg nanCombine(ulong Deg)(GDN!Deg[] args...)
+do {
+    return nanCombine_impl!Deg(args);
+}
+unittest {
+    import std.math: NaN;
+
+    assert(getNaNPayload(nanCombine(GDN!1(), GDN!1(0), GDN!1(NaN(1)))._x) == 1);
+}
+
+package pure nothrow @nogc @safe
+GDN!Deg nanCombine(ulong Deg, Range)(Range gdns)
+if (isInputRange!(Unqual!Range) && is(Unqual!(ElementType!Range) == GDN!Deg))
+do {
+    return nanCombine_impl!Deg(gdns);
+}
+unittest {
+    import std.math: NaN;
+
+    const h = getNaNPayload(nanCombine([GDN!1(), GDN!1(0), GDN!1(NaN(1)), GDN!1(NaN(2))])._x);
+    assert(h == 2);
+}
+
+private pure nothrow @nogc @safe GDN!Deg nanCombine_impl(ulong Deg, Range)(Range gdns)
+do {
+    alias largestPayload = fold!((l,s) => cmp(abs(l), abs(s)) < 0 ? s : l);
+
+    auto x = largestPayload(gdns.map!(g => g.val), 0.0L);
+    if (!isNaN(x)) x = real.nan;
+
+    static if (Deg == 1)
+        const dx = largestPayload(gdns.map!(g => g.d), 0.0L);
+    else
+        const dx = nanCombine_impl!(Deg - 1)(gdns.map!(g => g.d));
+
+    return GDN!Deg(x, dx);
+}
+unittest {
+    import std.math: NaN;
+
+    const a = nanCombine_impl!1([GDN!1(0), GDN!1()]);
+    assert(isNaN(a._x) && isNaN(a._dx));
+
+    const b = nanCombine_impl!1([GDN!1(), GDN!1(0)]);
+    assert(isNaN(b._x) && isNaN(b._dx));
+
+    assert(getNaNPayload(nanCombine_impl!1([GDN!1(NaN(2)), GDN!1(NaN(1))])._x) == 2);
+    assert(getNaNPayload(nanCombine_impl!1([GDN!1(NaN(2)), GDN!1(NaN(3))])._x) == 3);
+
+    const c = nanCombine_impl!1([GDN!1(0, NaN(1)), GDN!1()]);
+    assert(getNaNPayload(c._x) == 0 && getNaNPayload(c._dx) == 1);
+
+    const d = nanCombine_impl!1([GDN!1(0), GDN!1(NaN(2), NaN(3))]);
+    assert(getNaNPayload(d._x) == 2 && getNaNPayload(d._dx) == 3);
+
+    const e = nanCombine_impl!2([GDN!2(NaN(1), NaN(2), NaN(5)), GDN!2(NaN(0), NaN(4), NaN(3))]);
+    assert(
+        getNaNPayload(e._x) == 1 && getNaNPayload(e._dx._x) == 4 && getNaNPayload(e._dx._dx) == 5);
+
+    const f = nanCombine_impl!1(
+        [GDN!1(NaN(6), NaN(7)), GDN!1(NaN(8), NaN(1)), GDN!1(NaN(0), NaN(9))]);
+    assert(getNaNPayload(f._x) == 8 && getNaNPayload(f._dx) == 9);
+
+    GDN!1[] g = [];
+    assert(isNaN(nanCombine_impl!1(g)._x));
+
+    assert(isNaN(nanCombine_impl!1([GDN!1.zero])._x));
+    assert(getNaNPayload(nanCombine_impl!1([GDN!1(NaN(1))])._x));
 }
 
 

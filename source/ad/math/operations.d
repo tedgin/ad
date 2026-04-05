@@ -391,7 +391,7 @@ CommonGDN!(G, H) fmax(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
-    if (isNaN(gg.val) || isNaN(hh.val)) return GDN!Deg.nanCombine(gg, hh);
+    if (isNaN(gg.val) || isNaN(hh.val)) return nanCombine(gg, hh);
     return gg >= hh ? gg : hh;
 }
 
@@ -437,7 +437,7 @@ CommonGDN!(G, H) fmin(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
-    if (isNaN(gg) || isNaN(hh)) return GDN!Deg.nanCombine(gg, hh);
+    if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
     return gg <= hh ? gg : hh;
 }
 
