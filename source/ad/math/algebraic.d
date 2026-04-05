@@ -4,15 +4,16 @@ module ad.math.algebraic;
 static import core.math;
 static import std.math.algebraic;
 
-import std.algorithm: min;
+import std.algorithm: any, map, min;
 import std.math: isInfinity;
-import std.traits: isFloatingPoint, isImplicitlyConvertible, Select;
+import std.range: chain, only;
 
 static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, asReal, ceil, CommonGDN, floor, isGDN, isGDNOrReal, isOne, log2, sgn, signbit;
+    areAll, asGDN, asReal, ceil, CommonGDN, floor, isGDN, isGDNOrReal, isNaN, isOne, log2, sgn,
+    signbit;
 
 
 /**
@@ -27,8 +28,9 @@ import ad.math.internal:
  * Returns:
  *   the absolute value of the `GDN` object
  */
-pragma(inline, true) pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
-{
+pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
+out(f; isNaN(f) || f >= 0)
+do {
     const df_val = signbit(g) == 0 ? 1.0L : -1.0L;
 
     static if (Deg == 1)
@@ -38,26 +40,23 @@ pragma(inline, true) pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg
 
     return GDN!Deg(core.math.fabs(g.val), df * g.d);
 }
-
-///
-unittest
-{
+/***/ unittest {
     assert(fabs(GDN!2(-3)) is GDN!2(3, -1, 0));
 }
+unittest {
+    import std.math: NaN;
 
-unittest
-{
     assert(fabs(GDN!2(-3)) is GDN!2(3, -1, 0));
     assert(fabs(GDN!1(+0.)) is GDN!1(+0., 1));
     assert(fabs(GDN!1(-0.)) is GDN!1(+0., -1));
     assert(fabs(GDN!1(-1)) is GDN!1(1, -1));
     assert(fabs(GDN!1.nan) is GDN!1.nan);
+    assert(fabs(GDN!1(-NaN(1))) is GDN!1(NaN(1)));
 }
 
 
 // abs support
-unittest
-{
+unittest {
     assert(
         std.math.algebraic.abs(GDN!1(-1)) is GDN!1(1, -1),
         "std.math.algebraic.abs(GDN) not working");
@@ -76,14 +75,12 @@ unittest
  * Returns:
  *   the square root of the `GDN` object
  */
-pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
-{
+pure nothrow @nogc @safe GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
+out(f; isNaN(f) || f >= 0)
+do {
     return ad.math.internal.sqrt(g);
 }
-
-///
-unittest
-{
+/***/ unittest {
     assert(sqrt(GDN!2(1)) is GDN!2(1, 0.5, -0.25));
     assert(sqrt(GDN!1(+0.)) is GDN!1(0, real.infinity));
 }
@@ -102,27 +99,21 @@ unittest
  *   the cube root of the `GDN` object
  */
 nothrow @nogc @safe GDN!Deg cbrt(ulong Deg)(in GDN!Deg g)
-{
-    if (g == 0) {
-        return GDN!Deg(g.val, GDN!Deg.DerivType!1.infinity);
-    }
+do {
+    if (isNaN(g)) return g;
+    if (g == 0) return GDN!Deg(g.val, GDN!Deg.DerivType!1.infinity);
 
     const p = -2.0L / 3;
     const g_pow = isInfinity(g.val) && g < 0 ? -(-g.reduce())^^p : g.reduce()^^p;
     return GDN!Deg(std.math.algebraic.cbrt(g.val), g.d * g_pow / 3);
 }
-
-///
-unittest
-{
+/***/ unittest {
     import std.math: isClose;
 
     const f = cbrt(GDN!2(8));
     assert(f == 2 && f.d == 1/12.0L && isClose(f.d!2, -1/144.0L));
 }
-
-unittest
-{
+unittest {
     import std.format: format;
 
     assert(cbrt(GDN!1(1)) is GDN!1(1, 1/3.0L), "cbrt(1) incorrect");
@@ -162,11 +153,14 @@ unittest
  */
 pure nothrow @nogc @safe
 CommonGDN!(G, H) hypot(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
-{
+out(f; isNaN(f) || f >= 0)
+do {
     alias Deg = typeof(return).DEGREE;
 
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
+
+    if (any!isNaN(only(gg, hh))) return nanCombine(gg, hh);
 
     const g_red = gg.reduce();
     const h_red = hh.reduce();
@@ -179,18 +173,15 @@ CommonGDN!(G, H) hypot(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(
     const df = (g_red * gg.d + h_red * hh.d) / f_red;
     return GDN!Deg(asReal(f_red), df);
 }
-
-///
-unittest
-{
+/***/ unittest {
     import std.math: sqrt;
 
     assert(hypot(GDN!1(1), GDN!1(2)) is GDN!1(sqrt(5.0L), 3/sqrt(5.0L)));
 }
+unittest {
+    import std.math: isClose, NaN, sqrt;
 
-unittest
-{
-    import std.math: isClose, sqrt;
+    assert(hypot(GDN!1(NaN(2)), GDN!1(0, NaN(1))) is GDN!1(NaN(2), NaN(1)));
 
     const f = hypot(GDN!2(1), GDN!2(2));
     // f = sqrt(5)
@@ -230,12 +221,15 @@ unittest
 pure nothrow @nogc @safe
 CommonGDN!(G, H, I)
 hypot(G, H, I)(in G g, in H h, in I i) if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
-{
+out(f; isNaN(f) || f >= 0)
+do {
     alias Deg = typeof(return).DEGREE;
 
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
     const ii = asGDN!Deg(i);
+
+    if (any!isNaN(only(gg, hh, ii))) return nanCombine(gg, hh, ii);
 
     const g_red = gg.reduce();
     const h_red = hh.reduce();
@@ -249,20 +243,15 @@ hypot(G, H, I)(in G g, in H h, in I i) if (isOne!(isGDN, G, H, I) && areAll!(isG
     const df = (g_red * gg.d + h_red * hh.d + i_red * ii.d) / f_red;
     return GDN!Deg(asReal(f_red), df);
 }
-
-///
-unittest
-{
+/***/ unittest {
     import std.math: isClose, sqrt;
 
     const f = hypot(GDN!1(1), GDN!1(2), GDN!1(3));
     assert(isClose(f.val, sqrt(14.0L)) && isClose(f.d, 6/sqrt(14.0L)));
 }
-
-unittest
-{
+unittest {
     import std.format: format;
-    import std.math: isClose, sqrt;
+    import std.math: isClose, NaN, sqrt;
 
     assert(typeof(hypot(GDN!2.one, GDN!2.one, GDN!1.one)).DEGREE == 1);
     assert(typeof(hypot(GDN!2.one, GDN!1.one, GDN!3.one)).DEGREE == 1);
@@ -270,6 +259,9 @@ unittest
     assert(typeof(hypot(GDN!5(0), GDN!6(1), 2)).DEGREE == 5);
     assert(typeof(hypot(GDN!7(3), 4, GDN!1(5))).DEGREE == 1);
     assert(typeof(hypot(6, GDN!2(7), GDN!3(8))).DEGREE == 2);
+
+    const a = hypot(GDN!2(NaN(2)), GDN!2(0, NaN(0), 0), GDN!2(0, 0, -NaN(1)));
+    assert(a is GDN!2(NaN(2), NaN(0), -NaN(1)));
 
     const e = hypot(GDN!1(0), 1, 2);
     assert(e is GDN!1(sqrt(5.0L), 0), format("hypot(0, 1, 2) != %s", e));
@@ -318,67 +310,67 @@ unittest
 pure nothrow @nogc @safe
 CommonGDN!(G, H) poly(G, H)(in G g, in H[] h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 in(h.length > 0, "coefficient array cannot be empty")
-{
-    return poly_impl_base(g, h);
-}
+do {
+    alias Deg = typeof(return).DEGREE;
 
+    return poly_impl(asGDN!Deg(g), map!(asGDN!Deg)(h));
+}
 /// ditto
 pure nothrow @nogc @safe
-CommonGDN!(G, H) poly(G, H, int N)(in G g, ref const H[N] h)
+CommonGDN!(G, H) poly(G, H, size_t N)(in G g, ref const H[N] h)
 if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H) && N > 0 && N <= 10)
-{
-    return poly_impl_base(g, h);
-}
+do {
+    alias Deg = typeof(return).DEGREE;
 
-///
-unittest
-{
+    return poly_impl(asGDN!Deg(g), map!(asGDN!Deg)(h[]));
+}
+/***/ unittest {
     assert(poly(GDN!1(3), [GDN!1(0), GDN!1(1), GDN!1(2)]) is GDN!1(21, 26));
-    assert(poly(GDN!2(-1), [-2., -3., 4.]) is GDN!2(5, -11, 8));
+
+    static real[2] e = [2, 3];
+    assert(poly(GDN!2(-2), e) is GDN!2(-4, 3, 0));
 }
-
-unittest
-{
-    import std.format;
-
+unittest {
     assert(typeof(poly(GDN!1(0), [GDN!2(-1)])).DEGREE == 1);
     assert(typeof(poly(GDN!3(-2), [GDN!1(-3), GDN!1(4)])).DEGREE == 1);
 
-    static GDN!3[2] e = [GDN!3(2), GDN!3(3)];
+    static a = [GDN!2(1)];
+    assert(typeof(poly(GDN!1(2), a)).DEGREE == 1);
+    assert(typeof(poly(GDN!3(2), a)).DEGREE == 2);
 
-    const r = poly(GDN!2(-2), e);
-    assert(typeof(r).DEGREE == 2, format("%s", r));
+    assert(poly(1, [GDN!1(2)]) is GDN!1(2));
+    assert(poly(GDN!2(-1), [-2., -3., 4.]) is GDN!2(5, -11, 8));
 }
 
 // Taken from std.math.algebraic.polyImplBase
-private pragma(inline, true) pure nothrow @nogc @safe
-CommonGDN!(G, H) poly_impl_base(G, H)(in G g, in H[] h)
-if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
-{
-    alias Deg = typeof(return).DEGREE;
+private pure nothrow @nogc @safe GDN!Deg
+poly_impl(ulong Deg, Range)(in GDN!Deg g, Range h)
+do {
+    if (isNaN(g) || any!isNaN(h)) return nanCombine!Deg(chain(only(g), h));
 
     ptrdiff_t n = h.length;
     --n;
     auto acc = asGDN!Deg(h[n]);
     while (--n >= 0) {
-        acc = acc * asGDN!Deg(g) + asGDN!Deg(h[n]);
+        acc = acc*g + asGDN!Deg(h[n]);
     }
 
     return acc;
 }
-
-unittest
-{
+unittest {
     import std.format: format;
+    import std.math: NaN;
 
-    const f = poly_impl_base(0, [GDN!1(-1)]);
+    assert(poly_impl(GDN!1(NaN(1), NaN(2)), [GDN!1(NaN(3))]) is GDN!1(NaN(3), NaN(2)));
+
+    const f = poly_impl(GDN!1.zero, [GDN!1(-1)]);
     assert(f is GDN!1(-1), format("f = %s", f));
     // f = <-1,1>
 
-    const w = poly_impl_base(GDN!1(1), [2]);
+    const w = poly_impl(GDN!1(1), [GDN!1.mkConst(2)]);
     assert(w is GDN!1(2, 0), format("w = %s", w));
 
-    const q = poly_impl_base(GDN!2(2), [GDN!2(-2), GDN!2(-3), GDN!2(4)]);
+    const q = poly_impl(GDN!2(2), [GDN!2(-2), GDN!2(-3), GDN!2(4)]);
     assert(q is GDN!2(8, 20, 18), format("q = %s", q));
     // q = h0 + h1*g + h2*g^2
     // q' = h'0 + h'1*g + h1*g' + h'2*g^2 + 2*h2*g*g'
@@ -404,8 +396,10 @@ unittest
  *   The GDN object whose value is the next power of 2 after `g`.
  */
 pure nothrow @nogc @safe GDN!Deg nextPow2(ulong Deg)(in GDN!Deg g)
-out (f; f == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextPow2")
-{
+out (f; isNaN(f) || f == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextPow2")
+do {
+    if (isNaN(g)) return g;
+
     const lg_abs_g = log2(fabs(g));
 
     auto power = ceil(lg_abs_g);
@@ -413,19 +407,17 @@ out (f; f == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextP
         power = power + 1;
     }
 
-    return  sgn(g) * 2^^power;
+    return sgn(g) * 2^^power;
 }
-
-///
-unittest
-{
+/***/ unittest {
     assert(nextPow2(GDN!1(3)) is GDN!1(4, 0));
     assert(nextPow2(GDN!1(1)) is GDN!1(2, real.infinity));
 }
-
-unittest
-{
+unittest {
     import std.format: format;
+    import std.math: NaN;
+
+    assert(nextPow2(GDN!1(NaN(3))) is GDN!1(NaN(3)));
 
     const e = GDN!1(-1);
     const r = nextPow2(e);
@@ -492,20 +484,19 @@ unittest
  *   `g` truncated to a power of 2
  */
 pure nothrow @nogc @safe GDN!Deg truncPow2(ulong Deg)(in GDN!Deg g)
-out (f; f == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")
-{
+out (f; isNaN(f) || f == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")
+do {
+    if (isNaN(g)) return g;
     return  sgn(g) * 2^^floor(log2(fabs(g)));
 }
-
-///
-unittest
-{
+/***/ unittest {
     assert(truncPow2(GDN!1(3)) is GDN!1(2, 0));
     assert(truncPow2(GDN!1(1)) is GDN!1(1, real.infinity));
 }
+unittest {
+    import std.math: NaN;
 
-unittest
-{
+    assert(truncPow2(GDN!1(NaN(2))) is GDN!1(NaN(2)));
     assert(truncPow2(GDN!1(-1)) is GDN!1(-1, real.infinity));
     assert(truncPow2(GDN!1(+0.)) is GDN!1(+0., real.nan));
     assert(truncPow2(GDN!1(-0.)) is GDN!1(-0., real.nan));
