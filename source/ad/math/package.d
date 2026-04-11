@@ -15,6 +15,7 @@ public import ad.math.exponential;
 public import ad.math.operations;
 public import ad.math.remainder;
 public import ad.math.rounding;
+public import ad.math.special;
 public import ad.math.traits;
 public import ad.math.trigonometry;
 
