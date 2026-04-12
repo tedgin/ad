@@ -8,6 +8,7 @@ module ad.math;
 
 public import core.math: toPrec, yl2x, yl2xp1;
 public import std.math;
+
 public import ad.core;
 public import ad.math.algebraic;
 public import ad.math.constants;
@@ -26,7 +27,6 @@ import std.math.constants: LN2;
 import std.traits: isFloatingPoint, Select;
 
 import ad.math.internal: areAll, asGDN, CommonGDN, isGDN, isGDNOrReal, isOne, signbit;
-
 
 /**
  * This function rounds the value of a `GDN` to a given floating point type removing all derivative
@@ -50,6 +50,7 @@ F toPrec(F, ulong Deg)(in GDN!Deg g) if (isFloatingPoint!F)
 ///
 unittest
 {
+    assert(toPrec!float(GDN!1(-NaN(1))) is float(-NaN(1)));
     assert(typeid(toPrec!float(GDN!1.zero)) == typeid(float));
 }
 
@@ -74,7 +75,17 @@ pragma(inline, true) pure nothrow @nogc @safe
 CommonGDN!(G, H) yl2x(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
-    return yl2x_impl(asGDN!Deg(g), asGDN!Deg(h));
+
+    const gg = asGDN!Deg(g);
+    const hh = asGDN!Deg(h);
+
+// XXX - Due to https://github.com/dlang/dmd/issues/18223, both
+//       std.math.internal.isNaN and std.math.traits.isNaN are visible in this
+//       module
+//     if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
+    if (ad.math.traits.isNaN(gg) || ad.math.traits.isNaN(hh)) return nanCombine(gg, hh);
+// XXX - ^^^
+    return yl2x_impl(gg, hh);
 }
 
 ///
@@ -90,6 +101,7 @@ unittest
 
 unittest
 {
+    assert(yl2x(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
     assert(yl2x(1, GDN!1(2)) is GDN!1(0, 0));
 }
 
@@ -108,7 +120,12 @@ private pure nothrow @nogc @safe GDN!Deg yl2x_impl(ulong Deg)(in GDN!Deg g, in G
 
 unittest
 {
-    assert(isNaN(yl2x(GDN!1(-1), GDN!1(1)).val));
+// XXX - Due to https://github.com/dlang/dmd/issues/18223, both
+//       std.math.internal.isNaN and std.math.traits.isNaN are visible in this
+//       module
+//    assert(isNaN(yl2x(GDN!1(-1), GDN!1(1))));
+    assert(ad.math.traits.isNaN(yl2x(GDN!1(-1), GDN!1(1))));
+// XXX - ^^^
 
     const f = yl2x(GDN!1(0), GDN!1(1));
     assert(f == -real.infinity && isNaN(f.d));
@@ -143,7 +160,17 @@ pragma(inline, true) pure nothrow @nogc @safe
 CommonGDN!(G, H) yl2xp1(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
-    return yl2xp1_impl(asGDN!Deg(g), asGDN!Deg(h));
+
+    const gg = asGDN!Deg(g);
+    const hh = asGDN!Deg(h);
+
+// XXX - Due to https://github.com/dlang/dmd/issues/18223, both
+//       std.math.internal.isNaN and std.math.traits.isNaN are visible in this
+//       module
+//     if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
+    if (ad.math.traits.isNaN(gg) || ad.math.traits.isNaN(hh)) return nanCombine(gg, hh);
+// XXX - ^^^
+    return yl2xp1_impl(gg, hh);
 }
 
 ///
@@ -158,6 +185,7 @@ unittest
 
 unittest
 {
+    assert(yl2xp1(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
     assert(yl2xp1(0, GDN!1(1)) is GDN!1(0, 0));
 }
 
@@ -176,8 +204,6 @@ private pure nothrow @nogc @safe GDN!Deg yl2xp1_impl(ulong Deg)(in GDN!Deg g, in
 
 unittest
 {
-    import std.math: isNaN, LN2;
-
     assert(yl2xp1_impl(GDN!2(0), GDN!2(1)) is GDN!2(0, 1/LN2, 1/LN2));
     // f = 0
     // <f',f"> = h'lg(g+1) + hg'/[ln(2)(g+1)]

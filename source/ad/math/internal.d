@@ -13,7 +13,6 @@ import std.traits: fullyQualifiedName, isImplicitlyConvertible, isIntegral, Sele
 
 import ad.core;
 
-
 /*
  * General shared internals
  */
@@ -188,7 +187,7 @@ package
 {
     pure nothrow @nogc @safe  GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
     do {
-        if (isNaN(g.val)) return g;
+        if (isNaN(g)) return g;
 
         const dfdg = signbit(g) == 1 ? GDN!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
         return GDN!Deg(core.math.sqrt(g.val), dfdg * g.d);
@@ -215,7 +214,7 @@ package
     // The implementation of exp for GDN.
     pure nothrow @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
     do {
-        if (isNaN(g.val)) return g;
+        if (isNaN(g)) return g;
 
         static if (Deg == 1)
             alias exp_fn = std.math.exponential.exp;
@@ -234,7 +233,7 @@ package
     // The implementation of log2 for GDN.
     pure nothrow @nogc @safe GDN!Deg log2(ulong Deg)(in GDN!Deg g)
     do {
-        if (isNaN(g.val)) return g;
+        if (isNaN(g)) return g;
 
         const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN2*g.reduce());
         return GDN!Deg(std.math.exponential.log2(g.val), df * g.d);
@@ -284,20 +283,26 @@ package
     // The implementation of nextDown for GDN.
     pure nothrow @nogc @safe GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
     do {
+        if (isNaN(g)) return g;
         return GDN!Deg(std.math.operations.nextDown(g.val), g.d);
     }
     unittest {
-        assert(isNaN(nextDown(GDN!1.nan)));
+        import std.math: NaN;
+
+        assert(nextDown(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
     }
 
 
     // The implementation of nextUp for GDN.
     pure nothrow @nogc @safe GDN!Deg nextUp(ulong Deg)(in GDN!Deg g)
     do {
+        if (isNaN(g)) return g;
         return GDN!Deg(std.math.operations.nextUp(g.val), g.d);
     }
     unittest {
-        assert(isNaN(nextUp(GDN!1.nan)));
+        import std.math: NaN;
+
+        assert(nextUp(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
     }
 }
 
@@ -315,7 +320,7 @@ package
             pure nothrow @nogc @safe
             fn_deriv)
     do {
-        if (isNaN(g.val)) return g;
+        if (isNaN(g)) return g;
 
         static if (Deg == 1)
             mixin("const f_red = std.math.rounding." ~ Fn ~ "(g.reduce());");

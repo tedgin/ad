@@ -140,6 +140,8 @@ GDN!Deg nearbyint_impl(string impl, ulong Deg)(in GDN!Deg g)
 
 unittest
 {
+    import std.math: NaN;
+
     enum impl = "std.math.rounding.nearbyint";
 
     assert(nearbyint_impl!impl(GDN!1.infinity) is GDN!1(real.infinity, real.nan));
@@ -149,6 +151,8 @@ unittest
 
     assert(nearbyint_impl!impl(GDN!1(-0.)) is GDN!1(-0., 0));
     assert(nearbyint_impl!impl(GDN!1(+0.)) is GDN!1(+0., 0));
+
+    assert(nearbyint_impl!impl(GDN!1(NaN(1))) is GDN!1(NaN(1)));
 }
 
 
@@ -267,7 +271,11 @@ if (isOne!(isGDN, G, typeof(base))
 {
     alias Deg = typeof(return).DEGREE;
     enum b = asGDN!Deg(base);
-    return quantize_impl!round(asGDN!Deg(g), pow(b, exp));
+
+    const gg = asGDN!Deg(g);
+
+    if (isNaN(b) ||isNaN(gg)) return nanCombine(b, gg);
+    return quantize_impl!round(gg, pow(b, exp));
 }
 
 /// ditto
@@ -277,7 +285,12 @@ if (isOne!(isGDN, G, typeof(base))
     && (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base))))
 {
     alias Deg = typeof(return).DEGREE;
-    enum unit = pow(asGDN!Deg(base), exp);
+    enum b = asGDN!Deg(base);
+    enum unit = pow(b, exp);
+
+    const gg = asGDN!Deg(g);
+
+    if (isNaN(b) || isNaN(gg)) return nanCombine(b, gg);
     return quantize_impl!round(asGDN!Deg(g), unit);
 }
 
@@ -297,6 +310,10 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
+
+    assert(quantize!(GDN!1(NaN(1), NaN(3)))(GDN!1(NaN(4), NaN(2)), 0) is GDN!1(NaN(4),NaN(3)));
+    assert(quantize!(GDN!1(NaN(1), NaN(3)))(GDN!1(NaN(4), NaN(2))) is GDN!1(NaN(4), NaN(3)));
 }
 
 private pragma(inline, true)

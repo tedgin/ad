@@ -3,9 +3,9 @@ module ad.math.operations;
 
 static import std.math.operations;
 
-import std.algorithm: min;
+import std.algorithm: any, min;
 import std.math: abs, isNaN;
-import std.range: ElementType, empty, front, isInputRange, popFront;
+import std.range: ElementType, empty, front, isInputRange, only, popFront;
 import std.traits: isImplicitlyConvertible, Select;
 
 static import ad.math.internal;
@@ -300,7 +300,12 @@ CommonGDN!(G, H) fdim(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
 {
     alias Deg = typeof(return).DEGREE;
 
-    const gmh = asGDN!Deg(g) - asGDN!Deg(h);
+    const gg = asGDN!Deg(g);
+    const hh = asGDN!Deg(h);
+
+    if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
+
+    const gmh = gg - hh;
     if (signbit(gmh) == 1 && !isNaN(gmh.val)) return GDN!Deg.zero;
     return gmh;
 }
@@ -322,6 +327,12 @@ unittest
     assert(fdim(GDN!1(2) ,GDN!1(0)) is GDN!1(2, 0));
     assert(fdim(GDN!2(-2), GDN!2(0)) is GDN!2.zero);
     assert(isNaN(fdim(GDN!1.nan, GDN!1(2)).val));
+
+    const nan1 = std.math.operations.NaN(1);
+    const nan2 = std.math.operations.NaN(2);
+    const nan3 = std.math.operations.NaN(3);
+    const nan4 = std.math.operations.NaN(4);
+    assert(fdim(GDN!1(nan1, nan3), GDN!1(nan4, nan2)) is GDN!1(nan4, nan3));
 }
 
 
@@ -352,6 +363,8 @@ if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
     const hh = asGDN!Deg(h);
     const ii = asGDN!Deg(i);
 
+    if (any!(isNaN!Deg)(only(gg, hh, ii))) return nanCombine(gg, hh, ii);
+
     return GDN!Deg(
         std.math.operations.fma(gg.val, hh.val, ii.val), gg.d*hh.val + gg.val*hh.d + ii.d);
 }
@@ -360,6 +373,14 @@ if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
 unittest
 {
     assert(fma(GDN!1(2), GDN!2(3), 4) is GDN!1(10, 5));
+
+    const nan1 = std.math.operations.NaN(1);
+    const nan2 = std.math.operations.NaN(2);
+    const nan3 = std.math.operations.NaN(3);
+    const nan4 = std.math.operations.NaN(4);
+    const nan5 = std.math.operations.NaN(5);
+    const nan6 = std.math.operations.NaN(6);
+    assert(fma(GDN!1(nan1, nan2), GDN!1(nan3, nan5), GDN!1(nan6, nan4)) is GDN!1(nan6, nan5));
 }
 
 
@@ -391,7 +412,7 @@ CommonGDN!(G, H) fmax(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
-    if (isNaN(gg.val) || isNaN(hh.val)) return nanCombine(gg, hh);
+    if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
     return gg >= hh ? gg : hh;
 }
 
@@ -406,6 +427,12 @@ unittest
     assert(fmax(GDN!1(2), GDN!1(3)) is GDN!1(3));
     assert(fmax(GDN!1(2), 3) is GDN!1(3, 0));
     assert(fmax(2, GDN!1(3)) is GDN!1(3));
+
+    const nan1 = std.math.operations.NaN(1);
+    const nan2 = std.math.operations.NaN(2);
+    const nan3 = std.math.operations.NaN(3);
+    const nan4 = std.math.operations.NaN(4);
+    assert(fmax(GDN!1(nan1, nan3), GDN!1(nan4, nan2)) is GDN!1(nan4, nan3));
 }
 
 
@@ -452,6 +479,12 @@ unittest
     assert(fmin(GDN!1(2), GDN!1(3)) is GDN!1(2));
     assert(fmin(GDN!1(2), 3) is GDN!1(2));
     assert(fmin(2, GDN!1(3)) is GDN!1(2, 0));
+
+    const nan1 = std.math.operations.NaN(1);
+    const nan2 = std.math.operations.NaN(2);
+    const nan3 = std.math.operations.NaN(3);
+    const nan4 = std.math.operations.NaN(4);
+    assert(fmax(GDN!1(nan1, nan3), GDN!1(nan4, nan2)) is GDN!1(nan4, nan3));
 }
 
 
@@ -473,6 +506,9 @@ unittest
 pure nothrow @nogc @safe GDN!Deg nextafter(H, ulong Deg)(in GDN!Deg g, in H h) if (isGDNOrReal!H)
 {
     const hh = asGDN!Deg(h);
+
+    if (isNaN(g) || isNaN(hh)) return nanCombine(g, hh);
+
     const f_val = std.math.operations.nextafter(g.val, hh.val);
 
     return GDN!Deg(
@@ -518,6 +554,12 @@ unittest
 
     const t = nextafter(GDN!1(real.infinity), GDN!1(real.infinity));
     assert(t == real.infinity && isNaN(t.d));
+
+    const nan1 = std.math.operations.NaN(1);
+    const nan2 = std.math.operations.NaN(2);
+    const nan3 = std.math.operations.NaN(3);
+    const nan4 = std.math.operations.NaN(4);
+    assert(nextafter(GDN!1(nan1, nan3), GDN!1(nan4, nan2)) is GDN!1(nan4, nan3));
 }
 
 

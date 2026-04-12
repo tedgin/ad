@@ -30,6 +30,7 @@ pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sin(ulong Deg)(in GDN!Deg 
     else
         alias cosine = cos;
 
+    if (isNaN(g)) return g;
     return GDN!Deg(core.math.sin(g.val), cosine(g.reduce())*g.d);
 }
 
@@ -41,9 +42,10 @@ unittest
 
 unittest
 {
-    import std.math: isClose, PI_2;
+    import std.math: isClose, NaN, PI_2;
     import ad.math.traits: isNaN;
 
+    assert(sin(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
     assert(sin(GDN!1.zero) is GDN!1.zero);
 
     const g = sin(GDN!1(PI_2));
@@ -77,6 +79,7 @@ pragma(inline, true) pure nothrow @nogc @safe GDN!Deg cos(ulong Deg)(in GDN!Deg 
     else
         alias sine = sin;
 
+    if (isNaN(g)) return g;
     return GDN!Deg(core.math.cos(g.val), -sine(g.reduce())*g.d);
 }
 
@@ -90,8 +93,10 @@ unittest
 
 unittest
 {
-    import std.math: isClose, PI_2;
+    import std.math: isClose, NaN, PI_2;
     import ad.math.traits: isNaN;
+
+    assert(cos(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 
     const g = cos(GDN!1(PI_2));
     assert(isClose(g.val, 0., 0., real.epsilon) && g.d == -1);
@@ -124,6 +129,7 @@ pure nothrow @nogc @safe GDN!Deg tan(ulong Deg)(in GDN!Deg g)
     else
         alias cosine = cos;
 
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/pow(cosine(g.reduce()), 2));
 }
 
@@ -138,8 +144,10 @@ unittest
 
 unittest
 {
-    import std.math: isClose, PI_4;
+    import std.math: isClose, NaN, PI_4;
     import ad.math.traits: isNaN;
+
+    assert(tan(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 
     const w = tan(GDN!1(PI_4));
     assert(w.val == 1 && isClose(w.d, 2.));
@@ -171,6 +179,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg asin(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.asin(g.val), g.d/sqrt(1 - pow(g.reduce(), 2)));
 }
 
@@ -186,9 +195,10 @@ unittest
 unittest
 {
     import std.format: format;
-    import std.math: PI_2;
+    import std.math: NaN, PI_2;
     import ad.math.traits: isNaN;
 
+    assert(asin(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
     assert(asin(GDN!1(-1)) is GDN!1(-PI_2, real.infinity));
     assert(isNaN(asin(GDN!1(2))));
 
@@ -218,6 +228,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg acos(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.acos(g.val), -g.d/sqrt(1 - pow(g.reduce(), 2)));
 }
 
@@ -232,9 +243,10 @@ unittest
 
 unittest
 {
-    import std.math: PI, PI_2;
+    import std.math: NaN, PI, PI_2;
     import ad.math.traits: isNaN;
 
+    assert(acos(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
     assert(acos(GDN!1(-1)) is GDN!1(PI, -real.infinity));
     assert(isNaN(acos(GDN!1(2))));
     assert(acos(GDN!2(0)) is GDN!2(PI_2, -1, 0));
@@ -255,6 +267,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg atan(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.atan(g.val), g.d/(1 + pow(g.reduce(), 2)));
 }
 
@@ -266,8 +279,9 @@ unittest
 
 unittest
 {
-    import std.math: PI_2;
+    import std.math: NaN, PI_2;
 
+    assert(atan(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
     assert(atan(GDN!1(real.infinity)) is GDN!1(PI_2, +0.));
     assert(atan(GDN!1(-real.infinity)) is GDN!1(-PI_2, +0.));
     assert(atan(GDN!2(0)) is GDN!2(0, 1, 0));
@@ -298,6 +312,8 @@ CommonGDN!(G, H) atan2(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(
     const gg_red = gg.reduce();
     const hh_red = hh.reduce();
 
+    if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
+
     RGDN.DerivType!1 df;
     if (isFinite(gg) && isInfinity(hh)) {
         if (isFinite(gg.d) && isFinite(hh.d)) {
@@ -326,7 +342,9 @@ unittest
 unittest
 {
     import std.format: format;
-    import std.math: isNaN, PI, PI_2, PI_4;
+    import std.math: isNaN, NaN, PI, PI_2, PI_4;
+
+    assert(atan2(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
 
     assert(atan2(GDN!2(-1), GDN!2(1)) is GDN!2(-PI_4, 1, 0));
     // <f',f"> = (<1,0><1,1> - <-1,1><1,0>) / (<1,1>^2 + <-1,1>^2)
@@ -410,6 +428,7 @@ pure nothrow @nogc @safe GDN!Deg sinh(ulong Deg)(in GDN!Deg g)
     else
         alias ch = cosh;
 
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.sinh(g.val), ch(g.reduce())*g.d);
 }
 
@@ -422,7 +441,9 @@ unittest
 
 unittest
 {
-    import std.math: E;
+    import std.math: E, NaN;
+
+    assert(sinh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 
     assert(sinh(GDN!2(1)) is GDN!2((E - 1/E)/2, (E + 1/E)/2, (E - 1/E)/2));
     // <f',f"> = cosh(<1,1>)<1,0> = <cosh(1),sinh(1)1> = <(E + 1/E)/2,(E - 1/E)/2>
@@ -448,6 +469,7 @@ pure nothrow @nogc @safe GDN!Deg cosh(ulong Deg)(in GDN!Deg g)
     else
         alias sh = sinh;
 
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.cosh(g.val), sh(g.reduce())*g.d);
 }
 
@@ -459,8 +481,9 @@ unittest
 
 unittest
 {
-    import std.math: E;
+    import std.math: E, NaN;
 
+    assert(cosh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
     assert(cosh(GDN!2(1)) is GDN!2((E + 1/E)/2, (E - 1/E)/2, (E + 1/E)/2));
 }
 
@@ -484,6 +507,7 @@ pure nothrow @nogc @safe GDN!Deg tanh(ulong Deg)(in GDN!Deg g)
     else
         alias ch = cosh;
 
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.tanh(g.val), g.d/pow(ch(g.reduce()), 2));
 }
 
@@ -495,7 +519,9 @@ unittest
 
 unittest
 {
-    import std.math: isClose;
+    import std.math: isClose, NaN;
+
+    assert(tanh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 
     const g = GDN!2(1);
     const f1 = tanh(g);
@@ -520,6 +546,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg asinh(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.asinh(g.val), g.d/sqrt(pow(g.reduce(), 2) + 1));
 }
 
@@ -531,6 +558,10 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
+
+    assert(asinh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
+
     assert(asinh(GDN!2(-0.)) is GDN!2(-0., 1, 0));
     // <f',f"> = <1,0> / sqrt(1 + <-0,1>^2)
     //         = <1,0> / sqrt(1 + <+0,-0>)
@@ -554,6 +585,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg acosh(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.acosh(g.val), g.d / sqrt(pow(g.reduce(), 2) - 1));
 }
 
@@ -566,6 +598,10 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
+
+    assert(acosh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
+
     assert(
         acosh(GDN!2(2, 3, 1))
         is GDN!2(std.math.trigonometry.acosh(2.0L), sqrt(3.0L), -5*sqrt(3.0L)/3));
@@ -595,6 +631,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg atanh(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
+
     GDN!Deg.DerivType!1 df;
     if (abs(g) < 1) {
         df =  g.d/(1 - pow(g.reduce(), 2));
@@ -617,8 +655,10 @@ unittest
 
 unittest
 {
-    import std.math: isNaN;
+    import std.math: isNaN, NaN;
     import ad.math.traits: sgn;
+
+    assert(atanh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 
     const q = atanh(GDN!1(-1));
     assert(sgn(q) == -1 && isInfinity(q) && isNaN(q.d));

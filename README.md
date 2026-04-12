@@ -21,3 +21,8 @@ To be continued ...
 ## Building
 
 To be continued ...
+
+TODO: replace isOne and areAll (completed core)
+TODO: format everything (completed core, internal, algebraic, constants)
+TODO: verify imports (completed core)
+TODO: document modules and package

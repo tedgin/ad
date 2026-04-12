@@ -88,6 +88,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg gamma(ulong Deg)(in GDN!Deg g)
 {
+   if (isNaN(g)) return g;
+
     const g_red = g.reduce();
 
     static if (Deg == 1) {
@@ -112,6 +114,7 @@ unittest
 unittest
 {
     import std.format: format;
+    import std.math: NaN;
 
     assert(gamma(GDN!1(2, 3)) is GDN!1(1, 3*std.mathspecial.digamma(2)));
 
@@ -142,6 +145,8 @@ unittest
     // <f',f"> = Γ(<3,1>)Ψ(<3,1>)<1,0>
     //         = <2,2Ψ(3)><Ψ(3),Ψ₁(3)><1,0>
     //         = <2Ψ(3),2Ψ²(3)+2Ψ₁(3)>
+
+    assert(gamma(GDN!1(NaN(2), NaN(1))) is GDN!1(NaN(2), NaN(1)));
 }
 
 
@@ -159,6 +164,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg logGamma(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
+
     static if (Deg == 1)
         const df = std.mathspecial.digamma(g.reduce());
     else
@@ -178,7 +185,7 @@ unittest
 unittest
 {
     import std.format: format;
-    import std.math: log;
+    import std.math: log, NaN;
 
     assert(logGamma(GDN!1(3, 4)) is GDN!1(log(2.0L), 4*std.mathspecial.digamma(3)));
 
@@ -196,6 +203,8 @@ unittest
     const r = GDN!2(log(24.0L), std.mathspecial.digamma(5), ad.math.polygamma.polygamma!1(5));
     assert(logGamma(GDN!2(5)) == r);
     // <f',f"> = Ψ(<5,1>)*<1,0> = <Ψ(5), Ψ₁(5)>
+
+    assert(logGamma(GDN!1(NaN(2), NaN(1))) is GDN!1(NaN(2), NaN(1)));
 }
 
 
@@ -215,6 +224,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg sgnGamma(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
+
     const f = std.mathspecial.sgnGamma(g.val);
 
     real df;
@@ -242,6 +253,8 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
+
 // NB: This fails because of https://github.com/dlang/phobos/issues/10801, fixed in stable
 //     const g = sgnGamma(GDN!1(-0.5));
 //     assert(g == -1 && g.d == 0);
@@ -251,6 +264,8 @@ unittest
 
     const i = sgnGamma(GDN!1(-1));
     assert(isNaN(i.val) && isNaN(i.d));
+
+    assert(sgnGamma(GDN!1(NaN(2), NaN(1))) is GDN!1(NaN(2), NaN(1)));
 }
 
 
@@ -287,6 +302,8 @@ CommonGDN!(G, H) beta(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(i
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
 
+    if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
+
     const g_red = gg.reduce();
     const h_red = hh.reduce();
     const f_red = B(g_red, h_red);
@@ -310,7 +327,7 @@ unittest
     // Ψ₁(n) = 𝜋²/6 - ∑ᵢ₌₁ⁿ⁻¹(1/i²)
 
     import std.format: format;
-    import std.math: isClose;
+    import std.math: isClose, NaN;
 
     assert(beta(GDN!1(1), 2) is GDN!1(0.5, -0.75));
 
@@ -451,6 +468,8 @@ unittest
 
     const v = beta(GDN!1.nan, GDN!1(1));
     assert(isNaN(v.val) && isNaN(v.d));
+
+    assert(beta(GDN!1(NaN(1), NaN(3)), GDN!1(NaN(4), NaN(2))) is GDN!1(NaN(4), NaN(3)));
 }
 
 
@@ -469,6 +488,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg digamma(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
+
     static if (Deg == 1)
         const df = ad.math.polygamma.polygamma!1(g.reduce());
     else
@@ -495,6 +516,7 @@ unittest
 unittest
 {
     import std.format: format;
+    import std.math: NaN;
 
     const e = GDN!1(std.mathspecial.digamma(2), 3*ad.math.polygamma.polygamma!1(2));
     assert(digamma(GDN!1(2, 3)) is e);
@@ -519,6 +541,7 @@ unittest
         ad.math.polygamma.polygamma!2(2));
 
     assert(digamma(GDN!2(2)) is w);
+    assert(digamma(GDN!1(NaN(1))) is GDN!1(NaN(1)));
 }
 
 
@@ -536,8 +559,10 @@ unittest
  *   a GDN representing the natural logarithm of g minus digamma of g.
  */
 pure nothrow @nogc @safe GDN!Deg logmdigamma(ulong Deg)(in GDN!Deg g)
-in(signbit(g) == 0, "the argument must be positive")
+in(signbit(g) == 0 || isNaN(g), "the argument must be positive")
 do {
+    if (isNaN(g)) return g;
+
     const f = std.mathspecial.logmdigamma(g.val);
     const g_red = g.reduce();
 
@@ -565,7 +590,7 @@ unittest
 unittest
 {
     import std.format: format;
-    import std.math: isClose;
+    import std.math: isClose, NaN;
     import ad.math: log;
 
     const w = logmdigamma(GDN!1(+0.));
@@ -580,6 +605,8 @@ unittest
     assert(isClose(e_act.val, e_exp.val));
     assert(isClose(e_act.d.val, e_exp.d.val, 10*real.epsilon));
     assert(e_act.d!2 == e_exp.d!2);
+
+    assert(logmdigamma(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 }
 
 
@@ -600,6 +627,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg logmdigammaInverse(ulong Deg)(in GDN!Deg f)
 {
+    if (isNaN(f)) return f;
+
     static if (Deg == 1) {
         alias ln_m_digamma_inv = std.mathspecial.logmdigammaInverse;
         alias trigamma = ad.math.polygamma.polygamma!1;
@@ -647,10 +676,12 @@ unittest
 unittest
 {
     import std.format: format;
-    import std.math: isClose;
+    import std.math: isClose, NaN;
 
     const γ = 0.577_215_664_901_532_860_607L;
     const ζ3 = 1.202_056_903_159_594_285_400L;
+
+    assert(logmdigammaInverse(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 
     const q = logmdigammaInverse(GDN!1(+0.0L));
     // g = +∞
@@ -1423,6 +1454,7 @@ in {
     assert(isNaN!Deg(g) || (g >= 0 && g <= 1), "the argument must be in [0,1]");
 }
 do {
+    if (any!(std.math.isNaN)(only(a, b, g.val))) return nanCombine(g, asGDN!Deg(a), asGDN!Deg(b));
     return GDN!Deg(std.mathspecial.betaIncomplete(a, b, g.val), betaIncompleteDeriv(a, b, g)*g.d);
 }
 
@@ -1435,6 +1467,9 @@ unittest
 unittest
 {
     import std.format: format;
+    import std.math: NaN;
+
+    assert(betaIncomplete(NaN(1), NaN(2), GDN!1(-NaN(2), NaN(3))) is GDN!1(-NaN(2), NaN(3)));
 
     const g = GDN!1(0.5L, 0.5L);
     const a = betaIncomplete(2, 2, g);
@@ -1467,6 +1502,7 @@ unittest
 //     assert(isNaN!Deg(g) || (g >= 0 && g <= 1), "the argument must be in [0,1]");
 // }
 // do {
+//     if (any!(std.math.isNaN)(only(a, b, g.val))) return nanCombine(g, asGDN!Deg(a), asGDN!Deg(b));
 //     return GDN!Deg(
 //         std.mathspecial.betaIncompleteCompl(a, b, g.val), -betaIncompleteDeriv(a, b, g)*g.d);
 // }
@@ -1484,6 +1520,9 @@ unittest
 //
 // unittest
 // {
+//     import std.math: NaN;
+//
+//     assert(betaIncompleteCompl(NaN(1), NaN(2), GDN!1(-NaN(2), NaN(3))) is GDN!1(-NaN(2), NaN(3)));
 //     assert(betaIncompleteCompl(1, 1, GDN!1(0.5L, 2)) is GDN!1(0.5L, -2));
 // }
 
@@ -1511,6 +1550,8 @@ in {
     assert(isNaN!Deg(Ig) || (Ig >= 0 && Ig <= 1), "the argument must be in [0,1]");
 }
 do {
+    if (any!(std.math.isNaN)(only(a, b, Ig.val))) return nanCombine(Ig, asGDN!Deg(a), asGDN!Deg(b));
+
     static if (Deg == 1)
         alias Ig_inv = std.mathspecial.betaIncompleteInverse;
     else
@@ -1532,6 +1573,9 @@ unittest
 unittest
 {
     import std.format: format;
+    import std.math: NaN;
+
+    assert(betaIncompleteInverse(NaN(1), NaN(2), GDN!1(-NaN(2), NaN(3))) is GDN!1(-NaN(2), NaN(3)));
 
     const a = betaIncompleteInverse(0.5L, 1, GDN!1(0, real.infinity));
     assert(a == 0.0L && isNaN(a.d));

@@ -53,6 +53,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg exp2(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
+
     static if (Deg == 1)
         alias exp2_fn = std.math.exponential.exp2;
     else
@@ -70,6 +72,10 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
+
+    assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
+
     assert(exp2(GDN!2(2)) is GDN!2(4, 4*LN2, 4*LN2^^2));
     // f = 2^2 = 4
     // <f',f"> = 2^<2,1> * <1,0> * ln(2)
@@ -92,6 +98,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg expm1(ulong Deg)(in GDN!Deg g)
 {
+    if (isNaN(g)) return g;
+
     static if (Deg == 1)
         alias exp_fn = std.math.exponential.exp;
     else
@@ -108,6 +116,9 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
+
+    assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
     assert(expm1(GDN!2(1)) is GDN!2(E-1, E, E));
 }
 
@@ -122,21 +133,12 @@ unittest
  *
  * Returns:
  *   A `GDN` object representing the significand of `g`.
- *
- * Special cases:
- *   - If `g` is ±0, then `f` is ±0, `f.d` is NaN, and `e` is 0.
- *   - If `g` is +∞, then `f` is +∞, `f.d` is NaN, and `e` is `int.max`.
- *   - If `g` is -∞, then `f` is -∞, `f.d` is NaN, and `e` is `int.min`.
- *   - If `g` is ±NaN, then `f` is ±NaN, `f.d` is NaN, and `e` is `int.min`.
  */
 pure nothrow @nogc @safe GDN!Deg frexp(ulong Deg)(in GDN!Deg g, out int e)
 {
     std.math.exponential.frexp(g.val, e);
-
-    if (g == 0.0L || isInfinity(g) || isNaN(g)) {
-        return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv());
-    }
-
+    if (isNaN(g)) return g;
+    if (g == 0.0L || isInfinity(g)) return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv());
     return g * 2.0L ^^ -e;
 }
 
@@ -151,6 +153,7 @@ unittest
 unittest
 {
     import std.format: format;
+    import std.math: NaN;
 
     int e;
 
@@ -166,8 +169,8 @@ unittest
     const t = frexp(GDN!1(-real.infinity), e);
     assert(t == -real.infinity && isNaN(r.d) && e == int.min);
 
-    const y = frexp(GDN!1(real.nan), e);
-    assert(signbit(y) == 0 && isNaN(y) && isNaN(y.d) && e == int.min);
+    const y = frexp(GDN!1(-NaN(2)), e);
+    assert(y is GDN!1(-NaN(2)) && e == int.min);
 
     const u = frexp(GDN!1(-real.nan), e);
     assert(u is GDN!1(-real.nan, real.nan) && e == int.min);
@@ -215,6 +218,7 @@ unittest
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
 {
     alias ldexp_red = Select!(Deg == 1, core.math.ldexp, ldexp);
+    if (isNaN(g)) return g;
     return GDN!Deg(core.math.ldexp(g.val, c), ldexp_red(g.d, c));
 }
 
@@ -222,6 +226,13 @@ pragma(inline, true) pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!De
 unittest
 {
     assert(ldexp(GDN!2(1), 2) is GDN!2(4, 4, 0));
+}
+
+unittest
+{
+    import std.math: NaN;
+
+    assert(ldexp(GDN!1(NaN(2)), 1) is GDN!1(NaN(2)));
 }
 
 
@@ -422,6 +433,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in I n, in GDN!Deg g) if (isIntegral!I)
 {
+    if (isNaN(g)) return g;
+
     static if (Deg == 1) {
         const f_val = std.math.exponential.pow(n, g.val);
         return GDN!Deg(f_val, f_val * g.d * std.math.exponential.log(cast(real)n));
@@ -442,6 +455,7 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
     import ad.math.operations: isClose;
 
     const ln3 = std.math.exponential.log(3.);
@@ -452,6 +466,8 @@ unittest
     //         = <1,2ln(3)> * <2,4> * 3ln(3)
     //         = <2,4ln(3) + 4> * 3ln(3)
     //         = <6ln(3), 12ln(3)(ln(3)+1)>
+
+    assert(pow(5, GDN!1(NaN(2))) is GDN!1(NaN(2)));
 }
 
 /**
@@ -494,6 +510,8 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg scalbn(ulong Deg)(in GDN!Deg g, in int n)
 {
+    if (isNaN(g)) return g;
+
     static if (Deg == 1)
         alias dev_scale = std.math.exponential.scalbn;
     else
@@ -510,5 +528,8 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
+
     assert(scalbn(GDN!2(2048, 1, 2), -10) is GDN!2(2, 1.0L/1024, 1.0L/512));
+    assert(scalbn(GDN!1(-NaN(3)), 0) is GDN!1(-NaN(3)));
 }

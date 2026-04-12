@@ -58,6 +58,8 @@ nothrow @nogc @safe GDN!Deg modf(ulong Deg)(in GDN!Deg g, out GDN!Deg i)
 {
     i = trunc(g);
 
+    if (isNaN(g)) return g;
+
     if (isInfinity(g)) {
         return GDN!Deg(sgn(g.val) * 0., GDN!Deg.mkNaNDeriv());
     }
@@ -81,6 +83,7 @@ unittest
 unittest
 {
     import std.format: format;
+    import std.math: NaN;
 
     GDN!1 i;
 
@@ -91,6 +94,8 @@ unittest
 
     const w = modf(GDN!1(real.infinity), i);
     assert(w is GDN!1(0., real.nan) && i is GDN!1(real.infinity, real.nan));
+
+    assert(modf(GDN!1(NaN(1)), i) is GDN!1(NaN(1)) && i is GDN!1(NaN(1)));
 }
 
 
@@ -145,6 +150,7 @@ unittest
 
 unittest
 {
+    import std.math: NaN;
     import ad.math.traits: isNaN;
 
     int n;
@@ -161,6 +167,8 @@ unittest
     assert(isNaN(remquo(GDN!1(real.infinity), GDN!1(1), n)));
     assert(isNaN(remquo(GDN!1(1), GDN!1(0), n)));
     assert(remquo(GDN!1(2), GDN!1(-real.infinity), n) is GDN!1(2));
+
+    assert(remquo(GDN!1(NaN(1), NaN(3)), GDN!1(NaN(4), NaN(2)), n) is GDN!1(NaN(4), NaN(3)));
 }
 
 
