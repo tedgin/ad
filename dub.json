@@ -10,7 +10,7 @@
 		"docs": {
 			"buildOptions": [ "syntaxOnly" ],
 			"dflags": ["-Dddocs", "ad.ddoc"],
-			"excludedSourceFiles": ["source/ad/math/impl.d"]
+			"excludedSourceFiles": ["source/ad/math/internal.d"]
 		}
 	}
 }
