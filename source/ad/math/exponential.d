@@ -5,14 +5,14 @@ static import core.math;
 static import std.math.exponential;
 
 import std.math: E, isInfinity, isNaN, LN10, LN2, sgn;
+import std.meta: allSatisfy, anySatisfy;
 import std.traits: isIntegral, Select;
 
 static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    areAll, areNone, asReal, CommonGDN, floor, isGDN, isGDNOrReal, isInfinity, isNaN, isOne, sgn,
-    signbit;
+    asReal, CommonGDN, floor, isGDN, isGDNOrReal, isInfinity, isNaN, sgn, signbit;
 
 
 /**
@@ -484,7 +484,7 @@ unittest
  */
 pragma(inline, true) pure nothrow @nogc @safe
 CommonGDN!(G, H) pow(G, H)(in G g, in H h)
-if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H) && areNone!(isIntegral, G, H))
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H) && !anySatisfy!(isIntegral, G, H))
 {
     return g^^h;
 }

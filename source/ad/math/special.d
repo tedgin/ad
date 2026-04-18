@@ -6,6 +6,7 @@ public import std.mathspecial;
 
 import std.algorithm: any;
 import std.math: exp, getNaNPayload, isInfinity, isNaN, M_2_SQRTPI, signbit, trunc;
+import std.meta: allSatisfy, anySatisfy;
 import std.range: only;
 import std.traits: select;
 
@@ -13,8 +14,7 @@ static import ad.math.polygamma;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, asReal, CommonGDN, dirac, exp, getNaNPayload, isGDN, isGDNOrReal, isOne, isNaN,
-    signbit, sgn;
+    asGDN, asReal, CommonGDN, dirac, exp, getNaNPayload, isGDN, isGDNOrReal, isNaN, signbit, sgn;
 
 
 private pure nothrow @nogc @safe GDN!Deg polygamma(ulong N, ulong Deg)(in GDN!Deg g) if (N > 0)
@@ -287,7 +287,8 @@ unittest
  *   $(MATH B(g,h)) as a `GDN`.
  */
 pure nothrow @nogc @safe
-CommonGDN!(G, H) beta(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+beta(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
 

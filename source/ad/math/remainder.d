@@ -4,10 +4,11 @@ module ad.math.remainder;
 static import std.math.remainder;
 
 import std.math: sgn;
+import std.meta: allSatisfy, anySatisfy;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, CommonGDN, isFinite, isGDN, isGDNOrReal, isInfinity, isNaN, isOne, round, trunc;
+    asGDN, CommonGDN, isFinite, isGDN, isGDNOrReal, isInfinity, isNaN, round, trunc;
 
 
 /**
@@ -26,7 +27,8 @@ import ad.math.internal:
  *   The remainder of `g` divided by `h`.
  */
 nothrow @nogc @safe
-CommonGDN!(G, H) fmod(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+fmod(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     return g % h;
 }
@@ -117,7 +119,7 @@ unittest
  */
 nothrow @nogc @safe
 CommonGDN!(G, H) remquo(G, H)(in G g, in H h, out int n)
-if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
 
@@ -188,7 +190,7 @@ unittest
  */
 nothrow @nogc @safe
 CommonGDN!(G, H) remainder(G, H)(in G g, in H h)
-if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     int _;
     return remquo(g, h, _);

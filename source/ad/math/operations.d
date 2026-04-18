@@ -5,14 +5,14 @@ static import std.math.operations;
 
 import std.algorithm: any, min;
 import std.math: abs, isNaN;
+import std.meta: allSatisfy, anySatisfy;
 import std.range: ElementType, empty, front, isInputRange, only, popFront;
 import std.traits: isImplicitlyConvertible, Select;
 
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal:
-    areAll, asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isNaN, isOne, sgn, signbit;
+import ad.math.internal: asGDN, asReal, CommonGDN, isGDN, isGDNOrReal, isNaN, sgn, signbit;
 
 
 /// The default relative difference for operations
@@ -38,7 +38,7 @@ enum real DEFAULT_REL_DIFF = 10.0L ^^ -((real.dig + 1)/2 + 1);
  *   otherwise.
  */
 pure nothrow @nogc @safe
-int cmp(X, Y)(in X x, in Y y) if (isOne!(isGDN, X, Y) && areAll!(isGDNOrReal, X, Y))
+int cmp(X, Y)(in X x, in Y y) if (anySatisfy!(isGDN, X, Y) && allSatisfy!(isGDNOrReal, X, Y))
 {
     static if (isImplicitlyConvertible!(X, real))
         alias Deg = Y.DEGREE;
@@ -145,7 +145,7 @@ unittest
  */
 pure nothrow @nogc @safe
 bool isClose(T, U)(in T lhs, in U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
-if (areAll!(isGDNOrReal, T, U) && isOne!(isGDN, T, U))
+if (allSatisfy!(isGDNOrReal, T, U) && anySatisfy!(isGDN, T, U))
 {
     return std.math.operations.isClose(asReal(lhs), asReal(rhs), maxRelDiff, maxAbsDiff);
 }
@@ -181,7 +181,7 @@ if (isInputRange!T && isGDNOrReal!(ElementType!T) && isGDNOrReal!U)
 /// ditto
 pure nothrow @nogc @safe
 bool isClose(T, U)(T lhs, U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
-if (areAll!(isInputRange, T, U) && areAll!(isGDNOrReal, ElementType!T, ElementType!U))
+if (allSatisfy!(isInputRange, T, U) && allSatisfy!(isGDNOrReal, ElementType!T, ElementType!U))
 {
     for(;; lhs.popFront(), rhs.popFront()) {
         if (lhs.empty) return rhs.empty;
@@ -296,7 +296,8 @@ unittest
  *   $(MATH f') may not be correct when $(MATH g = h).
  */
 pure nothrow @nogc @safe
-CommonGDN!(G, H) fdim(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+fdim(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
 
@@ -355,7 +356,7 @@ unittest
  *   the resulting generalized dual number
  */
 pure nothrow @nogc @safe CommonGDN!(G, H, I) fma(G, H, I)(in G g, in H h, in I i)
-if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
+if (anySatisfy!(isGDN, G, H, I) && allSatisfy!(isGDNOrReal, G, H, I))
 {
     alias Deg = typeof(return).DEGREE;
 
@@ -405,7 +406,8 @@ unittest
  *   $(MATH f') may not be correct when $(MATH g = h).
  */
 pure nothrow @nogc @safe
-CommonGDN!(G, H) fmax(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+fmax(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
 
@@ -457,7 +459,8 @@ unittest
  *   $(MATH f') may not be correct when $(MATH g = h).
  */
 pure nothrow @nogc @safe
-CommonGDN!(G, H) fmin(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+fmin(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
 

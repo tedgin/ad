@@ -23,10 +23,12 @@ public import ad.math.trigonometry;
 static import core.math;
 
 import std.algorithm: min;
-import std.math.constants: LN2;
+import std.math: LN2;
+import std.meta: allSatisfy, anySatisfy;
 import std.traits: isFloatingPoint, Select;
 
-import ad.math.internal: areAll, asGDN, CommonGDN, isGDN, isGDNOrReal, isOne, signbit;
+import ad.math.internal: asGDN, CommonGDN, isGDN, isGDNOrReal, signbit;
+
 
 /**
  * This function rounds the value of a `GDN` to a given floating point type removing all derivative
@@ -72,7 +74,8 @@ unittest
  *   `g` and `h`.
  */
 pragma(inline, true) pure nothrow @nogc @safe
-CommonGDN!(G, H) yl2x(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+yl2x(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
 
@@ -157,7 +160,8 @@ unittest
  *   `g` and `h`.
  */
 pragma(inline, true) pure nothrow @nogc @safe
-CommonGDN!(G, H) yl2xp1(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+yl2xp1(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
 

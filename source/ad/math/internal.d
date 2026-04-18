@@ -9,6 +9,7 @@ static import std.math.traits;
 
 import std.algorithm: min;
 import std.math: abs, isFinite, isNaN, LN2;
+import std.meta: allSatisfy, anySatisfy;
 import std.traits: fullyQualifiedName, isImplicitlyConvertible, isIntegral, Select, TemplateOf;
 
 import ad.core;
@@ -62,22 +63,6 @@ package
  */
 package
 {
-    // The implementation of areAll
-    enum bool areAll(alias Test, TS...) = {
-        auto res = true;
-        static foreach(T; TS)
-            static if (!Test!T) res = false;
-        return res;
-    }();
-
-    // The implementation of areNone
-    enum bool areNone(alias Test, TS...) = {
-        auto res = true;
-        static foreach(T; TS)
-            static if (Test!T) res = false;
-        return res;
-    }();
-
     // The implementation of isGDN
     enum bool isGDN(T) = fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN";
 
@@ -142,17 +127,8 @@ package
     }
 
 
-    // The implementation of isOne
-    enum bool isOne(alias Test, TS...) = {
-        auto res = false;
-        static foreach(T; TS)
-            static if (Test!T) res = true;
-        return res;
-    }();
-
-
     // The implementation of CommonGDN
-    template CommonGDN(G...) if (isOne!(isGDN, G) && areAll!(isGDNOrReal, G))
+    template CommonGDN(G...) if (anySatisfy!(isGDN, G) && allSatisfy!(isGDNOrReal, G))
     {
         alias CommonGDN = GDN!(minDeg!G);
     }

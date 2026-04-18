@@ -5,13 +5,13 @@ static import core.math;
 static import std.math.rounding;
 
 import std.math: FloatingPointControl, isInfinity, isNaN, nearbyint, signbit;
+import std.meta: allSatisfy, anySatisfy;
 import std.traits: arity, isIntegral, Parameters, ReturnType;
 
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal:
-    areAll, asGDN, CommonGDN, dirac, isGDN, isGDNOrReal, isOne, isNaN, nextDown, nextUp, pow;
+import ad.math.internal: asGDN, CommonGDN, dirac, isGDN, isGDNOrReal, isNaN, nextDown, nextUp, pow;
 
 
 /**
@@ -264,8 +264,8 @@ unittest
  *   The rounded `GDN` object.
  */
 CommonGDN!(G, typeof(base)) quantize(alias base, alias round=rint, G, I)(in G g, in I exp)
-if (isOne!(isGDN, G, typeof(base))
-    && areAll!(isGDNOrReal, G, typeof(base))
+if (anySatisfy!(isGDN, G, typeof(base))
+    && allSatisfy!(isGDNOrReal, G, typeof(base))
     && (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base)))
     && isIntegral!I)
 {
@@ -280,8 +280,8 @@ if (isOne!(isGDN, G, typeof(base))
 
 /// ditto
 CommonGDN!(G, typeof(base)) quantize(alias base, long exp=1, alias round=rint, G)(in G g)
-if (isOne!(isGDN, G, typeof(base))
-    && areAll!(isGDNOrReal, G, typeof(base))
+if (anySatisfy!(isGDN, G, typeof(base))
+    && allSatisfy!(isGDNOrReal, G, typeof(base))
     && (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base))))
 {
     alias Deg = typeof(return).DEGREE;

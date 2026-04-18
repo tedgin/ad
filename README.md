@@ -22,7 +22,7 @@ To be continued ...
 
 To be continued ...
 
-TODO: replace isOne and areAll (completed core)
+TODO: replace static if with Select/select where possible
 TODO: format everything (completed core, internal, algebraic, constants)
 TODO: verify imports (completed core)
 TODO: document modules and package

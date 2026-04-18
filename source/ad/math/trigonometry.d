@@ -5,10 +5,11 @@ static import core.math;
 static import std.math.trigonometry;
 
 import std.math: abs, isFinite, pow, sqrt;
+import std.meta: allSatisfy, anySatisfy;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, CommonGDN, isFinite, isGDN, isGDNOrReal, isInfinity, isNaN, isOne, pow, sqrt;
+    asGDN, CommonGDN, isFinite, isGDN, isGDNOrReal, isInfinity, isNaN, pow, sqrt;
 
 
 /**
@@ -303,7 +304,8 @@ unittest
  *   It returns the angle resulting from the arctan(g/h).
  */
 pure nothrow @nogc @safe
-CommonGDN!(G, H) atan2(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+atan2(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias RGDN = typeof(return);
 

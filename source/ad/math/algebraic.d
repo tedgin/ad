@@ -6,14 +6,14 @@ static import std.math.algebraic;
 
 import std.algorithm: any, map, min;
 import std.math: isInfinity;
+import std.meta: allSatisfy, anySatisfy;
 import std.range: chain, only;
 
 static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    areAll, asGDN, asReal, ceil, CommonGDN, floor, isGDN, isGDNOrReal, isNaN, isOne, log2, sgn,
-    signbit;
+    asGDN, asReal, ceil, CommonGDN, floor, isGDN, isGDNOrReal, isNaN, log2, sgn, signbit;
 
 
 /**
@@ -152,7 +152,8 @@ unittest {
  *   degrees of `g` and `h`.
  */
 pure nothrow @nogc @safe
-CommonGDN!(G, H) hypot(G, H)(in G g, in H h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+hypot(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 out(f; isNaN(f) || f >= 0)
 do {
     alias Deg = typeof(return).DEGREE;
@@ -220,7 +221,8 @@ unittest {
  */
 pure nothrow @nogc @safe
 CommonGDN!(G, H, I)
-hypot(G, H, I)(in G g, in H h, in I i) if (isOne!(isGDN, G, H, I) && areAll!(isGDNOrReal, G, H, I))
+hypot(G, H, I)(in G g, in H h, in I i)
+if (anySatisfy!(isGDN, G, H, I) && allSatisfy!(isGDNOrReal, G, H, I))
 out(f; isNaN(f) || f >= 0)
 do {
     alias Deg = typeof(return).DEGREE;
@@ -308,7 +310,8 @@ unittest {
  *   the degrees of `G` and `H`.
  */
 pure nothrow @nogc @safe
-CommonGDN!(G, H) poly(G, H)(in G g, in H[] h) if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H))
+CommonGDN!(G, H)
+poly(G, H)(in G g, in H[] h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 in(h.length > 0, "coefficient array cannot be empty")
 do {
     alias Deg = typeof(return).DEGREE;
@@ -318,7 +321,7 @@ do {
 /// ditto
 pure nothrow @nogc @safe
 CommonGDN!(G, H) poly(G, H, size_t N)(in G g, ref const H[N] h)
-if (isOne!(isGDN, G, H) && areAll!(isGDNOrReal, G, H) && N > 0 && N <= 10)
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H) && N > 0 && N <= 10)
 do {
     alias Deg = typeof(return).DEGREE;
 
