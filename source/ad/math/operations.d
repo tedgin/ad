@@ -67,13 +67,9 @@ unittest
 private pragma(inline, true) pure nothrow @nogc @safe
 int cmp_impl(ulong Deg)(in GDN!Deg x, in GDN!Deg y)
 {
+    alias d_cmp = Select!(Deg == 1, std.math.operations.cmp, cmp_impl);
+
     const res = std.math.operations.cmp(x.val, y.val);
-
-    static if (Deg == 1)
-        alias d_cmp = std.math.operations.cmp;
-    else
-        alias d_cmp = cmp_impl!(Deg - 1);
-
     return res != 0 ? res : d_cmp(x.d, y.d);
 }
 

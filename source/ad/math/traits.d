@@ -3,7 +3,7 @@ module ad.math.traits;
 
 static import std.math.traits;
 
-import std.traits: isFloatingPoint, isIntegral;
+import std.traits: isFloatingPoint, isIntegral, Select;
 
 static import ad.math.internal;
 
@@ -107,21 +107,11 @@ unittest
  */
 pure nothrow @nogc @safe bool isIdentical(ulong FDeg, ulong GDeg)(in GDN!FDeg f, in GDN!GDeg g)
 {
-    static if (FDeg == GDeg)
-    {
-        static if (FDeg == 1)
-        {
-            return std.math.traits.isIdentical(f.val, g.val)
-                && std.math.traits.isIdentical(f.d, g.d);
-        }
-        else
-        {
-            return std.math.traits.isIdentical(f.val, g.val) && isIdentical(f.d, g.d);
-        }
-    }
-    else
-    {
+    static if (FDeg != GDeg) {
         return false;
+    } else {
+        alias isIdenticalDeriv = Select!(FDeg == 1, std.math.traits.isIdentical, isIdentical);
+        return std.math.traits.isIdentical(f.val, g.val) && isIdenticalDeriv(f.d, g.d);
     }
 }
 

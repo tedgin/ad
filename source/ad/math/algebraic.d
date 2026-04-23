@@ -8,6 +8,7 @@ import std.algorithm: any, map, min;
 import std.math: isInfinity;
 import std.meta: allSatisfy, anySatisfy;
 import std.range: chain, only;
+import std.traits: Select;
 
 static import ad.math.internal;
 
@@ -157,6 +158,7 @@ hypot(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrR
 out(f; isNaN(f) || f >= 0)
 do {
     alias Deg = typeof(return).DEGREE;
+    alias hypot_red = Select!(Deg == 1, std.math.algebraic.hypot, hypot);
 
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
@@ -165,12 +167,7 @@ do {
 
     const g_red = gg.reduce();
     const h_red = hh.reduce();
-
-    static if (Deg == 1)
-        const f_red = std.math.algebraic.hypot(g_red, h_red);
-    else
-        const f_red = hypot(g_red, h_red);
-
+    const f_red = hypot_red(g_red, h_red);
     const df = (g_red * gg.d + h_red * hh.d) / f_red;
     return GDN!Deg(asReal(f_red), df);
 }
@@ -226,6 +223,7 @@ if (anySatisfy!(isGDN, G, H, I) && allSatisfy!(isGDNOrReal, G, H, I))
 out(f; isNaN(f) || f >= 0)
 do {
     alias Deg = typeof(return).DEGREE;
+    alias hypot_red = Select!(Deg == 1, std.math.algebraic.hypot, hypot);
 
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
@@ -236,12 +234,7 @@ do {
     const g_red = gg.reduce();
     const h_red = hh.reduce();
     const i_red = ii.reduce();
-
-    static if (Deg == 1)
-        const f_red = std.math.algebraic.hypot(g_red, h_red, i_red);
-    else
-        const f_red = hypot(g_red, h_red, i_red);
-
+    const f_red = hypot_red(g_red, h_red, i_red);
     const df = (g_red * gg.d + h_red * hh.d + i_red * ii.d) / f_red;
     return GDN!Deg(asReal(f_red), df);
 }

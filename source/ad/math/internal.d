@@ -190,12 +190,9 @@ package
     // The implementation of exp for GDN.
     pure nothrow @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
     do {
-        if (isNaN(g)) return g;
+        alias exp_fn = Select!(Deg == 1, std.math.exponential.exp, exp);
 
-        static if (Deg == 1)
-            alias exp_fn = std.math.exponential.exp;
-        else
-            alias exp_fn = exp;
+        if (isNaN(g)) return g;
 
         const f_red = exp_fn(g.reduce());
         return GDN!Deg(asReal(f_red), f_red * g.d);

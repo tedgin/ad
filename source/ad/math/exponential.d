@@ -53,12 +53,9 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg exp2(ulong Deg)(in GDN!Deg g)
 {
-    if (isNaN(g)) return g;
+    alias exp2_fn = Select!(Deg == 1, std.math.exponential.exp2, exp2);
 
-    static if (Deg == 1)
-        alias exp2_fn = std.math.exponential.exp2;
-    else
-        alias exp2_fn = exp2;
+    if (isNaN(g)) return g;
 
     const f_red = exp2_fn(g.reduce());
     return GDN!Deg(asReal(f_red), f_red * g.d * LN2);
@@ -98,13 +95,9 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg expm1(ulong Deg)(in GDN!Deg g)
 {
+    alias exp_fn = Select!(Deg == 1, std.math.exponential.exp, exp);
+
     if (isNaN(g)) return g;
-
-    static if (Deg == 1)
-        alias exp_fn = std.math.exponential.exp;
-    else
-        alias exp_fn = exp;
-
     return GDN!Deg(std.math.exponential.expm1(g.val), exp_fn(g.reduce()) * g.d);
 }
 
@@ -510,13 +503,9 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg scalbn(ulong Deg)(in GDN!Deg g, in int n)
 {
+    alias dev_scale = Select!(Deg == 1, std.math.exponential.scalbn, scalbn);
+
     if (isNaN(g)) return g;
-
-    static if (Deg == 1)
-        alias dev_scale = std.math.exponential.scalbn;
-    else
-        alias dev_scale = scalbn;
-
     return GDN!Deg(std.math.exponential.scalbn(g.val, n), dev_scale(g.d, n));
 }
 

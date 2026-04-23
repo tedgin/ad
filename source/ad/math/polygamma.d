@@ -1,7 +1,8 @@
 module ad.math.polygamma;
 
 import core.math: cos, fabs, rndtol, sin;
-import std.math: abs, ceil, isInfinity, isNaN, log10, nextUp, PI, poly, sgn, signbit, trunc;
+import std.math:
+    abs, ceil, copysign, isInfinity, isNaN, log10, nextUp, PI, poly, sgn, signbit, trunc;
 import std.traits: isIntegral;
 
 private pure nothrow @nogc @safe bool isOdd(T)(in T n) if (isIntegral!T)
@@ -103,14 +104,7 @@ unittest
 private pure nothrow @nogc @safe real bernoulli(int Sign)(in ulong n)
 {
     if (n == 0) return 1;
-
-    if (n == 1) {
-        static if (signbit!float(Sign) == 0)
-            return 1.0L / 2;
-        else
-            return -1.0L / 2;
-    }
-
+    if (n == 1) return copysign(1.0L/2.0L, float(Sign));
     if (isOdd(n)) return 0;
     return (-1.0L)^^(n / 2) * n * (eulerZigZag(n-1) / (2.0L^^n - 4.0L^^n));
 }

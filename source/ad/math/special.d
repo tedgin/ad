@@ -8,7 +8,7 @@ import std.algorithm: any;
 import std.math: exp, getNaNPayload, isInfinity, isNaN, M_2_SQRTPI, signbit, trunc;
 import std.meta: allSatisfy, anySatisfy;
 import std.range: only;
-import std.traits: select;
+import std.traits: Select, select;
 
 static import ad.math.polygamma;
 
@@ -19,12 +19,8 @@ import ad.math.internal:
 
 private pure nothrow @nogc @safe GDN!Deg polygamma(ulong N, ulong Deg)(in GDN!Deg g) if (N > 0)
 {
-    static if (Deg == 1)
-        const df = ad.math.polygamma.polygamma!(N+1)(g.reduce());
-    else
-        const df = polygamma!(N+1)(g.reduce());
-
-    return GDN!Deg(ad.math.polygamma.polygamma!N(g.val), df*g.d);
+    alias pgDeriv = Select!(Deg == 1, ad.math.polygamma.polygamma, polygamma);
+    return GDN!Deg(ad.math.polygamma.polygamma!N(g.val), pgDeriv!(N+1)(g.reduce())*g.d);
 }
 
 unittest
@@ -88,19 +84,14 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg gamma(ulong Deg)(in GDN!Deg g)
 {
+    alias gamma_fn = Select!(Deg == 1, std.mathspecial.gamma, gamma);
+    alias digamma_fn = Select!(Deg == 1, std.mathspecial.digamma, digamma);
+
    if (isNaN(g)) return g;
 
     const g_red = g.reduce();
-
-    static if (Deg == 1) {
-        const f_red = std.mathspecial.gamma(g_red);
-        const psi = std.mathspecial.digamma(g_red);
-    } else {
-        const f_red = gamma(g_red);
-        const psi = digamma(g_red);
-    }
-
-    return GDN!Deg(asReal(f_red), f_red*psi*g.d);
+    const f_red = gamma_fn(g_red);
+    return GDN!Deg(asReal(f_red), f_red*digamma_fn(g_red)*g.d);
 }
 
 ///
@@ -164,14 +155,10 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg logGamma(ulong Deg)(in GDN!Deg g)
 {
+    alias digamma_fn = Select!(Deg == 1, std.mathspecial.digamma, digamma);
+
     if (isNaN(g)) return g;
-
-    static if (Deg == 1)
-        const df = std.mathspecial.digamma(g.reduce());
-    else
-        const df = digamma(g.reduce());
-
-    return GDN!Deg(std.mathspecial.logGamma(g.val), df*g.d);
+    return GDN!Deg(std.mathspecial.logGamma(g.val), digamma_fn(g.reduce())*g.d);
 }
 
 ///
@@ -291,14 +278,8 @@ CommonGDN!(G, H)
 beta(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
 {
     alias Deg = typeof(return).DEGREE;
-
-    static if (Deg == 1) {
-        alias B = std.mathspecial.beta;
-        alias psi = std.mathspecial.digamma;
-    } else {
-        alias B = beta;
-        alias psi = digamma;
-    }
+    alias B = Select!(Deg == 1, std.mathspecial.beta, beta);
+    alias psi = Select!(Deg == 1, std.mathspecial.digamma, digamma);
 
     const gg = asGDN!Deg(g);
     const hh = asGDN!Deg(h);
@@ -489,14 +470,10 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg digamma(ulong Deg)(in GDN!Deg g)
 {
+    alias pg = Select!(Deg == 1, ad.math.polygamma.polygamma, polygamma);
+
     if (isNaN(g)) return g;
-
-    static if (Deg == 1)
-        const df = ad.math.polygamma.polygamma!1(g.reduce());
-    else
-        const df = polygamma!1(g.reduce());
-
-    return GDN!Deg(std.mathspecial.digamma(g.val), df*g.d);
+    return GDN!Deg(std.mathspecial.digamma(g.val), pg!1(g.reduce())*g.d);
 }
 
 ///
@@ -562,17 +539,12 @@ unittest
 pure nothrow @nogc @safe GDN!Deg logmdigamma(ulong Deg)(in GDN!Deg g)
 in(signbit(g) == 0 || isNaN(g), "the argument must be positive")
 do {
+    alias pg = Select!(Deg == 1, ad.math.polygamma.polygamma, polygamma);
+
     if (isNaN(g)) return g;
 
-    const f = std.mathspecial.logmdigamma(g.val);
     const g_red = g.reduce();
-
-    static if (Deg == 1)
-        const dfdg = 1/g_red - ad.math.polygamma.polygamma!1(g_red);
-    else
-        const dfdg = g_red.inv() - polygamma!1(g_red);
-
-    return GDN!Deg(f, dfdg*g.d);
+    return GDN!Deg(std.mathspecial.logmdigamma(g.val), (1.0L/g_red - pg!1(g_red))*g.d);
 }
 
 ///
@@ -628,19 +600,16 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg logmdigammaInverse(ulong Deg)(in GDN!Deg f)
 {
+    alias ln_m_digamma_inv = Select!(
+        Deg == 1, std.mathspecial.logmdigammaInverse, logmdigammaInverse);
+
+    alias pg = Select!(Deg == 1, ad.math.polygamma.polygamma, polygamma);
+
+    auto naive_derivative(in GDN!Deg.DerivType!1 g) { return f.d * g / (1 - g*pg!1(g)); }
+
     if (isNaN(f)) return f;
 
-    static if (Deg == 1) {
-        alias ln_m_digamma_inv = std.mathspecial.logmdigammaInverse;
-        alias trigamma = ad.math.polygamma.polygamma!1;
-    } else {
-        alias ln_m_digamma_inv =  logmdigammaInverse;
-        alias trigamma = polygamma!(1, Deg-1);
-    }
-
     const g_red = ln_m_digamma_inv(f.reduce());
-
-    GDN!Deg.DerivType!1 naive_derivative() { return f.d * g_red / (1 - g_red*trigamma(g_red)); }
 
     // Assume x > 0. (x + 1/2)/x² ≤ Ψ₁(x) ≤ (x + 1)/x² ⇒ -1/x ≤ 1 - xΨ₁(x) ≤ -1/(2x).
     // lim{x⟶0⁺} -1/x = -∞ = lim{x⟶0⁺} -1/(2x) ⇒ lim{x⟶0⁺} 1 - xΨ₁(x) = -∞
@@ -649,16 +618,16 @@ pure nothrow @nogc @safe GDN!Deg logmdigammaInverse(ulong Deg)(in GDN!Deg f)
 
     if (g_red == 0 && signbit(g_red) == 0) {
         static if (Deg == 1)
-            dg = -0. * f.d;
+            dg = -0.0L * f.d;
         else
-            dg = GDN!Deg.DerivType!1(asReal(g_red.d), naive_derivative().d);
+            dg = GDN!Deg.DerivType!1(asReal(g_red.d), naive_derivative(g_red).d);
     } else if (g_red == real.infinity) {
         static if (Deg == 1)
             dg = -real.infinity * f.d;
         else
-            dg = GDN!Deg.DerivType!1(asReal(g_red.d), naive_derivative().d);
+            dg = GDN!Deg.DerivType!1(asReal(g_red.d), naive_derivative(g_red).d);
     } else {
-        dg = naive_derivative();
+        dg = naive_derivative(g_red);
     }
 
     return GDN!Deg(asReal(g_red), dg);
@@ -790,6 +759,7 @@ private pure nothrow @nogc @safe
 GDN!Deg.DerivType!1 gammaIncompleteDeriv(ulong Deg)(in real s, in GDN!Deg x)
 do {
     alias dType = typeof(return);
+    alias e = Select!(Deg == 1, std.math.exp, exp);
 
     if (signbit(s) == 1 || x < .0L) return dType.nan;
 
@@ -801,13 +771,10 @@ do {
         return x.val is real.infinity ? dirac(GDN!Deg(-0.0L, x.d)).reduce() : GDN!Deg.zero.reduce();
     } else {
         // Ensure that x = -0 is treated like x = +0
-        static if (Deg == 1) {
-            alias e = std.math.exp;
+        static if (Deg == 1)
             const x_red_pos = x_red is -0.0L ? +0.0L : x_red;
-        } else {
-            alias e = exp;
+        else
             const x_red_pos = dType(x_red.val is -0.0L ? +0.0L : x_red.val, x_red.d);
-        }
 
         if (x.val is real.infinity) {
             return GDN!Deg.one.d;
@@ -1551,12 +1518,9 @@ in {
     assert(isNaN!Deg(Ig) || (Ig >= 0 && Ig <= 1), "the argument must be in [0,1]");
 }
 do {
-    if (any!(std.math.isNaN)(only(a, b, Ig.val))) return nanCombine(Ig, asGDN!Deg(a), asGDN!Deg(b));
+    alias Ig_inv = Select!(Deg == 1, std.mathspecial.betaIncompleteInverse, betaIncompleteInverse);
 
-    static if (Deg == 1)
-        alias Ig_inv = std.mathspecial.betaIncompleteInverse;
-    else
-        alias Ig_inv = betaIncompleteInverse;
+    if (any!(std.math.isNaN)(only(a, b, Ig.val))) return nanCombine(Ig, asGDN!Deg(a), asGDN!Deg(b));
 
     const g_red = Ig_inv(a, b, Ig.reduce());
     return GDN!Deg(asReal(g_red), Ig.d/betaIncompleteDeriv(a, b, asGDN!Deg(g_red)));
@@ -1784,12 +1748,10 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg normalDistributionInverse(ulong Deg)(in GDN!Deg f)
 in(isNaN(f) || (f >= 0.0L && f <= 1.0L), "the argument must be in the interval [0,1]")
 do {
-    if (isNaN(f)) return f;
+    alias phi_inv = Select!(
+        Deg == 1, std.mathspecial.normalDistributionInverse, normalDistributionInverse);
 
-    static if (Deg == 1)
-        alias phi_inv = std.mathspecial.normalDistributionInverse;
-    else
-        alias phi_inv = normalDistributionInverse;
+    if (isNaN(f)) return f;
 
     const g_red = phi_inv(f.reduce());
     return GDN!Deg(asReal(g_red), sqrt(2.0L*PI)*f.d*exp(g_red^^2/2.0L));

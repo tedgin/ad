@@ -6,6 +6,7 @@ static import std.math.trigonometry;
 
 import std.math: abs, isFinite, pow, sqrt;
 import std.meta: allSatisfy, anySatisfy;
+import std.traits: Select;
 
 import ad.core;
 import ad.math.internal:
@@ -26,10 +27,7 @@ import ad.math.internal:
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sin(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        alias cosine = core.math.cos;
-    else
-        alias cosine = cos;
+    alias cosine = Select!(Deg == 1, core.math.cos, cos);
 
     if (isNaN(g)) return g;
     return GDN!Deg(core.math.sin(g.val), cosine(g.reduce())*g.d);
@@ -75,10 +73,7 @@ unittest
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg cos(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        alias sine = core.math.sin;
-    else
-        alias sine = sin;
+    alias sine = Select!(Deg == 1, core.math.sin, sin);
 
     if (isNaN(g)) return g;
     return GDN!Deg(core.math.cos(g.val), -sine(g.reduce())*g.d);
@@ -125,10 +120,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg tan(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        alias cosine = core.math.cos;
-    else
-        alias cosine = cos;
+    alias cosine = Select!(Deg == 1, core.math.cos, cos);
 
     if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/pow(cosine(g.reduce()), 2));
@@ -425,10 +417,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg sinh(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        alias ch = std.math.trigonometry.cosh;
-    else
-        alias ch = cosh;
+    alias ch = Select!(Deg == 1, std.math.trigonometry.cosh, cosh);
 
     if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.sinh(g.val), ch(g.reduce())*g.d);
@@ -466,10 +455,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg cosh(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        alias sh = std.math.trigonometry.sinh;
-    else
-        alias sh = sinh;
+    alias sh = Select!(Deg == 1, std.math.trigonometry.sinh, sinh);
 
     if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.cosh(g.val), sh(g.reduce())*g.d);
@@ -504,10 +490,7 @@ unittest
  */
 pure nothrow @nogc @safe GDN!Deg tanh(ulong Deg)(in GDN!Deg g)
 {
-    static if (Deg == 1)
-        alias ch = std.math.trigonometry.cosh;
-    else
-        alias ch = cosh;
+    alias ch = Select!(Deg == 1, std.math.trigonometry.cosh, cosh);
 
     if (isNaN(g)) return g;
     return GDN!Deg(std.math.trigonometry.tanh(g.val), g.d/pow(ch(g.reduce()), 2));
