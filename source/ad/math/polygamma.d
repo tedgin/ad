@@ -5,21 +5,21 @@ import std.math:
     abs, ceil, copysign, isInfinity, isNaN, log10, nextUp, PI, poly, sgn, signbit, trunc;
 import std.traits: isIntegral;
 
+
 private pure nothrow @nogc @safe bool isOdd(T)(in T n) if (isIntegral!T)
-{
+do {
     return (n & 1) == 1;
 }
-
-unittest
-{
+unittest {
     assert(!isOdd(0));
     assert(isOdd(1));
     assert(!isOdd(-2));
 }
 
+
 // n!
 private pure nothrow @nogc @safe real factorial(in ulong n)
-{
+do {
     real res = 1;
 
     for (ulong i = 2; i <= n; i++) {
@@ -28,9 +28,7 @@ private pure nothrow @nogc @safe real factorial(in ulong n)
 
     return res;
 }
-
-unittest
-{
+unittest {
     assert(factorial(0) == 1);
     assert(factorial(1) == 1);
     assert(factorial(2) == 2);
@@ -40,7 +38,7 @@ unittest
 
 // Implemented using Seidel's algorithm
 private nothrow pure @safe real[] initEulerZigZag()
-{
+do {
     real[][] s;
     s.length = 1;
     s[0].length = 1;
@@ -73,23 +71,23 @@ private nothrow pure @safe real[] initEulerZigZag()
         if (isInfinity(isOdd(k) ? s[k][0] : s[k][$-1])) break;
     }
 
-    real [] t;
+    real[] t;
     t.length = cast(long)s.length - 1;
     t[0] = 1;
     for (auto k = 1; k < t.length; k++) t[k] = isOdd(k) ? s[k][0] : s[k][$-1];
     return t;
 }
 
+
 private static immutable real[] T = initEulerZigZag();
+
 
 // Euler Zig Zag Numbers
 private pure nothrow @nogc @safe real eulerZigZag(in ulong n)
-{
+do {
     return n < T.length ? T[n] : real.infinity;
 }
-
-unittest
-{
+unittest {
     assert(eulerZigZag(1) == 1);
     assert(eulerZigZag(1) == 1);
     assert(eulerZigZag(2) == 1);
@@ -102,16 +100,13 @@ unittest
 
 // Bernoulli numbers
 private pure nothrow @nogc @safe real bernoulli(int Sign)(in ulong n)
-{
+do {
     if (n == 0) return 1;
     if (n == 1) return copysign(1.0L/2.0L, float(Sign));
     if (isOdd(n)) return 0;
     return (-1.0L)^^(n / 2) * n * (eulerZigZag(n-1) / (2.0L^^n - 4.0L^^n));
 }
-
-
-unittest
-{
+unittest {
     import std.format: format;
 
     assert(bernoulli!1(0) == 1);
@@ -129,7 +124,7 @@ unittest
 
 // Polynomial coefficients for derivatives of cot(πx)
 private pure nothrow @safe real[] polygammaReflectPolyCoef(in ulong n)
-{
+do {
     if (n == 1) return [-1.0L, 0, 0];
 
     const prev = polygammaReflectPolyCoef(n - 1);
@@ -152,9 +147,7 @@ private pure nothrow @safe real[] polygammaReflectPolyCoef(in ulong n)
 
     return coef;
 }
-
-unittest
-{
+unittest {
     import std.format: format;
 
     // p1(x) = -[x^2 + (1-x^2)] = -1 + 0x + 0x^2
@@ -173,7 +166,7 @@ unittest
 
 
 private pure nothrow @nogc @safe real polygammaReflectDelta(ulong n)(in real x)
-{
+do {
     static immutable coef = polygammaReflectPolyCoef(n);
 
     if (isNaN(x)) return x;
@@ -184,9 +177,7 @@ private pure nothrow @nogc @safe real polygammaReflectDelta(ulong n)(in real x)
     // Compute πⁿ⁺¹Pₙ(cos(πx))/sinⁿ⁺¹(πx)
     return (PI / sin(PI*x))^^(n + 1) * poly(cs, coef);
 }
-
-unittest
-{
+unittest {
     import std.format: format;
     import std.math: isClose;
 
@@ -224,7 +215,7 @@ unittest
 
 
 private pure nothrow @nogc @safe real polygammaRecureDelta(ulong N)(in real x, in long shift)
-{
+do {
     static const real scale = (-1.0L)^^N * factorial(N);
     static const pow = -1.0L*(N + 1);
 
@@ -234,9 +225,7 @@ private pure nothrow @nogc @safe real polygammaRecureDelta(ulong N)(in real x, i
     for(auto i = 0; i < abs(shift); i++) delta += (x0 + i*sgn(shift))^^pow;
     return sgn(shift) * scale * delta;
 }
-
-unittest
-{
+unittest {
     import std.format: format;
 
     real y;
@@ -250,10 +239,10 @@ unittest
 }
 
 
-// Ψₙ(x) ~ (-1)ⁿ⁻¹{(n-1)!/xⁿ + n!/(2xⁿ⁺¹) + ∑ₖ₌₁∞[(-1)ᵏ|B⁻₂ₖ|/(2k)!](2k+n-1)!/x²ᵏ⁺ⁿ}, for n > 0,
-// 2x > n + ⌊log(1/ε)⌋, and x > n.
+// Ψₙ(x) ~ (-1)ⁿ⁻¹{(n-1)!/xⁿ + n!/(2xⁿ⁺¹) + ∑ₖ₌₁∞[(-1)ᵏ|B⁻₂ₖ|/(2k)!](2k+n-1)!/x²ᵏ⁺ⁿ},
+// for n > 0, 2x > n + ⌊log(1/ε)⌋, and x > n.
 private pure nothrow @nogc @safe real polygammaAsymptoticSeries(ulong N)(in real x) if (N > 0)
-{
+do {
     static const real sign = (-1.) ^^ (N - 1);
     static const term_0 = sign * factorial(N - 1);
     static const term_1 = sign * factorial(N);
@@ -278,9 +267,7 @@ private pure nothrow @nogc @safe real polygammaAsymptoticSeries(ulong N)(in real
 
     return term_0 / x^^N + term_1 / (2 * x^^(N + 1)) + sign * series;
 }
-
-unittest
-{
+unittest {
     import std.format: format;
     import std.math: isClose;
 
@@ -309,7 +296,7 @@ unittest
 
 // polygamma
 package pure nothrow @nogc @safe real polygamma(ulong N)(in real x) if (N > 0)
-{
+do {
     static const odd_order = N%2 == 1;
     static const x_cut = (N + ceil(log10(1/real.epsilon))) / 2.0L;
 
@@ -344,9 +331,7 @@ package pure nothrow @nogc @safe real polygamma(ulong N)(in real x) if (N > 0)
     // x is nonintegral negative number. Use the reflection relation.
     return (odd_order ? -1 : 1)*polygamma!N(1-x) - polygammaReflectDelta!N(x);
 }
-
-unittest
-{
+unittest {
     import std.format: format;
     import std.math: isClose, isNaN;
 

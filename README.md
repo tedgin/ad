@@ -22,6 +22,6 @@ To be continued ...
 
 To be continued ...
 
-TODO: format everything (completed core, internal, algebraic, constants)
+TODO: format everything (completed core, polygamma, internal, algebraic, constants)
 TODO: verify imports
 TODO: document modules and package
