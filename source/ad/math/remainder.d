@@ -1,4 +1,6 @@
-/// It extends the `std.math.remainder` module to support `GDN` objects.
+/**
+ * It extends the `std.math.remainder` module to support `GDN` objects.
+ */
 module ad.math.remainder;
 
 static import std.math.remainder;
@@ -8,7 +10,7 @@ import std.meta: allSatisfy, anySatisfy;
 
 import ad.core;
 import ad.math.internal:
-    asGDN, CommonGDN, isFinite, isGDN, isGDNOrReal, isInfinity, isNaN, round, trunc;
+	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, round, trunc;
 
 
 /**
@@ -26,18 +28,15 @@ import ad.math.internal:
  * Returns:
  *   The remainder of `g` divided by `h`.
  */
-nothrow @nogc @safe
-CommonGDN!(G, H)
-fmod(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
-{
-    return g % h;
+pure nothrow @nogc @safe
+CommonGDN!(G, H) fmod(G, H)(in G g, in H h)
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
+do {
+	return g % h;
 }
-
-///
-unittest
-{
-    const f = fmod(GDN!1(5), GDN!1(3));
-    assert(f is GDN!1(2,0));
+/***/ unittest {
+	const f = fmod(GDN!1(5), GDN!1(3));
+	assert(f is GDN!1(2,0));
 }
 
 
@@ -56,48 +55,43 @@ unittest
  * Returns:
  *   The fractional part of g.
  */
-nothrow @nogc @safe GDN!Deg modf(ulong Deg)(in GDN!Deg g, out GDN!Deg i)
-{
-    i = trunc(g);
+pure nothrow @nogc @safe GDN!Deg modf(ulong Deg)(in GDN!Deg g, out GDN!Deg i)
+do {
+	i = trunc(g);
 
-    if (isNaN(g)) return g;
+	if (isNaN(g)) return g;
 
-    if (isInfinity(g)) {
-        return GDN!Deg(sgn(g.val) * 0., GDN!Deg.mkNaNDeriv());
-    }
+	if (isInfinity(g)) {
+		return GDN!Deg(sgn(g.val) * 0., GDN!Deg.mkNaNDeriv());
+	}
 
-    return g - i;
+	return g - i;
 }
+/***/ unittest {
+	import std.math: isClose;
 
-///
-unittest
-{
-    import std.math: isClose;
-
-    const g = GDN!1(3.14159);
-    GDN!1 i;
-    const f = modf(GDN!1(g), i);
-    assert(i is GDN!1(3, 0));
-    assert(isClose(f.val, 0.14159));
-    assert(f.d == 1);
+	const g = GDN!1(3.14159);
+	GDN!1 i;
+	const f = modf(GDN!1(g), i);
+	assert(i is GDN!1(3, 0));
+	assert(isClose(f.val, 0.14159));
+	assert(f.d == 1);
 }
+unittest {
+	import std.format: format;
+	import std.math: NaN;
 
-unittest
-{
-    import std.format: format;
-    import std.math: NaN;
+	GDN!1 i;
 
-    GDN!1 i;
+	const q = modf(GDN!1(-real.infinity), i);
+	assert(
+		q is GDN!1(-0., real.nan) && i is GDN!1(-real.infinity, real.nan),
+		format("q: %s, i: %s", q, i));
 
-    const q = modf(GDN!1(-real.infinity), i);
-    assert(
-        q is GDN!1(-0., real.nan) && i is GDN!1(-real.infinity, real.nan),
-        format("q: %s, i: %s", q, i));
+	const w = modf(GDN!1(real.infinity), i);
+	assert(w is GDN!1(0., real.nan) && i is GDN!1(real.infinity, real.nan));
 
-    const w = modf(GDN!1(real.infinity), i);
-    assert(w is GDN!1(0., real.nan) && i is GDN!1(real.infinity, real.nan));
-
-    assert(modf(GDN!1(NaN(1)), i) is GDN!1(NaN(1)) && i is GDN!1(NaN(1)));
+	assert(modf(GDN!1(NaN(1)), i) is GDN!1(NaN(1)) && i is GDN!1(NaN(1)));
 }
 
 
@@ -117,60 +111,55 @@ unittest
  * Returns:
  *   The remainder of `g` divided by `h`.
  */
-nothrow @nogc @safe
+pure nothrow @nogc @safe
 CommonGDN!(G, H) remquo(G, H)(in G g, in H h, out int n)
-if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
-{
-    alias Deg = typeof(return).DEGREE;
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
+do {
+	alias Deg = typeof(return).DEGREE;
 
-    const gg = asGDN!Deg(g);
-    const hh = asGDN!Deg(h);
+	const gg = asGDN!Deg(g);
+	const hh = asGDN!Deg(h);
 
-    if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
+	if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
 
-    if (gg == 0 && hh != 0) {
-        n = 0;
-        return gg;
-    }
+	if (gg == 0 && hh != 0) {
+		n = 0;
+		return gg;
+	}
 
-    if (isFinite(gg) && isInfinity(hh)) return gg;
+	if (isFinite(gg) && isInfinity(hh)) return gg;
 
-    const n_gdn = round(gg / hh);
-    n = cast(int) n_gdn.val;
-    return gg - hh * n_gdn;
+	const n_gdn = round(gg / hh);
+	n = cast(int) n_gdn.val;
+	return gg - hh * n_gdn;
 }
+/***/ unittest {
+	import std.math: isClose;
 
-///
-unittest
-{
-    import std.math: isClose;
-
-    int n;
-    const f = remquo(GDN!1(5.1), GDN!1(3), n);
-    assert(n ==2 && isClose(f.val, -0.9) && f.d == -1);
+	int n;
+	const f = remquo(GDN!1(5.1), GDN!1(3), n);
+	assert(n ==2 && isClose(f.val, -0.9) && f.d == -1);
 }
+unittest {
+	import std.math: NaN;
+	import ad.math.traits: isNaN;
 
-unittest
-{
-    import std.math: NaN;
-    import ad.math.traits: isNaN;
+	int n;
 
-    int n;
+	n = int.min;
+	const q = remquo(GDN!1(-0.), GDN!1(1), n);
+	assert(n == 0 && q is GDN!1(-0., 1));
 
-    n = int.min;
-    const q = remquo(GDN!1(-0.), GDN!1(1), n);
-    assert(n == 0 && q is GDN!1(-0., 1));
+	n = int.min;
+	const w = remquo(GDN!1(+0.), GDN!1(1), n);
+	assert(n == 0 && w is GDN!1(+0., 1));
 
-    n = int.min;
-    const w = remquo(GDN!1(+0.), GDN!1(1), n);
-    assert(n == 0 && w is GDN!1(+0., 1));
+	assert(isNaN(remquo(GDN!1(-real.infinity), GDN!1(1), n)));
+	assert(isNaN(remquo(GDN!1(real.infinity), GDN!1(1), n)));
+	assert(isNaN(remquo(GDN!1(1), GDN!1(0), n)));
+	assert(remquo(GDN!1(2), GDN!1(-real.infinity), n) is GDN!1(2));
 
-    assert(isNaN(remquo(GDN!1(-real.infinity), GDN!1(1), n)));
-    assert(isNaN(remquo(GDN!1(real.infinity), GDN!1(1), n)));
-    assert(isNaN(remquo(GDN!1(1), GDN!1(0), n)));
-    assert(remquo(GDN!1(2), GDN!1(-real.infinity), n) is GDN!1(2));
-
-    assert(remquo(GDN!1(NaN(1), NaN(3)), GDN!1(NaN(4), NaN(2)), n) is GDN!1(NaN(4), NaN(3)));
+	assert(remquo(GDN!1(NaN(1), NaN(3)), GDN!1(NaN(4), NaN(2)), n) is GDN!1(NaN(4), NaN(3)));
 }
 
 
@@ -188,20 +177,17 @@ unittest
  * Returns:
  *   The remainder of `g` divided by `h`.
  */
-nothrow @nogc @safe
+pure nothrow @nogc @safe
 CommonGDN!(G, H) remainder(G, H)(in G g, in H h)
-if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
-{
-    int _;
-    return remquo(g, h, _);
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
+do {
+	int _;
+	return remquo(g, h, _);
 }
+/***/ unittest {
+	import std.math: isClose;
 
-///
-unittest
-{
-    import std.math: isClose;
-
-    const f = remainder(GDN!1(5.1), GDN!1(3));
-    assert(isClose(f.val, -0.9));
-    assert(f.d == -1);
+	const f = remainder(GDN!1(5.1), GDN!1(3));
+	assert(isClose(f.val, -0.9));
+	assert(f.d == -1);
 }

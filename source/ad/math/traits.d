@@ -1,4 +1,6 @@
-/// It extends `std.math.traits` module to support `GDN` objects.
+/**
+ * It extends `std.math.traits` module to support `GDN` objects.
+ */
 module ad.math.traits;
 
 static import std.math.traits;
@@ -8,67 +10,7 @@ import std.traits: isFloatingPoint, isIntegral, Select;
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: asReal, dirac, minDeg;
-
-
-/**
- * Determines if a Given type is a `GDN`.
- *
- * Params:
- *   T = the type to test
- *
- * Returns:
- *   `true` if `T` is a `GDN`, otherwise `false`.
- */
-enum bool isGDN(T) = ad.math.internal.isGDN!(T);
-
-///
-unittest
-{
-    static assert(isGDN!(GDN!1));
-    static assert(!isGDN!real);
-}
-
-
-/**
- * Determines if a Given type is a `GDN` or implicitly convertible to `real`.
- *
- * Params:
- *   T = the type to test
- *
- * Returns:
- *   `true` if `T` is a `GDN` or implicitly convertible to `real`, otherwise `false`.
- */
-enum bool isGDNOrReal(T) = ad.math.internal.isGDNOrReal!(T);
-
-///
-unittest
-{
-    static assert(isGDNOrReal!(GDN!2));
-    static assert(isGDNOrReal!double);
-}
-
-
-/**
- * Given a sequence of GDN types or types implicitly convertible to `real`, this finds the one with
- * the least degree. There must be at least one GDN type
- *
- * Params:
- *   G = a sequence of GDN or real types
- *
- * Returns:
- *   The GDN type of least degree.
- */
-template CommonGDN(G...)
-{
-    alias CommonGDN = ad.math.internal.CommonGDN!G;
-}
-
-///
-unittest
-{
-    static assert(is(CommonGDN!(GDN!2, GDN!3, real) == GDN!2));
-}
+import ad.math.internal: asReal, dirac, isConvertibleToGDN, minDeg;
 
 
 /**
@@ -82,14 +24,11 @@ unittest
  *   `true` if the value of the `GDN` object is finite, `false` otherwise.
  */
 pure nothrow @nogc @safe bool isFinite(ulong Deg)(in GDN!Deg f)
-{
-    return ad.math.internal.isFinite(f);
+do {
+	return ad.math.internal.isFinite(f);
 }
-
-///
-unittest
-{
-    assert(isFinite(GDN!1(1)));
+/***/ unittest {
+	assert(isFinite(GDN!1(1)));
 }
 
 
@@ -106,22 +45,19 @@ unittest
  *   `true` if the two `GDN` objects are identical, `false` otherwise.
  */
 pure nothrow @nogc @safe bool isIdentical(ulong FDeg, ulong GDeg)(in GDN!FDeg f, in GDN!GDeg g)
-{
-    static if (FDeg != GDeg) {
-        return false;
-    } else {
-        alias isIdenticalDeriv = Select!(FDeg == 1, std.math.traits.isIdentical, isIdentical);
-        return std.math.traits.isIdentical(f.val, g.val) && isIdenticalDeriv(f.d, g.d);
-    }
-}
+do {
+	alias isIdenticalDeriv = Select!(FDeg == 1, std.math.traits.isIdentical, isIdentical);
 
-///
-unittest
-{
-    assert(isIdentical(GDN!1(1), GDN!1(1)));
-    assert(!isIdentical(GDN!1(1), GDN!1(2)));
-    assert(!isIdentical(GDN!1(1, 2), GDN!1(1, 1)));
-    assert(!isIdentical(GDN!1(1), GDN!2(1)));
+	static if (FDeg == GDeg)
+		return std.math.traits.isIdentical(f.val, g.val) && isIdenticalDeriv(f.d, g.d);
+	else
+		return false;
+}
+/***/ unittest {
+	assert(isIdentical(GDN!1(1), GDN!1(1)));
+	assert(!isIdentical(GDN!1(1), GDN!1(2)));
+	assert(!isIdentical(GDN!1(1, 2), GDN!1(1, 1)));
+	assert(!isIdentical(GDN!1(1), GDN!2(1)));
 }
 
 
@@ -136,14 +72,11 @@ unittest
  *   `true` if the value of the `GDN` object is infinite, `false` otherwise.
  */
 pure nothrow @nogc @safe bool isInfinity(ulong Deg)(in GDN!Deg f)
-{
-    return ad.math.internal.isInfinity(f);
+do {
+	return ad.math.internal.isInfinity(f);
 }
-
-///
-unittest
-{
-    assert(isInfinity(GDN!1(real.infinity)));
+/***/ unittest {
+	assert(isInfinity(GDN!1(real.infinity)));
 }
 
 
@@ -158,14 +91,11 @@ unittest
  *   `true` if the value of the `GDN` object is `NaN`, `false` otherwise.
  */
 pure nothrow @nogc @safe bool isNaN(ulong Deg)(in GDN!Deg f)
-{
-    return ad.math.internal.isNaN(f);
+do {
+	return ad.math.internal.isNaN(f);
 }
-
-///
-unittest
-{
-    assert(isNaN(GDN!1.nan));
+/***/ unittest {
+	assert(isNaN(GDN!1.nan));
 }
 
 
@@ -181,14 +111,11 @@ unittest
  *   `true` if the value of the `GDN` object is normal, `false` otherwise.
  */
 pure nothrow @nogc @safe bool isNormal(ulong Deg)(in GDN!Deg f)
-{
-    return std.math.traits.isNormal(f.val);
+do {
+	return std.math.traits.isNormal(f.val);
 }
-
-///
-unittest
-{
-    assert(isNormal(GDN!1(1)));
+/***/ unittest {
+	assert(isNormal(GDN!1(1)));
 }
 
 
@@ -203,14 +130,11 @@ unittest
  *   `true` if the value of the `GDN` object is a power of 2, `false` otherwise.
  */
 pure nothrow @nogc @safe bool isPowerOf2(ulong Deg)(in GDN!Deg f)
-{
-    return std.math.traits.isPowerOf2(f.val);
+do {
+	return std.math.traits.isPowerOf2(f.val);
 }
-
-///
-unittest
-{
-    assert(isPowerOf2(GDN!1(1)));
+/***/ unittest {
+	assert(isPowerOf2(GDN!1(1)));
 }
 
 
@@ -225,14 +149,11 @@ unittest
  *   `true` if the value of the `GDN` object is subnormal, `false` otherwise.
  */
 pure nothrow @nogc @safe bool isSubnormal(ulong Deg)(in GDN!Deg f)
-{
-    return std.math.traits.isSubnormal(f.val);
+do {
+	return std.math.traits.isSubnormal(f.val);
 }
-
-///
-unittest
-{
-    assert(isSubnormal(GDN!1(real.min_normal / 2)));
+/***/ unittest {
+	assert(isSubnormal(GDN!1(real.min_normal / 2)));
 }
 
 
@@ -247,14 +168,11 @@ unittest
  *   `1` if the sign bit of the `GDN` object's value is set, `0` otherwise.
  */
 pure nothrow @nogc @safe int signbit(ulong Deg)(in GDN!Deg f)
-{
-    return ad.math.internal.signbit(f);
+do {
+	return ad.math.internal.signbit(f);
 }
-
-///
-unittest
-{
-    assert(signbit(GDN!1(-1.0)) == 1);
+/***/ unittest {
+	assert(signbit(GDN!1(-1.0)) == 1);
 }
 
 
@@ -274,35 +192,28 @@ unittest
  *   `to` with the same sign as `from`
  */
 pure nothrow @nogc @safe
-GDN!TDeg copysign(G, ulong TDeg)(in GDN!TDeg to, in G from) if (isGDNOrReal!G)
-{
-    return GDN!TDeg(std.math.traits.copysign(to.val, asReal(from)), to.d);
+GDN!TDeg copysign(G, ulong TDeg)(in GDN!TDeg to, in G from) if (isConvertibleToGDN!G)
+do {
+	return GDN!TDeg(std.math.traits.copysign(to.val, asReal(from)), to.d);
 }
-
 /// ditto
 pure nothrow @nogc @safe F copysign(F, ulong FDeg)(in F to, in GDN!FDeg from) if (isFloatingPoint!F)
-{
-    return std.math.traits.copysign(to, from.val);
+do {
+	return std.math.traits.copysign(to, from.val);
 }
-
 /// ditto
 pure nothrow @nogc @safe real copysign(I, ulong FDeg)(in I to, in GDN!FDeg from) if (isIntegral!I)
-{
-    return std.math.traits.copysign(to, from.val);
+do {
+	return std.math.traits.copysign(to, from.val);
 }
-
-///
-unittest
-{
-    assert(isIdentical(copysign(GDN!1(-1), GDN!1(-2)), GDN!1(-1)));
-    assert(isIdentical(copysign(GDN!1(-3), 4.), GDN!1(3)));
-    assert(copysign(5., GDN!1(-6.)) is -5.);
-    assert(copysign(7, GDN!1(8)) is 7);
+/***/ unittest {
+	assert(isIdentical(copysign(GDN!1(-1), GDN!1(-2)), GDN!1(-1)));
+	assert(isIdentical(copysign(GDN!1(-3), 4.), GDN!1(3)));
+	assert(copysign(5., GDN!1(-6.)) is -5.);
+	assert(copysign(7, GDN!1(8)) is 7);
 }
-
-unittest
-{
-    assert(isIdentical(copysign(GDN!3(1), GDN!1(-1)), GDN!3(-1)));
+unittest {
+	assert(isIdentical(copysign(GDN!3(1), GDN!1(-1)), GDN!3(-1)));
 }
 
 
@@ -322,13 +233,10 @@ unittest
  *   the sign of the `GDN` object
  */
 pure nothrow @nogc @safe GDN!Deg sgn(ulong Deg)(in GDN!Deg g)
-{
-    return ad.math.internal.sgn(g);
+do {
+	return ad.math.internal.sgn(g);
 }
-
-///
-unittest
-{
-    assert(isIdentical(sgn(GDN!1(-2)), GDN!1(-1, 0)));
-    assert(isIdentical(sgn(GDN!1(0)), GDN!1(0, real.infinity)));
+/***/ unittest {
+	assert(isIdentical(sgn(GDN!1(-2)), GDN!1(-1, 0)));
+	assert(isIdentical(sgn(GDN!1(0)), GDN!1(0, real.infinity)));
 }

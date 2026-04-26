@@ -1,4 +1,6 @@
-/// It extends `std.math.rounding` module to support `GDN` objects.
+/**
+ * It extends `std.math.rounding` module to support `GDN` objects.
+ */
 module ad.math.rounding;
 
 static import core.math;
@@ -11,7 +13,8 @@ import std.traits: arity, isIntegral, Parameters, ReturnType;
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal: asGDN, CommonGDN, dirac, isGDN, isGDNOrReal, isNaN, nextDown, nextUp, pow;
+import ad.math.internal:
+	asGDN, CommonGDN, dirac, isConvertibleToGDN, isGDN, isNaN, nextDown, nextUp, pow;
 
 
 /**
@@ -27,15 +30,12 @@ import ad.math.internal: asGDN, CommonGDN, dirac, isGDN, isGDNOrReal, isNaN, nex
  *   the rounded `GDN`
  */
 pure nothrow @nogc @safe GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
-{
-    return ad.math.internal.ceil(g);
+do {
+	return ad.math.internal.ceil(g);
 }
-
-///
-unittest
-{
-    assert(ceil(GDN!1(1)) is GDN!1(1, real.infinity));
-    assert(ceil(GDN!1(-1.4)) is GDN!1(-1, 0));
+/***/ unittest {
+	assert(ceil(GDN!1(1)) is GDN!1(1, real.infinity));
+	assert(ceil(GDN!1(-1.4)) is GDN!1(-1, 0));
 }
 
 
@@ -52,15 +52,12 @@ unittest
  *   the rounded `GDN`
  */
 pure nothrow @nogc @safe GDN!Deg floor(ulong Deg)(in GDN!Deg g)
-{
-    return ad.math.internal.floor(g);
+do {
+	return ad.math.internal.floor(g);
 }
-
-///
-unittest
-{
-    assert(floor(GDN!1(1)) is GDN!1(1, real.infinity));
-    assert(floor(GDN!1(-1.4)) is GDN!1(-2, 0));
+/***/ unittest {
+	assert(floor(GDN!1(1)) is GDN!1(1, real.infinity));
+	assert(floor(GDN!1(-1.4)) is GDN!1(-2, 0));
 }
 
 
@@ -75,14 +72,11 @@ unittest
  *   An integer representing the rounded value of `g`.
  */
 pure nothrow @nogc @safe long lrint(ulong Deg)(in GDN!Deg g)
-{
-    return std.math.rounding.lrint(g.val);
+do {
+	return std.math.rounding.lrint(g.val);
 }
-
-///
-unittest
-{
-    assert(lrint(GDN!1(1.9)) == 2L);
+/***/ unittest {
+	assert(lrint(GDN!1(1.9)) == 2L);
 }
 
 
@@ -96,63 +90,57 @@ unittest
  *   An integer representing the rounded value of `g`.
  */
 nothrow @nogc @safe long lround(ulong Deg)(in GDN!Deg g)
-{
-    return std.math.rounding.lround(g.val);
+do {
+	return std.math.rounding.lround(g.val);
 }
-
-///
-unittest
-{
-    assert(lround(GDN!1(1.5)) == 2L);
-    assert(lround(GDN!1(-0.5)) == -1L);
+/***/ unittest {
+	assert(lround(GDN!1(1.5)) == 2L);
+	assert(lround(GDN!1(-0.5)) == -1L);
 }
 
 
-private pragma(inline, true) pure nothrow @nogc @safe
-GDN!Deg nearbyint_impl(string impl, ulong Deg)(in GDN!Deg g)
-{
-    if (isNaN(g)) return g;
+private pure nothrow @nogc @safe GDN!Deg nearbyint_impl(string impl, ulong Deg)(in GDN!Deg g)
+do {
+	if (isNaN(g)) return g;
 
-    mixin("const f = " ~ impl ~ "(g.val);");
+	mixin("const f = " ~ impl ~ "(g.val);");
 
-    auto dfdg = GDN!Deg.mkZeroDeriv();
-    if (isInfinity(g.val)) {
-        dfdg = GDN!Deg.mkNaNDeriv();
-    } else {
-        auto fn = std.math.rounding.nearbyint(nextDown(g).val);
-        auto fp = std.math.rounding.nearbyint(nextUp(g).val);
+	auto dfdg = GDN!Deg.mkZeroDeriv();
+	if (isInfinity(g.val)) {
+		dfdg = GDN!Deg.mkNaNDeriv();
+	} else {
+		auto fn = std.math.rounding.nearbyint(nextDown(g).val);
+		auto fp = std.math.rounding.nearbyint(nextUp(g).val);
 
-        if (f == 0) {
-            if (signbit(f) == 1) {
-                fp = f;
-            } else {
-                fn = f;
-            }
-        }
+		if (f == 0) {
+			if (signbit(f) == 1) {
+				fp = f;
+			} else {
+				fn = f;
+			}
+		}
 
-        if (fn != fp) {
-            dfdg = dirac(g.reduce() - g.val);
-        }
-    }
+		if (fn != fp) {
+			dfdg = dirac(g.reduce() - g.val);
+		}
+	}
 
-    return GDN!Deg(f, dfdg*g.d);
+	return GDN!Deg(f, dfdg*g.d);
 }
+unittest {
+	import std.math: NaN;
 
-unittest
-{
-    import std.math: NaN;
+	enum impl = "std.math.rounding.nearbyint";
 
-    enum impl = "std.math.rounding.nearbyint";
+	assert(nearbyint_impl!impl(GDN!1.infinity) is GDN!1(real.infinity, real.nan));
 
-    assert(nearbyint_impl!impl(GDN!1.infinity) is GDN!1(real.infinity, real.nan));
+	const f = nearbyint_impl!impl(GDN!2(1.5));
+	assert(f == 2 && f.d == real.infinity && isNaN(f.d!2));
 
-    const f = nearbyint_impl!impl(GDN!2(1.5));
-    assert(f == 2 && f.d == real.infinity && isNaN(f.d!2));
+	assert(nearbyint_impl!impl(GDN!1(-0.)) is GDN!1(-0., 0));
+	assert(nearbyint_impl!impl(GDN!1(+0.)) is GDN!1(+0., 0));
 
-    assert(nearbyint_impl!impl(GDN!1(-0.)) is GDN!1(-0., 0));
-    assert(nearbyint_impl!impl(GDN!1(+0.)) is GDN!1(+0., 0));
-
-    assert(nearbyint_impl!impl(GDN!1(NaN(1))) is GDN!1(NaN(1)));
+	assert(nearbyint_impl!impl(GDN!1(NaN(1))) is GDN!1(NaN(1)));
 }
 
 
@@ -170,15 +158,12 @@ unittest
  *   A `GDN` object representing the rounded value of `g`.
  */
 pure nothrow @nogc @safe GDN!Deg nearbyint(ulong Deg)(in GDN!Deg g)
-{
-    return nearbyint_impl!"std.math.rounding.nearbyint"(g);
+do {
+	return nearbyint_impl!"std.math.rounding.nearbyint"(g);
 }
-
-///
-unittest
-{
-    const e = nearbyint(GDN!2(1.5));
-    assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
+/***/ unittest {
+	const e = nearbyint(GDN!2(1.5));
+	assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
 }
 
 
@@ -196,30 +181,25 @@ unittest
  * Returns:
  *   A `GDN` object representing the rounded value of `g`.
  */
-pragma(inline, true) pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
-{
+pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
+do {
    return nearbyint_impl!"std.math.rounding.rint"(g);
 }
+/***/ unittest {
+	import std.math: ieeeFlags, resetIeeeFlags;
 
-///
-unittest
-{
-    import std.math: ieeeFlags, resetIeeeFlags;
-
-    resetIeeeFlags();
-    const e = rint(GDN!2(1.5));
-    assert(ieeeFlags.inexact);
-    assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
+	resetIeeeFlags();
+	const e = rint(GDN!2(1.5));
+	assert(ieeeFlags.inexact);
+	assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
 }
+unittest {
+	import std.math: ieeeFlags, resetIeeeFlags;
 
-unittest
-{
-    import std.math: ieeeFlags, resetIeeeFlags;
-
-    resetIeeeFlags();
-    const w = rint(GDN!1.one);
-    assert(!ieeeFlags.inexact);
-    assert(w is GDN!1.one);
+	resetIeeeFlags();
+	const w = rint(GDN!1.one);
+	assert(!ieeeFlags.inexact);
+	assert(w is GDN!1.one);
 }
 
 
@@ -236,18 +216,17 @@ unittest
  * Returns:
  *   The rounded value of `val` to the nearest multiple of `unit`.
  */
+pure nothrow @nogc @safe
 CommonGDN!(U, V) quantize(alias round=rint, U, V)(in V val, in U unit)
 if (is(typeof(round(CommonGDN!(U, V).init)) : CommonGDN!(U, V)))
-{
-    return quantize_impl!round(val, unit);
+do {
+	return quantize_impl!round(val, unit);
+}
+/***/ unittest {
+	const q = quantize!nearbyint(GDN!1(5), GDN!1(3));
+	assert(q is GDN!1(6, 2));
 }
 
-///
-unittest
-{
-    const q = quantize!nearbyint(GDN!1(5), GDN!1(3));
-    assert(q is GDN!1(6, 2));
-}
 
 /**
  * Round `g` to a multiple of `base ^^ exp`. `rfunc` specifies the rounding function to use.
@@ -263,70 +242,65 @@ unittest
  * Returns:
  *   The rounded `GDN` object.
  */
+pure nothrow @nogc @safe
 CommonGDN!(G, typeof(base)) quantize(alias base, alias round=rint, G, I)(in G g, in I exp)
 if (anySatisfy!(isGDN, G, typeof(base))
-    && allSatisfy!(isGDNOrReal, G, typeof(base))
-    && (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base)))
-    && isIntegral!I)
-{
-    alias Deg = typeof(return).DEGREE;
-    enum b = asGDN!Deg(base);
+	&& allSatisfy!(isConvertibleToGDN, G, typeof(base))
+	&& (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base)))
+	&& isIntegral!I)
+do {
+	alias Deg = typeof(return).DEGREE;
+	enum b = asGDN!Deg(base);
 
-    const gg = asGDN!Deg(g);
+	const gg = asGDN!Deg(g);
 
-    if (isNaN(b) ||isNaN(gg)) return nanCombine(b, gg);
-    return quantize_impl!round(gg, pow(b, exp));
+	if (isNaN(b) ||isNaN(gg)) return nanCombine(b, gg);
+	return quantize_impl!round(gg, pow(b, exp));
 }
-
 /// ditto
+pure nothrow @nogc @safe
 CommonGDN!(G, typeof(base)) quantize(alias base, long exp=1, alias round=rint, G)(in G g)
 if (anySatisfy!(isGDN, G, typeof(base))
-    && allSatisfy!(isGDNOrReal, G, typeof(base))
-    && (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base))))
-{
-    alias Deg = typeof(return).DEGREE;
-    enum b = asGDN!Deg(base);
-    enum unit = pow(b, exp);
+	&& allSatisfy!(isConvertibleToGDN, G, typeof(base))
+	&& (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base))))
+do {
+	alias Deg = typeof(return).DEGREE;
+	enum b = asGDN!Deg(base);
+	enum unit = pow(b, exp);
 
-    const gg = asGDN!Deg(g);
+	const gg = asGDN!Deg(g);
 
-    if (isNaN(b) || isNaN(gg)) return nanCombine(b, gg);
-    return quantize_impl!round(asGDN!Deg(g), unit);
+	if (isNaN(b) || isNaN(gg)) return nanCombine(b, gg);
+	return quantize_impl!round(asGDN!Deg(g), unit);
+}
+/***/ unittest {
+	import ad.math.operations: isClose;
+
+	const f = quantize!10(GDN!1(345.678_9), -2);
+	assert(isClose(f, 345.68) && f.d == 0);
+
+	const g = quantize!(GDN!1(2))(GDN!1(1.6), -1);
+	assert(g is GDN!1(1.5, -0.75));
+
+	assert(quantize!22(GDN!1(12_345.678_9)) is GDN!1(12_342, 0));
+}
+unittest {
+	import std.math: NaN;
+
+	assert(quantize!(GDN!1(NaN(1), NaN(3)))(GDN!1(NaN(4), NaN(2)), 0) is GDN!1(NaN(4),NaN(3)));
+	assert(quantize!(GDN!1(NaN(1), NaN(3)))(GDN!1(NaN(4), NaN(2))) is GDN!1(NaN(4), NaN(3)));
 }
 
-///
-unittest
-{
-    import ad.math.operations: isClose;
 
-    const f = quantize!10(GDN!1(345.678_9), -2);
-    assert(isClose(f, 345.68) && f.d == 0);
-
-    const g = quantize!(GDN!1(2))(GDN!1(1.6), -1);
-    assert(g is GDN!1(1.5, -0.75));
-
-    assert(quantize!22(GDN!1(12_345.678_9)) is GDN!1(12_342, 0));
-}
-
-unittest
-{
-    import std.math: NaN;
-
-    assert(quantize!(GDN!1(NaN(1), NaN(3)))(GDN!1(NaN(4), NaN(2)), 0) is GDN!1(NaN(4),NaN(3)));
-    assert(quantize!(GDN!1(NaN(1), NaN(3)))(GDN!1(NaN(4), NaN(2))) is GDN!1(NaN(4), NaN(3)));
-}
-
-private pragma(inline, true)
+private pure nothrow @nogc @safe
 GDN!Deg quantize_impl(alias round, ulong Deg)(in GDN!Deg val, in GDN!Deg unit)
 if (is(typeof(round(GDN!Deg.init)) : GDN!Deg))
-{
-    return round(val / unit) * unit;
+do {
+	return round(val / unit) * unit;
 }
-
-unittest
-{
-    const f = quantize_impl!rint(GDN!1(1.5), GDN!1(0.5, 0));
-    assert(f is GDN!1(1.5, 0));
+unittest {
+	const f = quantize_impl!rint(GDN!1(1.5), GDN!1(0.5, 0));
+	assert(f is GDN!1(1.5, 0));
 }
 
 
@@ -342,14 +316,11 @@ unittest
  *   the rounded value of `g`.
  */
 pragma(inline, true) pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
-{
-    return core.math.rndtol(g.val);
+do {
+	return core.math.rndtol(g.val);
 }
-
-///
-unittest
-{
-    assert(rndtol(GDN!1(1.1)) == 1L);
+/***/ unittest {
+	assert(rndtol(GDN!1(1.1)) == 1L);
 }
 
 
@@ -366,15 +337,12 @@ unittest
  *   The rounded `GDN`,
  */
 nothrow @nogc @trusted GDN!Deg round(ulong Deg)(in GDN!Deg g)
-{
-    return ad.math.internal.round(g);
+do {
+	return ad.math.internal.round(g);
 }
-
-///
-unittest
-{
-    assert(round(GDN!1(4.5)) is GDN!1(5, real.infinity));
-    assert(round(GDN!1(-4.5)) is GDN!1(-5, real.infinity));
+/***/ unittest {
+	assert(round(GDN!1(4.5)) is GDN!1(5, real.infinity));
+	assert(round(GDN!1(-4.5)) is GDN!1(-5, real.infinity));
 }
 
 
@@ -391,13 +359,10 @@ unittest
  *   The truncated `GDN`,
  */
 pure nothrow @nogc @trusted GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
-{
-    return ad.math.internal.trunc(g);
+do {
+	return ad.math.internal.trunc(g);
 }
-
-///
-unittest
-{
-    assert(trunc(GDN!1(0.01)) is GDN!1(+0., 0));
-    assert(trunc(GDN!1(-0.49)) is GDN!1(-0., 0));
+/***/ unittest {
+	assert(trunc(GDN!1(0.01)) is GDN!1(+0., 0));
+	assert(trunc(GDN!1(-0.49)) is GDN!1(-0., 0));
 }

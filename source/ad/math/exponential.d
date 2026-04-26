@@ -1,4 +1,6 @@
-/// It extends `std.math.exponential` module to support `GDN` objects.
+/**
+ * It extends `std.math.exponential` module to support `GDN` objects.
+ */
 module ad.math.exponential;
 
 static import core.math;
@@ -12,7 +14,7 @@ static import ad.math.internal;
 
 import ad.core;
 import ad.math.internal:
-    asReal, CommonGDN, floor, isGDN, isGDNOrReal, isInfinity, isNaN, sgn, signbit;
+	asReal, CommonGDN, floor, isConvertibleToGDN, isGDN, isInfinity, isNaN, sgn, signbit;
 
 
 /**
@@ -28,14 +30,11 @@ import ad.math.internal:
  *   A GDN object representing $(MATH e) raised to the power of `g`.
  */
 nothrow pure @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
-{
-    return ad.math.internal.exp(g);
+do {
+	return ad.math.internal.exp(g);
 }
-
-///
-unittest
-{
-    assert(exp(GDN!1(0, 3)) is GDN!1(1, 3));
+/***/ unittest {
+	assert(exp(GDN!1(0, 3)) is GDN!1(1, 3));
 }
 
 
@@ -52,32 +51,27 @@ unittest
  *   A `GDN` object representing the base-2 exponential of `g`.
  */
 pure nothrow @nogc @safe GDN!Deg exp2(ulong Deg)(in GDN!Deg g)
-{
-    alias exp2_fn = Select!(Deg == 1, std.math.exponential.exp2, exp2);
+do {
+	alias exp2_fn = Select!(Deg == 1, std.math.exponential.exp2, exp2);
 
-    if (isNaN(g)) return g;
+	if (isNaN(g)) return g;
 
-    const f_red = exp2_fn(g.reduce());
-    return GDN!Deg(asReal(f_red), f_red * g.d * LN2);
+	const f_red = exp2_fn(g.reduce());
+	return GDN!Deg(asReal(f_red), f_red * g.d * LN2);
 }
-
-///
-unittest
-{
-    assert(exp2(GDN!1(0)) is GDN!1(1, LN2));
+/***/ unittest {
+	assert(exp2(GDN!1(0)) is GDN!1(1, LN2));
 }
+unittest {
+	import std.math: NaN;
 
-unittest
-{
-    import std.math: NaN;
+	assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
 
-    assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
-
-    assert(exp2(GDN!2(2)) is GDN!2(4, 4*LN2, 4*LN2^^2));
-    // f = 2^2 = 4
-    // <f',f"> = 2^<2,1> * <1,0> * ln(2)
-    //         = <4,4*ln(2)> * <ln(2),0>
-    //         = <4*ln(2), 4*ln(2)^2>
+	assert(exp2(GDN!2(2)) is GDN!2(4, 4*LN2, 4*LN2^^2));
+	// f = 2^2 = 4
+	// <f',f"> = 2^<2,1> * <1,0> * ln(2)
+	//         = <4,4*ln(2)> * <ln(2),0>
+	//         = <4*ln(2), 4*ln(2)^2>
 }
 
 
@@ -94,25 +88,20 @@ unittest
  *   A `GDN` object representing $(MATH e$(SUP g) - 1).
  */
 pure nothrow @nogc @safe GDN!Deg expm1(ulong Deg)(in GDN!Deg g)
-{
-    alias exp_fn = Select!(Deg == 1, std.math.exponential.exp, exp);
+do {
+	alias exp_fn = Select!(Deg == 1, std.math.exponential.exp, exp);
 
-    if (isNaN(g)) return g;
-    return GDN!Deg(std.math.exponential.expm1(g.val), exp_fn(g.reduce()) * g.d);
+	if (isNaN(g)) return g;
+	return GDN!Deg(std.math.exponential.expm1(g.val), exp_fn(g.reduce()) * g.d);
 }
-
-///
-unittest
-{
-    assert(expm1(GDN!1(0)) is GDN!1(0, 1));
+/***/ unittest {
+	assert(expm1(GDN!1(0)) is GDN!1(0, 1));
 }
+unittest {
+	import std.math: NaN;
 
-unittest
-{
-    import std.math: NaN;
-
-    assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
-    assert(expm1(GDN!2(1)) is GDN!2(E-1, E, E));
+	assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
+	assert(expm1(GDN!2(1)) is GDN!2(E-1, E, E));
 }
 
 
@@ -128,48 +117,43 @@ unittest
  *   A `GDN` object representing the significand of `g`.
  */
 pure nothrow @nogc @safe GDN!Deg frexp(ulong Deg)(in GDN!Deg g, out int e)
-{
-    std.math.exponential.frexp(g.val, e);
-    if (isNaN(g)) return g;
-    if (g == 0.0L || isInfinity(g)) return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv());
-    return g * 2.0L ^^ -e;
+do {
+	std.math.exponential.frexp(g.val, e);
+	if (isNaN(g)) return g;
+	if (g == 0.0L || isInfinity(g)) return GDN!Deg(g.val, GDN!Deg.mkNaNDeriv());
+	return g * 2.0L ^^ -e;
 }
-
-///
-unittest
-{
-    int e;
-    const f = frexp(GDN!1(1.1), e);
-    assert(f is GDN!1(0.55, 0.5) && e == 1);
+/***/ unittest {
+	int e;
+	const f = frexp(GDN!1(1.1), e);
+	assert(f is GDN!1(0.55, 0.5) && e == 1);
 }
+unittest {
+	import std.format: format;
+	import std.math: NaN;
 
-unittest
-{
-    import std.format: format;
-    import std.math: NaN;
+	int e;
 
-    int e;
+	const q = frexp(GDN!1(+0.), e);
+	assert(q == +0. && isNaN(q.d) && e == 0);
 
-    const q = frexp(GDN!1(+0.), e);
-    assert(q == +0. && isNaN(q.d) && e == 0);
+	const w = frexp(GDN!1(-0.), e);
+	assert(w == -0. && isNaN(w.d) && e == 0);
 
-    const w = frexp(GDN!1(-0.), e);
-    assert(w == -0. && isNaN(w.d) && e == 0);
+	const r = frexp(GDN!1(+real.infinity), e);
+	assert(r == +real.infinity && isNaN(r.d) && e == int.max);
 
-    const r = frexp(GDN!1(+real.infinity), e);
-    assert(r == +real.infinity && isNaN(r.d) && e == int.max);
+	const t = frexp(GDN!1(-real.infinity), e);
+	assert(t == -real.infinity && isNaN(r.d) && e == int.min);
 
-    const t = frexp(GDN!1(-real.infinity), e);
-    assert(t == -real.infinity && isNaN(r.d) && e == int.min);
+	const y = frexp(GDN!1(-NaN(2)), e);
+	assert(y is GDN!1(-NaN(2)) && e == int.min);
 
-    const y = frexp(GDN!1(-NaN(2)), e);
-    assert(y is GDN!1(-NaN(2)) && e == int.min);
+	const u = frexp(GDN!1(-real.nan), e);
+	assert(u is GDN!1(-real.nan, real.nan) && e == int.min);
 
-    const u = frexp(GDN!1(-real.nan), e);
-    assert(u is GDN!1(-real.nan, real.nan) && e == int.min);
-
-    const i = frexp(GDN!2(3), e);
-    assert(i is GDN!2(0.75, 0.25, 0) && e == 2, format("frexp(GDN!2(1), %s) != %s", e, i));
+	const i = frexp(GDN!2(3), e);
+	assert(i is GDN!2(0.75, 0.25, 0) && e == 2, format("frexp(GDN!2(1), %s) != %s", e, i));
 }
 
 
@@ -184,14 +168,11 @@ unittest
  *   the integral exponent of g
  */
 pure nothrow @nogc @safe int ilogb(ulong Deg)(in GDN!Deg g)
-{
-    return std.math.exponential.ilogb(g.val);
+do {
+	return std.math.exponential.ilogb(g.val);
 }
-
-///
-unittest
-{
-    assert(ilogb(GDN!1.one) == 0);
+/***/ unittest {
+	assert(ilogb(GDN!1.one) == 0);
 }
 
 
@@ -209,23 +190,18 @@ unittest
  *   A `GDN` object resulting from the computation.
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
-{
-    alias ldexp_red = Select!(Deg == 1, core.math.ldexp, ldexp);
-    if (isNaN(g)) return g;
-    return GDN!Deg(core.math.ldexp(g.val, c), ldexp_red(g.d, c));
+do {
+	alias ldexp_red = Select!(Deg == 1, core.math.ldexp, ldexp);
+	if (isNaN(g)) return g;
+	return GDN!Deg(core.math.ldexp(g.val, c), ldexp_red(g.d, c));
 }
-
-///
-unittest
-{
-    assert(ldexp(GDN!2(1), 2) is GDN!2(4, 4, 0));
+/***/ unittest {
+	assert(ldexp(GDN!2(1), 2) is GDN!2(4, 4, 0));
 }
+unittest {
+	import std.math: NaN;
 
-unittest
-{
-    import std.math: NaN;
-
-    assert(ldexp(GDN!1(NaN(2)), 1) is GDN!1(NaN(2)));
+	assert(ldexp(GDN!1(NaN(2)), 1) is GDN!1(NaN(2)));
 }
 
 
@@ -242,14 +218,11 @@ unittest
  *   the natural logarithm of `g`.
  */
 pure nothrow @nogc @safe GDN!Deg log(ulong Deg)(in GDN!Deg g)
-{
-    return g.log();
+do {
+	return g.log();
 }
-
-///
-unittest
-{
-    assert(log(GDN!2(1)) is GDN!2(0, 1, -1));
+/***/ unittest {
+	assert(log(GDN!2(1)) is GDN!2(0, 1, -1));
 }
 
 
@@ -266,33 +239,29 @@ unittest
  *   A `GDN` object representing the logarithm of `g`.
  */
 pure nothrow @nogc @safe GDN!Deg log10(ulong Deg)(in GDN!Deg g)
-{
-    if (isNaN(g)) return g;
+do {
+	if (isNaN(g)) return g;
 
-    const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN10*g.reduce());
-    return GDN!Deg(std.math.exponential.log10(g.val), df * g.d);
+	const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN10*g.reduce());
+	return GDN!Deg(std.math.exponential.log10(g.val), df * g.d);
 }
-
-///
-unittest
+/***/ unittest
 {
-    assert(log10(GDN!1(1)) is GDN!1(0, 1/LN10));
+	assert(log10(GDN!1(1)) is GDN!1(0, 1/LN10));
 }
+unittest {
+	import std.format: format;
+	import std.math: LOG2;
 
-unittest
-{
-    import std.format: format;
-    import std.math: LOG2;
+	const q = log10(GDN!1(-1));
+	assert(isNaN(q) && isNaN(q.d), format("log10(-1) = %s", q));
 
-    const q = log10(GDN!1(-1));
-    assert(isNaN(q) && isNaN(q.d), format("log10(-1) = %s", q));
-
-    assert(log10(GDN!2(2)) is GDN!2(LOG2, 0.5/LN10, -0.25/LN10));
-    // f = log(2)
-    // <f',f"> = <1,0>/(ln(10)<2,1>)
-    //         = <1,0>/<2,1>/ln(10)
-    //         = <0.5,-0.25>/ln(10)
-    //         = <1/[2ln(10)],-1/[4ln(10)]>
+	assert(log10(GDN!2(2)) is GDN!2(LOG2, 0.5/LN10, -0.25/LN10));
+	// f = log(2)
+	// <f',f"> = <1,0>/(ln(10)<2,1>)
+	//         = <1,0>/<2,1>/ln(10)
+	//         = <0.5,-0.25>/ln(10)
+	//         = <1/[2ln(10)],-1/[4ln(10)]>
 }
 
 
@@ -309,28 +278,23 @@ unittest
  *  $(MATH ln(1 + g)) as a `GDN`
  */
 pure nothrow @nogc @safe GDN!Deg log1p(ulong Deg)(in GDN!Deg g)
-{
-    if (isNaN(g)) return g;
+do {
+	if (isNaN(g)) return g;
 
-    const df = g <= -1.0L ? GDN!Deg.mkNaNDeriv() : 1.0L / (1.0L+g.reduce());
-    return GDN!Deg(std.math.exponential.log1p(g.val), df*g.d);
+	const df = g <= -1.0L ? GDN!Deg.mkNaNDeriv() : 1.0L / (1.0L+g.reduce());
+	return GDN!Deg(std.math.exponential.log1p(g.val), df*g.d);
 }
+/***/ unittest {
+	import std.math: log;
+	import ad.math.operations: isClose;
 
-///
-unittest
-{
-    import std.math: log;
-    import ad.math.operations: isClose;
-
-    const f_act = log1p(GDN!1(3));
-    const f_exp = GDN!1(log(4.), 0.25);
-    assert(isClose(f_act, f_exp));
-    assert(log1p(GDN!1(-1)) is GDN!1(-real.infinity, real.nan));
+	const f_act = log1p(GDN!1(3));
+	const f_exp = GDN!1(log(4.), 0.25);
+	assert(isClose(f_act, f_exp));
+	assert(log1p(GDN!1(-1)) is GDN!1(-real.infinity, real.nan));
 }
-
-unittest
-{
-    assert(isNaN(log1p(GDN!1(-2))));
+unittest {
+	assert(isNaN(log1p(GDN!1(-2))));
 }
 
 
@@ -347,18 +311,15 @@ unittest
  *   A `GDN` object representing the base-2 logarithm of `g`.
  */
 pure nothrow @nogc @safe GDN!Deg log2(ulong Deg)(in GDN!Deg g)
-{
-    return ad.math.internal.log2(g);
+do {
+	return ad.math.internal.log2(g);
 }
+/***/ unittest {
+	import std.math: LN2;
 
-///
-unittest
-{
-    import std.math: LN2;
-
-    assert(log2(GDN!1(2)) is GDN!1(1, 1/(2 * LN2)));
-    assert(log2(GDN!1(-0.)) is GDN!1(-real.infinity, real.nan));
-    assert(log2(GDN!1(+0.)) is GDN!1(-real.infinity, real.infinity));
+	assert(log2(GDN!1(2)) is GDN!1(1, 1/(2 * LN2)));
+	assert(log2(GDN!1(-0.)) is GDN!1(-real.infinity, real.nan));
+	assert(log2(GDN!1(+0.)) is GDN!1(-real.infinity, real.infinity));
 }
 
 
@@ -373,14 +334,11 @@ unittest
  *   The exponent of g
  */
 nothrow @nogc @safe real logb(ulong Deg)(in GDN!Deg g)
-{
-    return std.math.exponential.logb(g.val);
+do {
+	return std.math.exponential.logb(g.val);
 }
-
-///
-unittest
-{
-    assert(logb(GDN!1(1)) == 0);
+/***/ unittest {
+	assert(logb(GDN!1(1)) == 0);
 }
 
 
@@ -400,15 +358,13 @@ unittest
  *   It returns a `GDN` representing `g` raised to `n`.
  */
 pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in GDN!Deg g, in I n) if (isIntegral!I)
-{
-    return ad.math.internal.pow(g, n);
+do {
+	return ad.math.internal.pow(g, n);
+}
+/***/ unittest {
+	assert(pow(GDN!1(2), 3) is GDN!1(8, 12));
 }
 
-///
-unittest
-{
-    assert(pow(GDN!1(2), 3) is GDN!1(8, 12));
-}
 
 /**
  * This function determine the value of a integer raised to a `GDN` power;
@@ -425,43 +381,39 @@ unittest
  *   A `GDN` representing `n` raised to `g`.
  */
 pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in I n, in GDN!Deg g) if (isIntegral!I)
-{
-    if (isNaN(g)) return g;
+do {
+	if (isNaN(g)) return g;
 
-    static if (Deg == 1) {
-        const f_val = std.math.exponential.pow(n, g.val);
-        return GDN!Deg(f_val, f_val * g.d * std.math.exponential.log(cast(real)n));
-    } else {
-        const f_red = pow(n, g.reduce());
-        return GDN!Deg(f_red.val(), f_red * g.d * std.math.exponential.log(cast(real)n));
-    }
+	static if (Deg == 1) {
+		const f_val = std.math.exponential.pow(n, g.val);
+		return GDN!Deg(f_val, f_val * g.d * std.math.exponential.log(cast(real)n));
+	} else {
+		const f_red = pow(n, g.reduce());
+		return GDN!Deg(f_red.val(), f_red * g.d * std.math.exponential.log(cast(real)n));
+	}
+}
+/***/ unittest {
+	import std.math: log;
+	import ad.math.operations: isClose;
+
+	assert(isClose(pow(2, GDN!1(5)), GDN!1(32, 32*log(2.))));
+}
+unittest {
+	import std.math: NaN;
+	import ad.math.operations: isClose;
+
+	const ln3 = std.math.exponential.log(3.);
+	assert(isClose(pow(3, GDN!2(1, 2, 4)), GDN!2(3, 6*ln3, 12*ln3*(ln3 + 1))));
+	// f = 3
+	// <f',f"> = 3^<1,2> * <2,4> * ln(3)
+	//         = <3,3*2ln(3)> * <2,4> * ln(3)
+	//         = <1,2ln(3)> * <2,4> * 3ln(3)
+	//         = <2,4ln(3) + 4> * 3ln(3)
+	//         = <6ln(3), 12ln(3)(ln(3)+1)>
+
+	assert(pow(5, GDN!1(NaN(2))) is GDN!1(NaN(2)));
 }
 
-///
-unittest
-{
-    import std.math: log;
-    import ad.math.operations: isClose;
-
-    assert(isClose(pow(2, GDN!1(5)), GDN!1(32, 32*log(2.))));
-}
-
-unittest
-{
-    import std.math: NaN;
-    import ad.math.operations: isClose;
-
-    const ln3 = std.math.exponential.log(3.);
-    assert(isClose(pow(3, GDN!2(1, 2, 4)), GDN!2(3, 6*ln3, 12*ln3*(ln3 + 1))));
-    // f = 3
-    // <f',f"> = 3^<1,2> * <2,4> * ln(3)
-    //         = <3,3*2ln(3)> * <2,4> * ln(3)
-    //         = <1,2ln(3)> * <2,4> * 3ln(3)
-    //         = <2,4ln(3) + 4> * 3ln(3)
-    //         = <6ln(3), 12ln(3)(ln(3)+1)>
-
-    assert(pow(5, GDN!1(NaN(2))) is GDN!1(NaN(2)));
-}
 
 /**
  * This function calculates $(MATH g$(SUP h)). It is the same as `g ^^ h`.
@@ -475,16 +427,16 @@ unittest
  * Returns:
  *   It returns `g ^^ h`.
  */
-pragma(inline, true) pure nothrow @nogc @safe
+pure nothrow @nogc @safe
 CommonGDN!(G, H) pow(G, H)(in G g, in H h)
-if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H) && !anySatisfy!(isIntegral, G, H))
-{
-    return g^^h;
+if (anySatisfy!(isGDN, G, H)
+	&& allSatisfy!(isConvertibleToGDN, G, H)
+	&& !anySatisfy!(isIntegral, G, H))
+do {
+	return g ^^ h;
 }
-
-unittest
-{
-    assert(pow(GDN!1(2), 3.) is GDN!1(8, 12));
+/***/ unittest {
+	assert(pow(GDN!1(2), 3.) is GDN!1(8, 12));
 }
 
 
@@ -502,23 +454,18 @@ unittest
  *   It returns the scaled `GDN`.
  */
 pure nothrow @nogc @safe GDN!Deg scalbn(ulong Deg)(in GDN!Deg g, in int n)
-{
-    alias dev_scale = Select!(Deg == 1, std.math.exponential.scalbn, scalbn);
+do {
+	alias dev_scale = Select!(Deg == 1, std.math.exponential.scalbn, scalbn);
 
-    if (isNaN(g)) return g;
-    return GDN!Deg(std.math.exponential.scalbn(g.val, n), dev_scale(g.d, n));
+	if (isNaN(g)) return g;
+	return GDN!Deg(std.math.exponential.scalbn(g.val, n), dev_scale(g.d, n));
 }
-
-///
-unittest
-{
-    assert(scalbn(GDN!1(2), 10) is GDN!1(2048, 1024));
+/***/ unittest {
+	assert(scalbn(GDN!1(2), 10) is GDN!1(2048, 1024));
 }
+unittest {
+	import std.math: NaN;
 
-unittest
-{
-    import std.math: NaN;
-
-    assert(scalbn(GDN!2(2048, 1, 2), -10) is GDN!2(2, 1.0L/1024, 1.0L/512));
-    assert(scalbn(GDN!1(-NaN(3)), 0) is GDN!1(-NaN(3)));
+	assert(scalbn(GDN!2(2048, 1, 2), -10) is GDN!2(2, 1.0L/1024, 1.0L/512));
+	assert(scalbn(GDN!1(-NaN(3)), 0) is GDN!1(-NaN(3)));
 }

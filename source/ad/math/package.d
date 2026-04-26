@@ -27,7 +27,7 @@ import std.math: LN2;
 import std.meta: allSatisfy, anySatisfy;
 import std.traits: isFloatingPoint, Select;
 
-import ad.math.internal: asGDN, CommonGDN, isGDN, isGDNOrReal, signbit;
+import ad.math.internal: asGDN, CommonGDN, isConvertibleToGDN, isGDN, signbit;
 
 
 /**
@@ -45,15 +45,12 @@ import ad.math.internal: asGDN, CommonGDN, isGDN, isGDNOrReal, signbit;
  */
 pragma(inline, true) pure nothrow @nogc @safe
 F toPrec(F, ulong Deg)(in GDN!Deg g) if (isFloatingPoint!F)
-{
-    return core.math.toPrec!F(g.val);
+do {
+	return core.math.toPrec!F(g.val);
 }
-
-///
-unittest
-{
-    assert(toPrec!float(GDN!1(-NaN(1))) is float(-NaN(1)));
-    assert(typeid(toPrec!float(GDN!1.zero)) == typeid(float));
+/***/ unittest {
+	assert(toPrec!float(GDN!1(-NaN(1))) is float(-NaN(1)));
+	assert(typeid(toPrec!float(GDN!1.zero)) == typeid(float));
 }
 
 
@@ -74,73 +71,68 @@ unittest
  *   `g` and `h`.
  */
 pragma(inline, true) pure nothrow @nogc @safe
-CommonGDN!(G, H)
-yl2x(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
-{
-    alias Deg = typeof(return).DEGREE;
+CommonGDN!(G, H) yl2x(G, H)(in G g, in H h)
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
+do {
+	alias Deg = typeof(return).DEGREE;
 
-    const gg = asGDN!Deg(g);
-    const hh = asGDN!Deg(h);
+	const gg = asGDN!Deg(g);
+	const hh = asGDN!Deg(h);
 
 // XXX - Due to https://github.com/dlang/dmd/issues/18223, both
 //       std.math.internal.isNaN and std.math.traits.isNaN are visible in this
 //       module
 //     if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
-    if (ad.math.traits.isNaN(gg) || ad.math.traits.isNaN(hh)) return nanCombine(gg, hh);
+	if (ad.math.traits.isNaN(gg) || ad.math.traits.isNaN(hh)) return nanCombine(gg, hh);
 // XXX - ^^^
-    return yl2x_impl(gg, hh);
+	return yl2x_impl(gg, hh);
+}
+/***/ unittest {
+	import std.math: LN2;
+
+	assert(yl2x(GDN!1(2), GDN!1(3)) is GDN!1(3, 1 + 1.5/LN2));
+	assert(yl2x(GDN!1(+0., -1), GDN!1(1)) is GDN!1(-real.infinity,  -real.infinity));
+	assert(typeof(yl2x(GDN!2(1), GDN!1(2))).DEGREE == 1);
+	assert(yl2x(GDN!1(1), 2.) is GDN!1(0, 2/LN2));
+}
+unittest {
+	assert(yl2x(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
+	assert(yl2x(1, GDN!1(2)) is GDN!1(0, 0));
 }
 
-///
-unittest
-{
-    import std.math: LN2;
-
-    assert(yl2x(GDN!1(2), GDN!1(3)) is GDN!1(3, 1 + 1.5/LN2));
-    assert(yl2x(GDN!1(+0., -1), GDN!1(1)) is GDN!1(-real.infinity,  -real.infinity));
-    assert(typeof(yl2x(GDN!2(1), GDN!1(2))).DEGREE == 1);
-    assert(yl2x(GDN!1(1), 2.) is GDN!1(0, 2/LN2));
-}
-
-unittest
-{
-    assert(yl2x(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
-    assert(yl2x(1, GDN!1(2)) is GDN!1(0, 0));
-}
 
 private pure nothrow @nogc @safe GDN!Deg yl2x_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h)
-{
-    alias yl2x_red = Select!(Deg == 1, core.math.yl2x, yl2x_impl);
+do {
+	alias yl2x_red = Select!(Deg == 1, core.math.yl2x, yl2x_impl);
 
-    GDN!Deg.DerivType!1 df;
-    if (signbit(g) == 0) {
-        const g_red = g.reduce();
-        df = yl2x_red(g_red, h.d) + h.reduce()*g.d/(LN2 * g_red);
-    }
+	GDN!Deg.DerivType!1 df;
+	if (signbit(g) == 0) {
+		const g_red = g.reduce();
+		df = yl2x_red(g_red, h.d) + h.reduce()*g.d/(LN2 * g_red);
+	}
 
-    return GDN!Deg(core.math.yl2x(g.val, h.val), df);
+	return GDN!Deg(core.math.yl2x(g.val, h.val), df);
 }
-
-unittest
-{
+unittest {
 // XXX - Due to https://github.com/dlang/dmd/issues/18223, both
 //       std.math.internal.isNaN and std.math.traits.isNaN are visible in this
 //       module
 //    assert(isNaN(yl2x(GDN!1(-1), GDN!1(1))));
-    assert(ad.math.traits.isNaN(yl2x(GDN!1(-1), GDN!1(1))));
+	assert(ad.math.traits.isNaN(yl2x(GDN!1(-1), GDN!1(1))));
 // XXX - ^^^
 
-    const f = yl2x(GDN!1(0), GDN!1(1));
-    assert(f == -real.infinity && isNaN(f.d));
+	const f = yl2x(GDN!1(0), GDN!1(1));
+	assert(f == -real.infinity && isNaN(f.d));
 
-    assert(yl2x(GDN!2(1), GDN!2(2)) is GDN!2(0, 2/LN2, 0));
-    // f = 0
-    // <f',f"> = h'lg(g) + hg'/(ln(2)g)
-    //    = <1,0>lg(<1,1>) + <2,1><1,0>/ln(2)<1,1>
-    //    = <0,0+1/ln(2)> + <2,1>/<1,1>/ln(2)
-    //    = <0,1/ln(2)> + <2,-1>/ln(2)
-    //    = <2/ln(2),0>
+	assert(yl2x(GDN!2(1), GDN!2(2)) is GDN!2(0, 2/LN2, 0));
+	// f = 0
+	// <f',f"> = h'lg(g) + hg'/(ln(2)g)
+	//    = <1,0>lg(<1,1>) + <2,1><1,0>/ln(2)<1,1>
+	//    = <0,0+1/ln(2)> + <2,1>/<1,1>/ln(2)
+	//    = <0,1/ln(2)> + <2,-1>/ln(2)
+	//    = <2/ln(2),0>
 }
+
 
 /**
  * Computes $(MATH h⋅lg(g + 1)), for $(MATH -(1 - √½) ≤ x ≤ +(1 - √½)). When $(MATH g) is outside of
@@ -160,64 +152,58 @@ unittest
  *   `g` and `h`.
  */
 pragma(inline, true) pure nothrow @nogc @safe
-CommonGDN!(G, H)
-yl2xp1(G, H)(in G g, in H h) if (anySatisfy!(isGDN, G, H) && allSatisfy!(isGDNOrReal, G, H))
-{
-    alias Deg = typeof(return).DEGREE;
+CommonGDN!(G, H) yl2xp1(G, H)(in G g, in H h)
+if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
+do {
+	alias Deg = typeof(return).DEGREE;
 
-    const gg = asGDN!Deg(g);
-    const hh = asGDN!Deg(h);
+	const gg = asGDN!Deg(g);
+	const hh = asGDN!Deg(h);
 
 // XXX - Due to https://github.com/dlang/dmd/issues/18223, both
 //       std.math.internal.isNaN and std.math.traits.isNaN are visible in this
 //       module
 //     if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
-    if (ad.math.traits.isNaN(gg) || ad.math.traits.isNaN(hh)) return nanCombine(gg, hh);
+	if (ad.math.traits.isNaN(gg) || ad.math.traits.isNaN(hh)) return nanCombine(gg, hh);
 // XXX - ^^^
-    return yl2xp1_impl(gg, hh);
+	return yl2xp1_impl(gg, hh);
+}
+/***/ unittest {
+	import std.math: LN2;
+
+	assert(yl2xp1(GDN!1(0), GDN!1(3)) is GDN!1(0, 3/LN2));
+	assert(typeof(yl2xp1(GDN!2(0), GDN!1(1))).DEGREE == 1);
+	assert(yl2xp1(GDN!1(0), 1) is GDN!1(0, 1/LN2));
+}
+unittest {
+	assert(yl2xp1(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
+	assert(yl2xp1(0, GDN!1(1)) is GDN!1(0, 0));
 }
 
-///
-unittest
-{
-    import std.math: LN2;
-
-    assert(yl2xp1(GDN!1(0), GDN!1(3)) is GDN!1(0, 3/LN2));
-    assert(typeof(yl2xp1(GDN!2(0), GDN!1(1))).DEGREE == 1);
-    assert(yl2xp1(GDN!1(0), 1) is GDN!1(0, 1/LN2));
-}
-
-unittest
-{
-    assert(yl2xp1(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
-    assert(yl2xp1(0, GDN!1(1)) is GDN!1(0, 0));
-}
 
 private pure nothrow @nogc @safe GDN!Deg yl2xp1_impl(ulong Deg)(in GDN!Deg g, in GDN!Deg h)
-{
-    alias yl2xp1_red = Select!(Deg == 1, core.math.yl2xp1, yl2xp1_impl);
+do {
+	alias yl2xp1_red = Select!(Deg == 1, core.math.yl2xp1, yl2xp1_impl);
 
-    GDN!Deg.DerivType!1 df;
-    if (g > -1) {
-        const g_red = g.reduce();
-        df = yl2xp1_red(g_red, h.d) + h.reduce()*g.d/(LN2 * (g_red + 1));
-    }
+	GDN!Deg.DerivType!1 df;
+	if (g > -1) {
+		const g_red = g.reduce();
+		df = yl2xp1_red(g_red, h.d) + h.reduce()*g.d/(LN2 * (g_red + 1));
+	}
 
-    return GDN!Deg(core.math.yl2xp1(g.val, h.val), df);
+	return GDN!Deg(core.math.yl2xp1(g.val, h.val), df);
 }
+unittest {
+	assert(yl2xp1_impl(GDN!2(0), GDN!2(1)) is GDN!2(0, 1/LN2, 1/LN2));
+	// f = 0
+	// <f',f"> = h'lg(g+1) + hg'/[ln(2)(g+1)]
+	//    = <1,0>lg(<0,1>+1) + <1,1><1,0>/[ln(2)(<0,1>+1)]
+	//    = <1,0>lg<1,1> + <1,1>/[ln(2)<1,1>]
+	//    = <0,1/ln(2)> + <1,0>/ln(2)
+	//    = <1/ln(2),1/ln(2)>
 
-unittest
-{
-    assert(yl2xp1_impl(GDN!2(0), GDN!2(1)) is GDN!2(0, 1/LN2, 1/LN2));
-    // f = 0
-    // <f',f"> = h'lg(g+1) + hg'/[ln(2)(g+1)]
-    //    = <1,0>lg(<0,1>+1) + <1,1><1,0>/[ln(2)(<0,1>+1)]
-    //    = <1,0>lg<1,1> + <1,1>/[ln(2)<1,1>]
-    //    = <0,1/ln(2)> + <1,0>/ln(2)
-    //    = <1/ln(2),1/ln(2)>
+	assert(isNaN(yl2xp1_impl(GDN!1(-1), GDN!1(0)).d));
 
-    assert(isNaN(yl2xp1_impl(GDN!1(-1), GDN!1(0)).d));
-
-    const q = yl2xp1_impl(GDN!1(-2), GDN!1(0));
-    assert(isNaN(q.d), "yl2xp1(2,0) should not have a derivative");
+	const q = yl2xp1_impl(GDN!1(-2), GDN!1(0));
+	assert(isNaN(q.d), "yl2xp1(2,0) should not have a derivative");
 }
