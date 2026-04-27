@@ -138,7 +138,7 @@ do {
 
 	int n;
 	const f = remquo(GDN!1(5.1), GDN!1(3), n);
-	assert(n ==2 && isClose(f.val, -0.9) && f.d == -1);
+	assert(n == 2 && isClose(f.val, -0.9) && f.d == -1);
 }
 unittest {
 	import std.math: NaN;

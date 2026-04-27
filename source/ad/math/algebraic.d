@@ -331,7 +331,7 @@ unittest {
 	assert(typeof(poly(GDN!1(0), [GDN!2(-1)])).DEGREE == 1);
 	assert(typeof(poly(GDN!3(-2), [GDN!1(-3), GDN!1(4)])).DEGREE == 1);
 
-	static a = [GDN!2(1)];
+	static const a = [GDN!2(1)];
 	assert(typeof(poly(GDN!1(2), a)).DEGREE == 1);
 	assert(typeof(poly(GDN!3(2), a)).DEGREE == 2);
 
