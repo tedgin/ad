@@ -3,8 +3,9 @@
  */
 module ad.math.trigonometry;
 
+public import std.math.trigonometry;
+
 static import core.math;
-static import std.math.trigonometry;
 
 import std.math: abs, isFinite, pow, sqrt;
 import std.meta: allSatisfy, anySatisfy;
@@ -39,7 +40,6 @@ do {
 }
 unittest {
 	import std.math: isClose, NaN, PI_2;
-	import ad.math.traits: isNaN;
 
 	assert(sin(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 	assert(sin(GDN!1.zero) is GDN!1.zero);
@@ -82,7 +82,6 @@ do {
 }
 unittest {
 	import std.math: isClose, NaN, PI_2;
-	import ad.math.traits: isNaN;
 
 	assert(cos(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 
@@ -125,7 +124,6 @@ do {
 }
 unittest {
 	import std.math: isClose, NaN, PI_4;
-	import ad.math.traits: isNaN;
 
 	assert(tan(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 
@@ -171,7 +169,6 @@ do {
 unittest {
 	import std.format: format;
 	import std.math: NaN, PI_2;
-	import ad.math.traits: isNaN;
 
 	assert(asin(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 	assert(asin(GDN!1(-1)) is GDN!1(-PI_2, real.infinity));
@@ -214,7 +211,6 @@ do {
 }
 unittest {
 	import std.math: NaN, PI, PI_2;
-	import ad.math.traits: isNaN;
 
 	assert(acos(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 	assert(acos(GDN!1(-1)) is GDN!1(PI, -real.infinity));

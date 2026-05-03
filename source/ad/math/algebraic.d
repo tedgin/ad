@@ -3,10 +3,11 @@
  */
 module ad.math.algebraic;
 
-static import core.math;
-static import std.math.algebraic;
+public import std.math.algebraic;
 
-import std.algorithm: any, map, min;
+static import core.math;
+
+import std.algorithm: any, map;
 import std.math: isInfinity;
 import std.meta: allSatisfy, anySatisfy;
 import std.range: chain, only;

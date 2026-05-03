@@ -3,12 +3,13 @@
  */
 module ad.math.rounding;
 
-static import core.math;
-static import std.math.rounding;
+public import std.math.rounding;
 
-import std.math: FloatingPointControl, isInfinity, isNaN, nearbyint, signbit;
+static import core.math;
+
+import std.math: isInfinity, signbit;
 import std.meta: allSatisfy, anySatisfy;
-import std.traits: arity, isIntegral, Parameters, ReturnType;
+import std.traits: isIntegral;
 
 static import ad.math.internal;
 
@@ -128,7 +129,7 @@ do {
 	return GDN!Deg(f, dfdg*g.d);
 }
 unittest {
-	import std.math: NaN;
+	import std.math: isNaN, NaN;
 
 	enum impl = "std.math.rounding.nearbyint";
 
@@ -162,6 +163,8 @@ do {
 	return nearbyint_impl!"std.math.rounding.nearbyint"(g);
 }
 /***/ unittest {
+	import std.math: isNaN;
+
 	const e = nearbyint(GDN!2(1.5));
 	assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
 }
@@ -186,7 +189,7 @@ do {
    return nearbyint_impl!"std.math.rounding.rint"(g);
 }
 /***/ unittest {
-	import std.math: ieeeFlags, resetIeeeFlags;
+	import std.math: ieeeFlags, isNaN, resetIeeeFlags;
 
 	resetIeeeFlags();
 	const e = rint(GDN!2(1.5));
@@ -254,7 +257,7 @@ do {
 
 	const gg = asGDN!Deg(g);
 
-	if (isNaN(b) ||isNaN(gg)) return nanCombine(b, gg);
+	if (isNaN(b) || isNaN(gg)) return nanCombine(b, gg);
 	return quantize_impl!round(gg, pow(b, exp));
 }
 /// ditto

@@ -3,10 +3,11 @@
  */
 module ad.math.operations;
 
-static import std.math.operations;
+public import std.math.operations;
 
-import std.algorithm: any, min;
-import std.math: abs, isNaN;
+import core.math: fabs;
+import std.algorithm: any;
+import std.math: isNaN;
 import std.meta: allSatisfy, anySatisfy;
 import std.range: ElementType, empty, front, isInputRange, only, popFront;
 import std.traits: isImplicitlyConvertible, Select;
@@ -472,7 +473,7 @@ do {
 	if (isNaN(g) || isNaN(hh)) return nanCombine(g, hh);
 
 	const f_val = std.math.operations.nextafter(g.val, hh.val);
-	return GDN!Deg(f_val, g.d + sgn(hh - g).d*(hh.d - g.d)*abs(f_val - g.val));
+	return GDN!Deg(f_val, g.d + sgn(hh - g).d*(hh.d - g.d)*fabs(f_val - g.val));
 }
 /// ditto
 pure nothrow @nogc @safe real nextafter(ulong Deg)(in real g, in GDN!Deg h)

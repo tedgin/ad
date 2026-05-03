@@ -10,7 +10,7 @@ static import std.math.rounding;
 static import std.math.traits;
 
 import std.algorithm: min;
-import std.math: abs, isFinite, isNaN, LN2;
+import std.math: abs, isNaN, LN2;
 import std.meta: allSatisfy, anySatisfy;
 import std.traits: fullyQualifiedName, isImplicitlyConvertible, isIntegral, Select, TemplateOf;
 
@@ -188,7 +188,6 @@ package
 	}
 	unittest {
 		import std.format: format;
-		import ad.math.traits: isNaN;
 
 		assert(sqrt(GDN!1(-0.)) is GDN!1(-0., real.nan), "sqrt(-0) incorrect");
 
@@ -249,8 +248,6 @@ package
 		return GDN!Deg(std.math.exponential.pow(g.val, n), df * g.d);
 	}
 	unittest {
-		import std.format: format;
-
 		assert(isNaN(pow(GDN!1.nan, 1)));
 		assert(pow(GDN!1(2, 3), 0) is GDN!1(1, 0));
 
@@ -353,8 +350,6 @@ package
 		return round_impl!("ceil", Deg)(g, &dfn);
 	}
 	unittest {
-		import std.math: LN2;
-
 		assert(ceil(GDN!1.nan) is GDN!1.nan);
 		assert(ceil(GDN!1(real.infinity)) is GDN!1(real.infinity, real.nan));
 		assert(ceil(GDN!1(-real.infinity)) is GDN!1(-real.infinity, real.nan));
@@ -374,8 +369,6 @@ package
 		return round_impl!("floor", Deg)(g, &dfn);
 	}
 	unittest {
-		import std.math: LN2;
-
 		assert(floor(GDN!1.nan) is GDN!1.nan);
 		assert(floor(GDN!1(real.infinity)) is GDN!1(real.infinity, real.nan));
 		assert(floor(GDN!1(-real.infinity)) is GDN!1(-real.infinity, real.nan));

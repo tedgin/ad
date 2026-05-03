@@ -3,18 +3,18 @@
  */
 module ad.math.exponential;
 
-static import core.math;
-static import std.math.exponential;
+public import std.math.exponential;
 
-import std.math: E, isInfinity, isNaN, LN10, LN2, sgn;
+static import core.math;
+
+import std.math: LN10, LN2;
 import std.meta: allSatisfy, anySatisfy;
 import std.traits: isIntegral, Select;
 
 static import ad.math.internal;
 
 import ad.core;
-import ad.math.internal:
-	asReal, CommonGDN, floor, isConvertibleToGDN, isGDN, isInfinity, isNaN, sgn, signbit;
+import ad.math.internal: asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinity, isNaN, signbit;
 
 
 /**
@@ -98,7 +98,7 @@ do {
 	assert(expm1(GDN!1(0)) is GDN!1(0, 1));
 }
 unittest {
-	import std.math: NaN;
+	import std.math: E, NaN;
 
 	assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
 	assert(expm1(GDN!2(1)) is GDN!2(E-1, E, E));
@@ -130,7 +130,7 @@ do {
 }
 unittest {
 	import std.format: format;
-	import std.math: NaN;
+	import std.math: isNaN, NaN;
 
 	int e;
 
@@ -251,10 +251,10 @@ do {
 }
 unittest {
 	import std.format: format;
-	import std.math: LOG2;
+	import std.math: isNaN, LOG2;
 
 	const q = log10(GDN!1(-1));
-	assert(isNaN(q) && isNaN(q.d), format("log10(-1) = %s", q));
+	assert(ad.math.internal.isNaN(q) && isNaN(q.d), format("log10(-1) = %s", q));
 
 	assert(log10(GDN!2(2)) is GDN!2(LOG2, 0.5/LN10, -0.25/LN10));
 	// f = log(2)

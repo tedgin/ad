@@ -3,7 +3,7 @@
  */
 module ad.math.remainder;
 
-static import std.math.remainder;
+public import std.math.remainder;
 
 import std.math: sgn;
 import std.meta: allSatisfy, anySatisfy;

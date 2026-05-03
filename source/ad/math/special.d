@@ -6,17 +6,16 @@ module ad.math.special;
 public import std.mathspecial;
 
 import std.algorithm: any;
-import std.math: exp, getNaNPayload, isInfinity, isNaN, M_2_SQRTPI, signbit, trunc;
+import std.math: exp, isNaN, M_2_SQRTPI, signbit, trunc;
 import std.meta: allSatisfy, anySatisfy;
 import std.range: only;
-import std.traits: Select, select;
+import std.traits: Select;
 
 static import ad.math.polygamma;
 
 import ad.core;
 import ad.math.internal:
-	asGDN, asReal, CommonGDN, dirac, exp, getNaNPayload, isConvertibleToGDN, isGDN, isNaN, sgn,
-	signbit;
+	asGDN, asReal, CommonGDN, dirac, exp, isConvertibleToGDN, isGDN, isNaN, signbit;
 
 
 private pure nothrow @nogc @safe GDN!Deg polygamma(ulong N, ulong Deg)(in GDN!Deg g) if (N > 0)
@@ -87,7 +86,7 @@ do {
 	alias gamma_fn = Select!(Deg == 1, std.mathspecial.gamma, gamma);
 	alias digamma_fn = Select!(Deg == 1, std.mathspecial.digamma, digamma);
 
-   if (isNaN(g)) return g;
+	if (isNaN(g)) return g;
 
 	const g_red = g.reduce();
 	const f_red = gamma_fn(g_red);
@@ -99,7 +98,6 @@ do {
 	assert(gamma(GDN!1(1)) is GDN!1(1, digamma(1)));
 }
 unittest {
-	import std.format: format;
 	import std.math: NaN;
 
 	assert(gamma(GDN!1(2, 3)) is GDN!1(1, 3*std.mathspecial.digamma(2)));
@@ -468,7 +466,6 @@ do {
 	assert(digamma(GDN!1(real.infinity)) is GDN!1(real.infinity, +0.));
 }
 unittest {
-	import std.format: format;
 	import std.math: NaN;
 
 	const e = GDN!1(std.mathspecial.digamma(2), 3*ad.math.polygamma.polygamma!1(2));
@@ -534,7 +531,7 @@ do {
 unittest {
 	import std.format: format;
 	import std.math: isClose, NaN;
-	import ad.math: log;
+	import ad.math.exponential: log;
 
 	const w = logmdigamma(GDN!1(+0.));
 	// ln(x) - 1/x ≤ Ψ(x) ≤ ln(x) - 1/(2x), x>0
@@ -865,9 +862,10 @@ do {
 }
 unittest {
 	import std.format: format;
+	import std.math: getNaNPayload;
 
 	const a = gammaIncomplete(NaN(0x1UL), GDN!1(.0L, NaN(0x2UL)));
-	assert(isNaN(a) && getNaNPayload(a) == 0x1UL && getNaNPayload(a.d) == 0x2UL);
+	assert(isNaN(a) && getNaNPayload(a.val) == 0x1UL && getNaNPayload(a.d) == 0x2UL);
 
 	const b_g = GDN!1(2.0L, 2.0L);
 	const b_act = gammaIncomplete(1.0L, b_g);
@@ -931,9 +929,10 @@ do {
 }
 unittest {
 	import std.format: format;
+	import std.math: getNaNPayload;
 
 	const a = gammaIncompleteCompl(NaN(0x1UL), GDN!1(.0L, NaN(0x2UL)));
-	assert(isNaN(a) && getNaNPayload(a) == 0x1UL && getNaNPayload(a.d) == 0x2UL);
+	assert(isNaN(a) && getNaNPayload(a.val) == 0x1UL && getNaNPayload(a.d) == 0x2UL);
 
 	const b = gammaIncompleteCompl(1.0L, GDN!1(1.0L, .0L));
 	assert(b == 1.0L/E && b.d == .0L);
@@ -1005,10 +1004,10 @@ do {
 }
 unittest {
 	import std.format: format;
-	import std.math: SQRT2;
+	import std.math: getNaNPayload, SQRT2;
 
 	const a = gammaIncompleteComplInverse(NaN(0x1UL), GDN!1(0, NaN(0x3UL)));
-	assert(isNaN(a) && getNaNPayload(a) == 0x1UL && getNaNPayload(a.d) == 0x3UL);
+	assert(isNaN(a) && getNaNPayload(a.val) == 0x1UL && getNaNPayload(a.d) == 0x3UL);
 
 // NB: broken in std.mathspecial.gammaIncompleteComplInverse. fixed in master
 //     const b = gammaIncompleteComplInverse(2.0L, GDN!1(1.0L));
@@ -1583,7 +1582,7 @@ do {
 	assert(isClose(f1, f2) && f1.d == f2.d);
 }
 unittest {
-	import std.format : format;
+	import std.format: format;
 
 	const a = GDN!1(NaN(0x1UL));
 	assert(erfc(a) is a);

@@ -333,7 +333,7 @@ do {
 }
 unittest {
 	import std.format: format;
-	import std.math: isClose, isNaN;
+	import std.math: isClose;
 
 	void assert_close(ulong n)(in real x, in real expected_result) {
 		const act = polygamma!n(x);

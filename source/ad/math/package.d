@@ -22,7 +22,6 @@ public import ad.math.trigonometry;
 
 static import core.math;
 
-import std.algorithm: min;
 import std.math: LN2;
 import std.meta: allSatisfy, anySatisfy;
 import std.traits: isFloatingPoint, Select;

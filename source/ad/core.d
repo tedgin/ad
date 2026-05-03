@@ -6,9 +6,10 @@ module ad.core;
 
 import std.algorithm: fold, map, min;
 import std.format: format;
-import std.math: abs, cmp, copysign, getNaNPayload, isInfinity, isNaN, LN2, log, signbit;
+import std.math: abs, cmp, copysign, getNaNPayload, isInfinity, isNaN, log, signbit;
 import std.range: ElementType, isInputRange;
 import std.traits: fullyQualifiedName, TemplateOf, Unqual;
+
 
 /**
  * This data structure implements a <em>generalized dual number</em>, a generalization of the dual
@@ -1156,6 +1157,8 @@ unittest {
 
 // opBinary(^^)
 unittest {
+	import std.math: LN2;
+
 	const a1 = GDN!1(2, -1);
 	const a2 = GDN!1(-2, 3);
 	const nz = GDN!1(-0.);
