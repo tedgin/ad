@@ -11,7 +11,7 @@ import std.math: abs, isFinite, pow, sqrt;
 import std.meta: allSatisfy, anySatisfy;
 import std.traits: Select;
 
-import ad.core;
+import ad;
 import ad.math.internal:
 	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, pow, sqrt;
 

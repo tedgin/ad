@@ -6,6 +6,13 @@
 	"description": "automatic differentiation library",
 	"license": "BSD-2-Clause",
 	"name": "ad",
+	"version": "0.1.0",
+	"configurations": [
+		{
+			"name": "library",
+			"targetType": "library"
+		}
+	],
 	"buildTypes": {
 		"docs": {
 			"buildOptions": [ "syntaxOnly" ],

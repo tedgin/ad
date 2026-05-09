@@ -9,7 +9,7 @@ import std.traits: isFloatingPoint, isIntegral, Select;
 
 static import ad.math.internal;
 
-import ad.core;
+import ad;
 import ad.math.internal: asReal, isConvertibleToGDN;
 
 

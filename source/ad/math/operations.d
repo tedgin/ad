@@ -14,7 +14,7 @@ import std.traits: isImplicitlyConvertible, Select;
 
 static import ad.math.internal;
 
-import ad.core;
+import ad;
 import ad.math.internal: asGDN, asReal, CommonGDN, isConvertibleToGDN, isGDN, isNaN, sgn, signbit;
 
 

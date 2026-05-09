@@ -13,7 +13,7 @@ import std.traits: isIntegral, Select;
 
 static import ad.math.internal;
 
-import ad.core;
+import ad;
 import ad.math.internal: asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinity, isNaN, signbit;
 
 
@@ -29,9 +29,9 @@ import ad.math.internal: asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinit
  * Returns:
  *   A GDN object representing $(MATH e) raised to the power of `g`.
  */
-nothrow pure @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
+pure nothrow @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.exp(g);
+	return ad.math.internal.exp!Deg(g);
 }
 /***/ unittest {
 	assert(exp(GDN!1(0, 3)) is GDN!1(1, 3));

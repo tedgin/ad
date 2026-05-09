@@ -14,7 +14,7 @@ import std.math: abs, isNaN, LN2;
 import std.meta: allSatisfy, anySatisfy;
 import std.traits: fullyQualifiedName, isImplicitlyConvertible, isIntegral, Select, TemplateOf;
 
-import ad.core;
+import ad;
 
 /*
  * General shared internals
@@ -23,7 +23,7 @@ package
 {
 	/* Determines if a type is a GDN.
 	 */
-	enum bool isGDN(T) = fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN";
+	enum bool isGDN(T) = fullyQualifiedName!(TemplateOf!T) == "ad.GDN";
 
 
 	/* Determines if a type is a GDN or can be implicitly converted to a real.

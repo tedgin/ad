@@ -8,7 +8,7 @@ public import std.math.remainder;
 import std.math: sgn;
 import std.meta: allSatisfy, anySatisfy;
 
-import ad.core;
+import ad;
 import ad.math.internal:
 	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, round, trunc;
 

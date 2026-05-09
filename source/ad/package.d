@@ -2,7 +2,7 @@
  * This module implements univariate automatic differentiation of arbitrary order using forward
  * accumulation. It supports differentiating functions of the form $(MATH f:ℝ→ℝ).
  */
-module ad.core;
+module ad;
 
 import std.algorithm: fold, map, min;
 import std.format: format;
@@ -15,9 +15,6 @@ import std.traits: fullyQualifiedName, TemplateOf, Unqual;
  * This data structure implements a <em>generalized dual number</em>, a generalization of the dual
  * number that supports derivatives of arbitrary order. The <em>degree</em> of a generalized dual
  * number is the maximum order of derivative that it supports.
- *
- * `GDN` is intended to be a drop-in replacement for a `real`. When no operation is explicitly
- * defined for a `GDN` is will implicitly be converted to a `real`.
  *
  * In addition to differentiation, it supports basic algebraic operations mostly through operator
  * overloading. The `+` and `-` prefix operators are overloaded as well as the `+`, `-`, `*`, `/`,
@@ -434,7 +431,7 @@ struct GDN(ulong Degree = 1) if (Degree > 0)
 	 *   ```
 	 */
 	pure nothrow @nogc @safe
-	T opCast(T)() const if (fullyQualifiedName!(TemplateOf!T) == "ad.core.GDN")
+	T opCast(T)() const if (fullyQualifiedName!(TemplateOf!T) == "ad.GDN")
 	do {
 		static if (T.DEGREE == Degree)
 			return this;

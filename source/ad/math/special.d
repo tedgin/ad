@@ -13,7 +13,7 @@ import std.traits: Select;
 
 static import ad.math.polygamma;
 
-import ad.core;
+import ad;
 import ad.math.internal:
 	asGDN, asReal, CommonGDN, dirac, exp, isConvertibleToGDN, isGDN, isNaN, signbit;
 

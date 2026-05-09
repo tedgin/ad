@@ -13,7 +13,7 @@ import std.traits: isIntegral;
 
 static import ad.math.internal;
 
-import ad.core;
+import ad;
 import ad.math.internal:
 	asGDN, CommonGDN, dirac, isConvertibleToGDN, isGDN, isNaN, nextDown, nextUp, pow;
 

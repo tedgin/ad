@@ -7,9 +7,8 @@
 module ad.math;
 
 public import core.math: toPrec, yl2x, yl2xp1;
-public import std.math;
 
-public import ad.core;
+public import ad;
 public import ad.math.algebraic;
 public import ad.math.constants;
 public import ad.math.exponential;
@@ -22,11 +21,11 @@ public import ad.math.trigonometry;
 
 static import core.math;
 
-import std.math: LN2;
+import std.math: isNaN, LN2;
 import std.meta: allSatisfy, anySatisfy;
 import std.traits: isFloatingPoint, Select;
 
-import ad.math.internal: asGDN, CommonGDN, isConvertibleToGDN, isGDN, signbit;
+import ad.math.internal: asGDN, CommonGDN, isConvertibleToGDN, isGDN, isNaN, signbit;
 
 
 /**
