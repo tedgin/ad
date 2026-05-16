@@ -3,19 +3,19 @@
  */
 module ad.math.operations;
 
-public import std.math.operations;
+static import std.math.operations;
 
-import core.math: fabs;
-import std.algorithm: any;
-import std.math: isNaN;
-import std.meta: allSatisfy, anySatisfy;
-import std.range: ElementType, empty, front, isInputRange, only, popFront;
-import std.traits: isImplicitlyConvertible, Select;
+import core.math : fabs;
+import std.algorithm : any;
+import std.math : isNaN;
+import std.meta : allSatisfy, anySatisfy;
+import std.range : ElementType, empty, front, isInputRange, only, popFront;
+import std.traits : isImplicitlyConvertible, Select;
 
 static import ad.math.internal;
 
 import ad;
-import ad.math.internal: asGDN, asReal, CommonGDN, isConvertibleToGDN, isGDN, isNaN, sgn, signbit;
+import ad.math.internal : asGDN, asReal, CommonGDN, isConvertibleToGDN, isGDN, isNaN, sgn, signbit;
 
 
 /*The default relative difference for operations
@@ -225,7 +225,7 @@ do {
 	return GDN!Deg(std.math.operations.NaN(payload));
 }
 /***/ unittest {
-	import std.math: getNaNPayload;
+	import std.math : getNaNPayload;
 
 	assert(getNaNPayload(NaN!2(3).val) == 3);
 }
@@ -485,7 +485,7 @@ do {
 	assert(nextafter(1, GDN!1(0)) == 1 - real.epsilon/2);
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
 
 	const q = nextafter(GDN!1(1), GDN!1(1));
 	assert(q == 1 && isNaN(q.d), format("nextafter(GDN!1(1), GDN!1(1)) != %s", q));

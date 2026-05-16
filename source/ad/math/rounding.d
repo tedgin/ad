@@ -3,18 +3,17 @@
  */
 module ad.math.rounding;
 
-public import std.math.rounding;
-
 static import core.math;
+static import std.math.rounding;
 
-import std.math: isInfinity, signbit;
-import std.meta: allSatisfy, anySatisfy;
-import std.traits: isIntegral;
+import std.math : isInfinity, signbit;
+import std.meta : allSatisfy, anySatisfy;
+import std.traits : isIntegral;
 
 static import ad.math.internal;
 
 import ad;
-import ad.math.internal:
+import ad.math.internal :
 	asGDN, CommonGDN, dirac, isConvertibleToGDN, isGDN, isNaN, nextDown, nextUp, pow;
 
 
@@ -129,7 +128,7 @@ do {
 	return GDN!Deg(f, dfdg*g.d);
 }
 unittest {
-	import std.math: isNaN, NaN;
+	import std.math : isNaN, NaN;
 
 	enum impl = "std.math.rounding.nearbyint";
 
@@ -163,7 +162,7 @@ do {
 	return nearbyint_impl!"std.math.rounding.nearbyint"(g);
 }
 /***/ unittest {
-	import std.math: isNaN;
+	import std.math : isNaN;
 
 	const e = nearbyint(GDN!2(1.5));
 	assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
@@ -189,7 +188,7 @@ do {
    return nearbyint_impl!"std.math.rounding.rint"(g);
 }
 /***/ unittest {
-	import std.math: ieeeFlags, isNaN, resetIeeeFlags;
+	import std.math : ieeeFlags, isNaN, resetIeeeFlags;
 
 	resetIeeeFlags();
 	const e = rint(GDN!2(1.5));
@@ -197,7 +196,7 @@ do {
 	assert(e == 2 && e.d == real.infinity && isNaN(e.d!2));
 }
 unittest {
-	import std.math: ieeeFlags, resetIeeeFlags;
+	import std.math : ieeeFlags, resetIeeeFlags;
 
 	resetIeeeFlags();
 	const w = rint(GDN!1.one);
@@ -277,7 +276,7 @@ do {
 	return quantize_impl!round(asGDN!Deg(g), unit);
 }
 /***/ unittest {
-	import ad.math.operations: isClose;
+	import ad.math.operations : isClose;
 
 	const f = quantize!10(GDN!1(345.678_9), -2);
 	assert(isClose(f, 345.68) && f.d == 0);
@@ -288,7 +287,7 @@ do {
 	assert(quantize!22(GDN!1(12_345.678_9)) is GDN!1(12_342, 0));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(quantize!(GDN!1(NaN(1), NaN(3)))(GDN!1(NaN(4), NaN(2)), 0) is GDN!1(NaN(4),NaN(3)));
 	assert(quantize!(GDN!1(NaN(1), NaN(3)))(GDN!1(NaN(4), NaN(2))) is GDN!1(NaN(4), NaN(3)));

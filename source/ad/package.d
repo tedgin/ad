@@ -4,11 +4,11 @@
  */
 module ad;
 
-import std.algorithm: fold, map, min;
-import std.format: format;
-import std.math: abs, cmp, copysign, getNaNPayload, isInfinity, isNaN, log, signbit;
-import std.range: ElementType, isInputRange;
-import std.traits: fullyQualifiedName, TemplateOf, Unqual;
+import std.algorithm : fold, map, min;
+import std.format : format;
+import std.math : abs, cmp, copysign, getNaNPayload, isInfinity, isNaN, log, signbit;
+import std.range : ElementType, isInputRange;
+import std.traits : fullyQualifiedName, TemplateOf, Unqual;
 
 
 /**
@@ -1154,7 +1154,7 @@ unittest {
 
 // opBinary(^^)
 unittest {
-	import std.math: LN2;
+	import std.math : LN2;
 
 	const a1 = GDN!1(2, -1);
 	const a2 = GDN!1(-2, 3);
@@ -1354,7 +1354,7 @@ do {
 	return nanCombine_impl!Deg(args);
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(getNaNPayload(nanCombine(GDN!1(), GDN!1(0), GDN!1(NaN(1)))._x) == 1);
 }
@@ -1367,7 +1367,7 @@ do {
 	return nanCombine_impl!Deg(gdns);
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	const h = getNaNPayload(nanCombine([GDN!1(), GDN!1(0), GDN!1(NaN(1)), GDN!1(NaN(2))])._x);
 	assert(h == 2);
@@ -1389,7 +1389,7 @@ do {
 	return GDN!Deg(x, dx);
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	const a = nanCombine_impl!1([GDN!1(0), GDN!1()]);
 	assert(isNaN(a._x) && isNaN(a._dx));
@@ -1436,7 +1436,7 @@ do {
 	return format("%g", num);
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	string num;
 

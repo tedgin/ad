@@ -3,18 +3,19 @@
  */
 module ad.math.special;
 
-public import std.mathspecial;
+static import std.math.exponential;
+static import std.mathspecial;
 
-import std.algorithm: any;
-import std.math: exp, isNaN, M_2_SQRTPI, signbit, trunc;
-import std.meta: allSatisfy, anySatisfy;
-import std.range: only;
-import std.traits: Select;
+import std.algorithm : any;
+import std.math : exp, isNaN, M_2_SQRTPI, PI, signbit, sqrt, trunc;
+import std.meta : allSatisfy, anySatisfy;
+import std.range : only;
+import std.traits : Select;
 
 static import ad.math.polygamma;
 
 import ad;
-import ad.math.internal:
+import ad.math.internal :
 	asGDN, asReal, CommonGDN, dirac, exp, isConvertibleToGDN, isGDN, isNaN, signbit;
 
 
@@ -24,7 +25,7 @@ do {
 	return GDN!Deg(ad.math.polygamma.polygamma!N(g.val), pgDeriv!(N+1)(g.reduce())*g.d);
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
 
 	const q = GDN!1(ad.math.polygamma.polygamma!1(1), ad.math.polygamma.polygamma!2(1));
 	assert(polygamma!1(GDN!1(1)) is q);
@@ -93,12 +94,12 @@ do {
 	return GDN!Deg(asReal(f_red), f_red*digamma_fn(g_red)*g.d);
 }
 /***/ unittest {
-	import std.mathspecial: digamma;
+	import std.mathspecial : digamma;
 
 	assert(gamma(GDN!1(1)) is GDN!1(1, digamma(1)));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(gamma(GDN!1(2, 3)) is GDN!1(1, 3*std.mathspecial.digamma(2)));
 
@@ -154,13 +155,13 @@ do {
 	return GDN!Deg(std.mathspecial.logGamma(g.val), digamma_fn(g.reduce())*g.d);
 }
 /***/ unittest {
-	import std.mathspecial: digamma;
+	import std.mathspecial : digamma;
 
 	assert(logGamma(GDN!1(2)) is GDN!1(0, digamma(2)));
 }
 unittest {
-	import std.format: format;
-	import std.math: log, NaN;
+	import std.format : format;
+	import std.math : log, NaN;
 
 	assert(logGamma(GDN!1(3, 4)) is GDN!1(log(2.0L), 4*std.mathspecial.digamma(3)));
 
@@ -223,7 +224,7 @@ do {
 	assert(f == 1 && f.d == 0);
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 // NB: This fails because of https://github.com/dlang/phobos/issues/10801, fixed in stable
 //     const g = sgnGamma(GDN!1(-0.5));
@@ -286,8 +287,8 @@ unittest {
 	// Ψ(n) = -γ + ∑ᵢ₌₁ⁿ⁻¹(1/i)
 	// Ψ₁(n) = 𝜋²/6 - ∑ᵢ₌₁ⁿ⁻¹(1/i²)
 
-	import std.format: format;
-	import std.math: isClose, NaN;
+	import std.format : format;
+	import std.math : isClose, LN2, NaN;
 
 	assert(beta(GDN!1(1), 2) is GDN!1(0.5, -0.75));
 
@@ -454,7 +455,8 @@ do {
 	return GDN!Deg(std.mathspecial.digamma(g.val), pg!1(g.reduce())*g.d);
 }
 /***/ unittest {
-	import ad.math.internal: isNaN;
+	import std.math : PI;
+	import ad.math.traits : isNaN;
 
 	const trigamma_1 = PI^^2 / 6;  // Ψ₁(1)
 
@@ -466,7 +468,7 @@ do {
 	assert(digamma(GDN!1(real.infinity)) is GDN!1(real.infinity, +0.));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	const e = GDN!1(std.mathspecial.digamma(2), 3*ad.math.polygamma.polygamma!1(2));
 	assert(digamma(GDN!1(2, 3)) is e);
@@ -519,7 +521,7 @@ do {
 	return GDN!Deg(std.mathspecial.logmdigamma(g.val), (1.0L/g_red - pg!1(g_red))*g.d);
 }
 /***/ unittest {
-	import std.math: isClose;
+	import std.math : isClose, PI;
 
 	// Euler-Mascheroni constant
 	const γ = 0.577_215_664_901_532_860_607L;
@@ -529,9 +531,9 @@ do {
 	assert(isClose(f_act.val, f_exp.val) && isClose(f_act.d, f_exp.d));
 }
 unittest {
-	import std.format: format;
-	import std.math: isClose, NaN;
-	import ad.math.exponential: log;
+	import std.format : format;
+	import std.math : isClose, NaN;
+	import ad.math.exponential : log;
 
 	const w = logmdigamma(GDN!1(+0.));
 	// ln(x) - 1/x ≤ Ψ(x) ≤ ln(x) - 1/(2x), x>0
@@ -600,15 +602,15 @@ do {
 	return GDN!Deg(asReal(g_red), dg);
 }
 /***/ unittest {
-	import std.math: isClose;
+	import std.math : isClose;
 
 	const f = GDN!1(1);
 	const g = logmdigammaInverse(logmdigamma(f));
 	assert(isClose(g.val, f.val) && isClose(g.d, f.d));
 }
 unittest {
-	import std.format: format;
-	import std.math: isClose, NaN;
+	import std.format : format;
+	import std.math : isClose, NaN;
 
 	const γ = 0.577_215_664_901_532_860_607L;
 	const ζ3 = 1.202_056_903_159_594_285_400L;
@@ -721,7 +723,7 @@ private pure nothrow @nogc @safe
 GDN!Deg.DerivType!1 gammaIncompleteDeriv(ulong Deg)(in real s, in GDN!Deg x)
 do {
 	alias dType = typeof(return);
-	alias e = Select!(Deg == 1, std.math.exp, exp);
+	alias e = Select!(Deg == 1, std.math.exponential.exp, exp);
 
 	if (signbit(s) == 1 || x < .0L) return dType.nan;
 
@@ -744,7 +746,8 @@ do {
 	}
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
+	import std.math : E, isClose;
 
 	const a_act = gammaIncompleteDeriv(.5L, GDN!1(.25L));
 	const a_exp = 2.0L / (E^^.25L * sqrt(PI));
@@ -856,13 +859,13 @@ do {
 	return GDN!Deg(std.mathspecial.gammaIncomplete(a, g.val), g.d*gammaIncompleteDeriv(a, g));
 }
 /***/ unittest {
-	import std.math: E;
+	import std.math : E;
 
 	assert(gammaIncomplete(1, GDN!1(1, 2)) is GDN!1(1-1/E, 2/E));
 }
 unittest {
-	import std.format: format;
-	import std.math: getNaNPayload;
+	import std.format : format;
+	import std.math : E, getNaNPayload, NaN;
 
 	const a = gammaIncomplete(NaN(0x1UL), GDN!1(.0L, NaN(0x2UL)));
 	assert(isNaN(a) && getNaNPayload(a.val) == 0x1UL && getNaNPayload(a.d) == 0x2UL);
@@ -918,7 +921,7 @@ do {
 	return GDN!Deg(std.mathspecial.gammaIncompleteCompl(a, g.val), -g.d*gammaIncompleteDeriv(a, g));
 }
 /***/ unittest {
-	import std.math: E, isClose;
+	import std.math : E, isClose;
 
 	assert(gammaIncompleteCompl(1, GDN!1(1, 2)) is GDN!1(1/E, -2/E));
 
@@ -928,8 +931,8 @@ do {
 	assert(isClose(q, 1-p) && q.d == (1-p).d);
 }
 unittest {
-	import std.format: format;
-	import std.math: getNaNPayload;
+	import std.format : format;
+	import std.math : E, getNaNPayload, isClose, NaN;
 
 	const a = gammaIncompleteCompl(NaN(0x1UL), GDN!1(.0L, NaN(0x2UL)));
 	assert(isNaN(a) && getNaNPayload(a.val) == 0x1UL && getNaNPayload(a.d) == 0x2UL);
@@ -996,15 +999,15 @@ do {
 	return GDN!Deg(asReal(g_red), -q.d/gammaIncompleteDeriv(a, asGDN!Deg(g_red)));
 }
 /***/ unittest {
-	import std.math: isClose;
+	import std.math : isClose;
 
 	const x = GDN!1(2);
 	const res = gammaIncompleteComplInverse(1, gammaIncompleteCompl(1, x));
 	assert(isClose(res, x) && isClose(res.d, x.d));
 }
 unittest {
-	import std.format: format;
-	import std.math: getNaNPayload, SQRT2;
+	import std.format : format;
+	import std.math : E, getNaNPayload, isClose, NaN, SQRT2;
 
 	const a = gammaIncompleteComplInverse(NaN(0x1UL), GDN!1(0, NaN(0x3UL)));
 	assert(isNaN(a) && getNaNPayload(a.val) == 0x1UL && getNaNPayload(a.d) == 0x3UL);
@@ -1134,7 +1137,8 @@ do {
 	}
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
+	import std.math : isClose, M_2_PI, SQRT1_2, SQRT2;
 
 	//
 	// Tests of degree 1
@@ -1385,8 +1389,8 @@ do {
 	assert(betaIncomplete(1, 1, GDN!1(0.5)) is GDN!1(0.5, 1));
 }
 unittest {
-	import std.format: format;
-	import std.math: NaN;
+	import std.format : format;
+	import std.math : isClose, NaN;
 
 	assert(betaIncomplete(NaN(1), NaN(2), GDN!1(-NaN(2), NaN(3))) is GDN!1(-NaN(2), NaN(3)));
 
@@ -1435,7 +1439,7 @@ do {
 	assert(isClose(icc, i) && icc.d == i.d);
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(betaIncompleteCompl(NaN(1), NaN(2), GDN!1(-NaN(2), NaN(3))) is GDN!1(-NaN(2), NaN(3)));
 	assert(betaIncompleteCompl(1, 1, GDN!1(0.5L, 2)) is GDN!1(0.5L, -2));
@@ -1480,8 +1484,8 @@ do {
 	assert(betaIncompleteInverse(a, b, betaIncomplete(a, b, x)) is x);
 }
 unittest {
-	import std.format: format;
-	import std.math: NaN;
+	import std.format : format;
+	import std.math : NaN;
 
 	assert(betaIncompleteInverse(NaN(1), NaN(2), GDN!1(-NaN(2), NaN(3))) is GDN!1(-NaN(2), NaN(3)));
 
@@ -1526,12 +1530,13 @@ do {
 	return GDN!Deg(std.mathspecial.erf(g.val), M_2_SQRTPI*g.d*exp(-g.reduce()^^2));
 }
 /***/ unittest {
-	import std.math: M_2_SQRTPI;
+	import std.math : M_2_SQRTPI;
 
 	assert(erf(GDN!1(0)) is GDN!1(0, M_2_SQRTPI));
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
+	import std.math : E, isClose, NaN;
 
 	assert(erf(GDN!1(NaN(0x1UL))) is GDN!1(NaN(0x1UL)));
 	assert(erf(GDN!1(-real.infinity)) is GDN!1(-1.0L, 0.0L));
@@ -1576,13 +1581,16 @@ do {
 	return GDN!Deg(std.mathspecial.erfc(g.val), -M_2_SQRTPI*g.d*exp(-g.reduce()^^2));
 }
 /***/ unittest {
+	import ad.math : isClose;
+
 	const g = GDN!1(1);
 	const f1 = erfc(g);
 	const f2 = 1.0L - erf(g);
 	assert(isClose(f1, f2) && f1.d == f2.d);
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
+	import std.math : E, isClose, NaN;
 
 	const a = GDN!1(NaN(0x1UL));
 	assert(erfc(a) is a);
@@ -1634,12 +1642,13 @@ do {
 		std.mathspecial.normalDistribution(g.val), g.d*exp(-g.reduce()^^2/2.0L)/sqrt(2.0L*PI));
 }
 /***/ unittest {
-	import std.math: PI;
+	import std.math : PI, sqrt;
 
 	assert(normalDistribution(GDN!1(0)) is GDN!1(0.5, 1/sqrt(2*PI)));
 }
 unittest {
 	import std.format : format;
+	import std.math : E, isClose, NaN;
 
 	const a = GDN!1(NaN(0x1UL));
 	assert(normalDistribution(a) is a);
@@ -1703,6 +1712,7 @@ do {
 }
 unittest {
 	import std.format : format;
+	import std.math : isClose, NaN;
 
 	const a = GDN!1(NaN(0x1UL));
 	assert(normalDistributionInverse(a) is a);

@@ -3,13 +3,13 @@
  */
 module ad.math.remainder;
 
-public import std.math.remainder;
+static import std.math.remainder;
 
-import std.math: sgn;
-import std.meta: allSatisfy, anySatisfy;
+import std.math : sgn;
+import std.meta : allSatisfy, anySatisfy;
 
 import ad;
-import ad.math.internal:
+import ad.math.internal :
 	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, round, trunc;
 
 
@@ -68,7 +68,7 @@ do {
 	return g - i;
 }
 /***/ unittest {
-	import std.math: isClose;
+	import std.math : isClose;
 
 	const g = GDN!1(3.14159);
 	GDN!1 i;
@@ -78,8 +78,8 @@ do {
 	assert(f.d == 1);
 }
 unittest {
-	import std.format: format;
-	import std.math: NaN;
+	import std.format : format;
+	import std.math : NaN;
 
 	GDN!1 i;
 
@@ -134,15 +134,15 @@ do {
 	return gg - hh * n_gdn;
 }
 /***/ unittest {
-	import std.math: isClose;
+	import std.math : isClose;
 
 	int n;
 	const f = remquo(GDN!1(5.1), GDN!1(3), n);
 	assert(n == 2 && isClose(f.val, -0.9) && f.d == -1);
 }
 unittest {
-	import std.math: NaN;
-	import ad.math.traits: isNaN;
+	import std.math : NaN;
+	import ad.math.traits : isNaN;
 
 	int n;
 
@@ -185,7 +185,7 @@ do {
 	return remquo(g, h, _);
 }
 /***/ unittest {
-	import std.math: isClose;
+	import std.math : isClose;
 
 	const f = remainder(GDN!1(5.1), GDN!1(3));
 	assert(isClose(f.val, -0.9));

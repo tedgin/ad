@@ -1,9 +1,9 @@
 module ad.math.polygamma;
 
-import core.math: cos, fabs, rndtol, sin;
-import std.math:
+import core.math : cos, fabs, rndtol, sin;
+import std.math :
 	abs, ceil, copysign, isInfinity, isNaN, log10, nextUp, PI, poly, sgn, signbit, trunc;
-import std.traits: isIntegral;
+import std.traits : isIntegral;
 
 
 private pure nothrow @nogc @safe bool isOdd(T)(in T n) if (isIntegral!T)
@@ -107,7 +107,7 @@ do {
 	return (-1.0L)^^(n / 2) * n * (eulerZigZag(n-1) / (2.0L^^n - 4.0L^^n));
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
 
 	assert(bernoulli!1(0) == 1);
 	assert(bernoulli!1(1) == 1.0L / 2);
@@ -148,7 +148,7 @@ do {
 	return coef;
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
 
 	// p1(x) = -[x^2 + (1-x^2)] = -1 + 0x + 0x^2
 	const p1 = polygammaReflectPolyCoef(1);
@@ -178,8 +178,8 @@ do {
 	return (PI / sin(PI*x))^^(n + 1) * poly(cs, coef);
 }
 unittest {
-	import std.format: format;
-	import std.math: isClose;
+	import std.format : format;
+	import std.math : isClose;
 
 	real act, exp;
 
@@ -226,7 +226,7 @@ do {
 	return sgn(shift) * scale * delta;
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
 
 	real y;
 
@@ -268,8 +268,8 @@ do {
 	return term_0 / x^^N + term_1 / (2 * x^^(N + 1)) + sign * series;
 }
 unittest {
-	import std.format: format;
-	import std.math: isClose;
+	import std.format : format;
+	import std.math : isClose;
 
 	real exp, act;
 	real acc;
@@ -332,8 +332,8 @@ do {
 	return (odd_order ? -1 : 1)*polygamma!N(1-x) - polygammaReflectDelta!N(x);
 }
 unittest {
-	import std.format: format;
-	import std.math: isClose;
+	import std.format : format;
+	import std.math : isClose;
 
 	void assert_close(ulong n)(in real x, in real expected_result) {
 		const act = polygamma!n(x);

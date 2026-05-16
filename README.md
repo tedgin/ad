@@ -12,7 +12,10 @@ TODO: document modules and package
 * supports the same set of functions as `std.mathspecial`
 * supports arbitrary order differentiation, must be fixed at compile time
 
-TODO: should this be restructured so that ad.core.math implements core.math, etc?
+## Overview
+
+<!-- TODO: write this secion -->
+To be continued ...
 
 ## Examples
 
@@ -23,11 +26,12 @@ Here are some examples of using this library.
 To differentiate a function, create a `GDN` variable with the desired derivative degree and evaluate your function:
 
 ```d
-import ad: GDN;
+import ad;
 
 void main()
 do {
-   // Create a variable x = 3 that can track up to first order derivatives
+   // Create a variable x = 3 that can track up to first order
+   // derivatives
    const x = GDN!1(3);
 
    // Evaluate a function: f(x) = 2x + 1
@@ -44,12 +48,13 @@ do {
 Specify a higher degree to compute multiple orders of derivatives:
 
 ```d
-import ad: GDN;
+import ad;
 
 void main()
 do {
-   // Create a variable x = 2 that tracks up to third order derivatives
-   const x = GDN!2(3);
+   // Create a variable x = 2 that tracks up to third order
+   // derivatives
+   const x = GDN!3(2);
 
    // Evaluate a function: f(x) = x³
    const f = x ^^ 3;
@@ -66,20 +71,19 @@ do {
 
 The library supports standard math functions from `core.math`, `std.math`, and `std.mathspecial`:
 
-TODO: Is it possible create a GDN such that GDN!0 is an alias for real?
-
 ```d
-import std.math: E;
-import std.mathspecial: digamma;
+import std.math : E;
+import std.mathspecial : digamma;
 
-import ad.math: GDN, exp, gamma, sin;
+import ad;
+import ad.math;
 
 void main()
 do {
    // Differentiate trigonometric functions
    const x = GDN!1(0);
    const y = sin(x);
-   assert(y == 0);
+   assert(y == 0);    // sin(0) = 0
    assert(y.d == 1);  // sin'(x) = cos(x)
 
    // Differentiate exponential functions
@@ -88,9 +92,9 @@ do {
    assert(u.d == E);  // (d/dx)eˣ = eˣ
 
    // Differentiate the Gamma function
-   const q = gamma(GDN!1(2));  // Γ(2)
-   assert(q == 1);
-   assert(q.d == digamma(2));  // Γ'(x) = Γ(x)Ψ(x), Γ'(2) = Γ(2)Ψ(2) = Ψ(2)
+   const q = gamma(GDN!1(2));
+   assert(q == 1);             // Γ(2) = 1
+   assert(q.d == digamma(2));  // Γ'(x) = Γ(x)Ψ(x)
 }
 ```
 
@@ -99,34 +103,34 @@ do {
 GDN objects can be freely mixed with arithmetic operations and math functions:
 
 ```d
-import std.math: E, cos;
+import std.math : E, cos;
 
-import ad.math: GDN, exp, sin;
+import ad;
+import ad.math;
 
 void main()
 do {
-   // x is the result of evaluating a function whose value is 1 and derivative
-   // is 2.
+   // x is the result of evaluating a function whose value is 1
+   // and derivative is 2.
    const x = GDN!1(1, 2);
 
    // Evaluate f(x) = eˣsin(x)
    const f = exp(x) * sin(x);
    assert(f == E * sin(1.0L));
 
-   // f'(x) = eˣx'sin(x) + eˣcos(x)x' = x'eˣ[cos(x) + sin(x)]
+   // f'(x) = eˣx'sin(x) + eˣcos(x)x'
+   //       = x'eˣ[cos(x) + sin(x)]
    assert(f.d == 2*E*(cos(1.0L) + sin(1.0L)));
 }
 ```
 
-## Overview
-
-To be continued ...
-
 ## Building
 
+<!-- TODO: write this section -->
 To be continued ...
 
 ## Future work
 
+<!-- TODO: write this section -->
 gammaIncomplete
 betaIncomplete

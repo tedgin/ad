@@ -6,9 +6,6 @@
  */
 module ad.math;
 
-public import core.math: toPrec, yl2x, yl2xp1;
-
-public import ad;
 public import ad.math.algebraic;
 public import ad.math.constants;
 public import ad.math.exponential;
@@ -21,11 +18,12 @@ public import ad.math.trigonometry;
 
 static import core.math;
 
-import std.math: isNaN, LN2;
-import std.meta: allSatisfy, anySatisfy;
-import std.traits: isFloatingPoint, Select;
+import std.math : isNaN, LN2;
+import std.meta : allSatisfy, anySatisfy;
+import std.traits : isFloatingPoint, Select;
 
-import ad.math.internal: asGDN, CommonGDN, isConvertibleToGDN, isGDN, isNaN, signbit;
+import ad;
+import ad.math.internal : asGDN, CommonGDN, isConvertibleToGDN, isGDN, isNaN, signbit;
 
 
 /**
@@ -47,6 +45,8 @@ do {
 	return core.math.toPrec!F(g.val);
 }
 /***/ unittest {
+	import std.math : NaN;
+
 	assert(toPrec!float(GDN!1(-NaN(1))) is float(-NaN(1)));
 	assert(typeid(toPrec!float(GDN!1.zero)) == typeid(float));
 }
@@ -86,7 +86,7 @@ do {
 	return yl2x_impl(gg, hh);
 }
 /***/ unittest {
-	import std.math: LN2;
+	import std.math : LN2;
 
 	assert(yl2x(GDN!1(2), GDN!1(3)) is GDN!1(3, 1 + 1.5/LN2));
 	assert(yl2x(GDN!1(+0., -1), GDN!1(1)) is GDN!1(-real.infinity,  -real.infinity));
@@ -94,6 +94,8 @@ do {
 	assert(yl2x(GDN!1(1), 2.) is GDN!1(0, 2/LN2));
 }
 unittest {
+	import std.math : NaN;
+
 	assert(yl2x(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
 	assert(yl2x(1, GDN!1(2)) is GDN!1(0, 0));
 }
@@ -167,13 +169,15 @@ do {
 	return yl2xp1_impl(gg, hh);
 }
 /***/ unittest {
-	import std.math: LN2;
+	import std.math : LN2;
 
 	assert(yl2xp1(GDN!1(0), GDN!1(3)) is GDN!1(0, 3/LN2));
 	assert(typeof(yl2xp1(GDN!2(0), GDN!1(1))).DEGREE == 1);
 	assert(yl2xp1(GDN!1(0), 1) is GDN!1(0, 1/LN2));
 }
 unittest {
+	import std.math : NaN;
+
 	assert(yl2xp1(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
 	assert(yl2xp1(0, GDN!1(1)) is GDN!1(0, 0));
 }

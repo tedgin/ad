@@ -3,18 +3,17 @@
  */
 module ad.math.exponential;
 
-public import std.math.exponential;
-
+static import std.math.exponential;
 static import core.math;
 
-import std.math: LN10, LN2;
-import std.meta: allSatisfy, anySatisfy;
-import std.traits: isIntegral, Select;
+import std.math : LN10, LN2;
+import std.meta : allSatisfy, anySatisfy;
+import std.traits : isIntegral, Select;
 
 static import ad.math.internal;
 
 import ad;
-import ad.math.internal: asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinity, isNaN, signbit;
+import ad.math.internal : asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinity, isNaN, signbit;
 
 
 /**
@@ -63,7 +62,7 @@ do {
 	assert(exp2(GDN!1(0)) is GDN!1(1, LN2));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
 
@@ -98,7 +97,7 @@ do {
 	assert(expm1(GDN!1(0)) is GDN!1(0, 1));
 }
 unittest {
-	import std.math: E, NaN;
+	import std.math : E, NaN;
 
 	assert(exp2(GDN!1(NaN(1))) is GDN!1(NaN(1)));
 	assert(expm1(GDN!2(1)) is GDN!2(E-1, E, E));
@@ -129,8 +128,8 @@ do {
 	assert(f is GDN!1(0.55, 0.5) && e == 1);
 }
 unittest {
-	import std.format: format;
-	import std.math: isNaN, NaN;
+	import std.format : format;
+	import std.math : isNaN, NaN;
 
 	int e;
 
@@ -199,7 +198,7 @@ do {
 	assert(ldexp(GDN!2(1), 2) is GDN!2(4, 4, 0));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(ldexp(GDN!1(NaN(2)), 1) is GDN!1(NaN(2)));
 }
@@ -250,8 +249,8 @@ do {
 	assert(log10(GDN!1(1)) is GDN!1(0, 1/LN10));
 }
 unittest {
-	import std.format: format;
-	import std.math: isNaN, LOG2;
+	import std.format : format;
+	import std.math : isNaN, LOG2;
 
 	const q = log10(GDN!1(-1));
 	assert(ad.math.internal.isNaN(q) && isNaN(q.d), format("log10(-1) = %s", q));
@@ -285,8 +284,8 @@ do {
 	return GDN!Deg(std.math.exponential.log1p(g.val), df*g.d);
 }
 /***/ unittest {
-	import std.math: log;
-	import ad.math.operations: isClose;
+	import std.math : log;
+	import ad.math.operations : isClose;
 
 	const f_act = log1p(GDN!1(3));
 	const f_exp = GDN!1(log(4.), 0.25);
@@ -315,7 +314,7 @@ do {
 	return ad.math.internal.log2(g);
 }
 /***/ unittest {
-	import std.math: LN2;
+	import std.math : LN2;
 
 	assert(log2(GDN!1(2)) is GDN!1(1, 1/(2 * LN2)));
 	assert(log2(GDN!1(-0.)) is GDN!1(-real.infinity, real.nan));
@@ -393,14 +392,14 @@ do {
 	}
 }
 /***/ unittest {
-	import std.math: log;
-	import ad.math.operations: isClose;
+	import std.math : log;
+	import ad.math.operations : isClose;
 
 	assert(isClose(pow(2, GDN!1(5)), GDN!1(32, 32*log(2.))));
 }
 unittest {
-	import std.math: NaN;
-	import ad.math.operations: isClose;
+	import std.math : NaN;
+	import ad.math.operations : isClose;
 
 	const ln3 = std.math.exponential.log(3.);
 	assert(isClose(pow(3, GDN!2(1, 2, 4)), GDN!2(3, 6*ln3, 12*ln3*(ln3 + 1))));
@@ -464,7 +463,7 @@ do {
 	assert(scalbn(GDN!1(2), 10) is GDN!1(2048, 1024));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(scalbn(GDN!2(2048, 1, 2), -10) is GDN!2(2, 1.0L/1024, 1.0L/512));
 	assert(scalbn(GDN!1(-NaN(3)), 0) is GDN!1(-NaN(3)));

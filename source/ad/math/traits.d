@@ -3,14 +3,14 @@
  */
 module ad.math.traits;
 
-public import std.math.traits;
+static import std.math.traits;
 
-import std.traits: isFloatingPoint, isIntegral, Select;
+import std.traits : isFloatingPoint, isIntegral, Select;
 
 static import ad.math.internal;
 
 import ad;
-import ad.math.internal: asReal, isConvertibleToGDN;
+import ad.math.internal : asReal, isConvertibleToGDN;
 
 
 /**

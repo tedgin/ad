@@ -9,10 +9,10 @@ static import std.math.operations;
 static import std.math.rounding;
 static import std.math.traits;
 
-import std.algorithm: min;
-import std.math: abs, isNaN, LN2;
-import std.meta: allSatisfy, anySatisfy;
-import std.traits: fullyQualifiedName, isImplicitlyConvertible, isIntegral, Select, TemplateOf;
+import std.algorithm : min;
+import std.math : abs, isNaN, LN2;
+import std.meta : allSatisfy, anySatisfy;
+import std.traits : fullyQualifiedName, isImplicitlyConvertible, isIntegral, Select, TemplateOf;
 
 import ad;
 
@@ -187,7 +187,7 @@ package
 		return GDN!Deg(core.math.sqrt(g.val), dfdg * g.d);
 	}
 	unittest {
-		import std.format: format;
+		import std.format : format;
 
 		assert(sqrt(GDN!1(-0.)) is GDN!1(-0., real.nan), "sqrt(-0) incorrect");
 
@@ -281,7 +281,7 @@ package
 		return GDN!Deg(std.math.operations.nextDown(g.val), g.d);
 	}
 	unittest {
-		import std.math: NaN;
+		import std.math : NaN;
 
 		assert(nextDown(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 	}
@@ -295,7 +295,7 @@ package
 		return GDN!Deg(std.math.operations.nextUp(g.val), g.d);
 	}
 	unittest {
-		import std.math: NaN;
+		import std.math : NaN;
 
 		assert(nextUp(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 	}

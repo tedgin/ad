@@ -3,16 +3,15 @@
  */
 module ad.math.trigonometry;
 
-public import std.math.trigonometry;
-
 static import core.math;
+static import std.math.trigonometry;
 
-import std.math: abs, isFinite, pow, sqrt;
-import std.meta: allSatisfy, anySatisfy;
-import std.traits: Select;
+import std.math : abs, isFinite, pow, sqrt;
+import std.meta : allSatisfy, anySatisfy;
+import std.traits : Select;
 
 import ad;
-import ad.math.internal:
+import ad.math.internal :
 	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, pow, sqrt;
 
 
@@ -39,7 +38,7 @@ do {
 	assert(sin(GDN!2(0)) is GDN!2(0, 1, 0));
 }
 unittest {
-	import std.math: isClose, NaN, PI_2;
+	import std.math : isClose, NaN, PI_2;
 
 	assert(sin(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 	assert(sin(GDN!1.zero) is GDN!1.zero);
@@ -81,7 +80,7 @@ do {
 	assert(f == 1 && f.d == 0 && f.d!2 == -1);
 }
 unittest {
-	import std.math: isClose, NaN, PI_2;
+	import std.math : isClose, NaN, PI_2;
 
 	assert(cos(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 
@@ -117,13 +116,13 @@ do {
 	return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/pow(cosine(g.reduce()), 2));
 }
 /***/ unittest {
-	import std.math: isClose, PI_4;
+	import std.math : isClose, PI_4;
 
 	const f = tan(GDN!1(-PI_4));
 	assert(f == -1 && isClose(f.d, 2));
 }
 unittest {
-	import std.math: isClose, NaN, PI_4;
+	import std.math : isClose, NaN, PI_4;
 
 	assert(tan(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 
@@ -161,14 +160,14 @@ do {
 	return GDN!Deg(std.math.trigonometry.asin(g.val), g.d/sqrt(1 - pow(g.reduce(), 2)));
 }
 /***/ unittest {
-	import std.math: PI_2;
+	import std.math : PI_2;
 
 	assert(asin(GDN!1(0)) is GDN!1(0, 1));
 	assert(asin(GDN!1(1)) is GDN!1(PI_2, real.infinity));
 }
 unittest {
-	import std.format: format;
-	import std.math: NaN, PI_2;
+	import std.format : format;
+	import std.math : NaN, PI_2;
 
 	assert(asin(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
 	assert(asin(GDN!1(-1)) is GDN!1(-PI_2, real.infinity));
@@ -204,13 +203,13 @@ do {
 	return GDN!Deg(std.math.trigonometry.acos(g.val), -g.d/sqrt(1 - pow(g.reduce(), 2)));
 }
 /***/ unittest {
-	import std.math: PI_2;
+	import std.math : PI_2;
 
 	assert(acos(GDN!1(0)) is GDN!1(PI_2, -1));
 	assert(acos(GDN!1(1)) is GDN!1(0, -real.infinity));
 }
 unittest {
-	import std.math: NaN, PI, PI_2;
+	import std.math : NaN, PI, PI_2;
 
 	assert(acos(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 	assert(acos(GDN!1(-1)) is GDN!1(PI, -real.infinity));
@@ -240,7 +239,7 @@ do {
 	assert(atan(GDN!1(0)) is GDN!1(0, 1));
 }
 unittest {
-	import std.math: NaN, PI_2;
+	import std.math : NaN, PI_2;
 
 	assert(atan(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 	assert(atan(GDN!1(real.infinity)) is GDN!1(PI_2, +0.));
@@ -292,14 +291,14 @@ do {
 	return RGDN(std.math.trigonometry.atan2(gg.val, hh.val), df);
 }
 /***/ unittest {
-	import std.math: PI_4;
+	import std.math : PI_4;
 
 	assert(atan2(GDN!1(1), GDN!1(1)) is GDN!1(PI_4, 0));
 	assert(atan2(GDN!1(1), -1) is GDN!1(3*PI_4, -0.5));
 }
 unittest {
-	import std.format: format;
-	import std.math: isNaN, NaN, PI, PI_2, PI_4;
+	import std.format : format;
+	import std.math : isNaN, NaN, PI, PI_2, PI_4;
 
 	assert(atan2(GDN!1(-NaN(1), NaN(2)), GDN!1(NaN(1), NaN(3))) is GDN!1(-NaN(1), NaN(3)));
 
@@ -390,7 +389,7 @@ do {
 	assert(f is GDN!1(0, 1));
 }
 unittest {
-	import std.math: E, NaN;
+	import std.math : E, NaN;
 
 	assert(sinh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 
@@ -422,7 +421,7 @@ do {
 	assert(cosh(GDN!1(0)) is GDN!1(1, 0));
 }
 unittest {
-	import std.math: E, NaN;
+	import std.math : E, NaN;
 
 	assert(cosh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 	assert(cosh(GDN!2(1)) is GDN!2((E + 1/E)/2, (E - 1/E)/2, (E + 1/E)/2));
@@ -452,7 +451,7 @@ do {
 	assert(tanh(GDN!1(0)) is GDN!1(0, 1));
 }
 unittest {
-	import std.math: isClose, NaN;
+	import std.math : isClose, NaN;
 
 	assert(tanh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 
@@ -486,7 +485,7 @@ do {
 	assert(asinh(GDN!1(0)) is GDN!1(0, 1));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(asinh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 
@@ -521,7 +520,7 @@ do {
 	assert(acosh(GDN!1(1)) is GDN!1(0, real.infinity));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(acosh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 
@@ -564,8 +563,8 @@ do {
 	return GDN!Deg(std.math.trigonometry.atanh(g.val), df);
 }
 /***/ unittest {
-	import std.math: isNaN;
-	import ad.math.traits: sgn;
+	import std.math : isNaN;
+	import ad.math.traits : sgn;
 
 	assert(atanh(GDN!1(0)) is GDN!1(0, 1));
 
@@ -573,8 +572,8 @@ do {
 	assert(sgn(f) == 1 && isInfinity(f) && isNaN(f.d));
 }
 unittest {
-	import std.math: isNaN, NaN;
-	import ad.math.traits: sgn;
+	import std.math : isNaN, NaN;
+	import ad.math.traits : sgn;
 
 	assert(atanh(GDN!1(NaN(1), -NaN(2))) is GDN!1(NaN(1), -NaN(2)));
 
