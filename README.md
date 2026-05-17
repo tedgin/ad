@@ -2,8 +2,6 @@
 
 This is an automatic differentiation library written in D supporting one-dimensional, real-valued derivatives of arbitrary order. It is not a high performance library. It could become one; I'm not against that by any means! It's just that I originally built this library after learning about automatic differentiation. The elegance of the concept struct me. I had to implement it.
 
-TODO: document modules and package
-
 ## Features
 
 * supports all of D's arithmetic operators
@@ -11,11 +9,6 @@ TODO: document modules and package
 * supports the same set of functions as `std.math`
 * supports the same set of functions as `std.mathspecial`
 * supports arbitrary order differentiation, must be fixed at compile time
-
-## Overview
-
-<!-- TODO: write this secion -->
-To be continued ...
 
 ## Examples
 
@@ -126,11 +119,40 @@ do {
 
 ## Building
 
-<!-- TODO: write this section -->
-To be continued ...
+This library is built with DUB.
 
-## Future work
+To build the library, run:
 
-<!-- TODO: write this section -->
-gammaIncomplete
-betaIncomplete
+```bash
+dub build
+```
+
+To build the API documentation from the DDoc configuration, run:
+
+```bash
+dub build --config=docs
+```
+
+This command will generate `docs/` folder with HTML reference pages.
+
+## Using the library in an application
+
+Add `ad` github repository as a dependency in your application's `dub.json` or `dub.sdl`.
+
+Example `dub.json` dependency:
+
+```json
+"dependencies": {
+   "ad": {
+      "repository": "git+https://github.com/tedgin/ad.git"
+   }
+}
+```
+
+## Future Work
+
+The implementations of the regularized lower incomplete gamma function <var style="white-space:nowrap">P(s,x)</var> and the regularized incomplete beta function <var style="white-space:no-wrap">Iₓ(a,b)</var> don't support differention of their parameters. I would like to extend the library to support this.
+
+For the regularized lower incomplete gamma function <var style="white-space:nowrap">P(s,x)</var>, implementating <var style="white-space:nowrap"><sup style="font-size:70%;vertical-align:super">∂P</sup>/<sub style="font-size:70%;vertical-align:sub">∂s</sub></var> looks possible. <var style="white-space:nowrap"><sup style="font-size:70%;vertical-align:super">∂P</sup>/<sub style="font-size:70%;vertical-align:sub">∂s</sub> = -<sup style="font-size:70%;vertical-align:super">∂Q</sup>/<sub style="font-size:70%;vertical-align:sub">∂s</sub></var>, where <var style="white-space:nowrap">Q(s,x)</var> is the regularized upper incomplete gamma function. <var style="white-space:nowrap"><sup style="font-size:70%;vertical-align:super">∂Q</sup>/<sub style="font-size:70%;vertical-align:sub">∂s</sub> = [<sup style="font-size:70%;vertical-align:super">∂𝛤(s,x)</sup>/<sub style="font-size:70%;vertical-align:sub">∂s</sub>𝛤(s) - 𝛤(s,x)𝛤'(s)]/𝛤(s)²</var> where <var style="white-space:nowrap">𝛤(s,x)</var> is the upper incomplete gamma function, and <var style="white-space:nowrap">𝛤(s)</var> is the gamma function. <var style="white-space:nowrap"><sup style="font-size:70%;vertical-align:super">∂𝛤(s,x)</sup>/<sub style="font-size:70%;vertical-align:sub">∂s</sub> = ln(x)𝛤(s,x) + xT(3,s,x)</var>, where <var style="white-space:nowrap">T(m,s,x) = G<sup style="font-size:70%;vertical-align:super">m,0</sup><sub style="font-size:70%;vertical-align:sub">m-1,m</sub>(0,0,…,0;s-1,-1,…,-1|x)</var>, and <var style="white-space:nowrap">G</var> is the Meijer G-function. <var style="white-space:nowrap">T</var> has recurrent derivate formulas for both <var style="white-space:nowrap">s</var> and <var style="white-space:nowrap">x</var>: <var style="white-space:nowrap"><sup style="font-size:70%;vertical-align:super">∂T(m,s,x)</sup>/<sub style="font-size:70%;vertical-align:sub">∂s</sub> = ln(x)T(m,s,x) + (m-1)T(m+1,s,x)</var>, and  <var style="white-space:nowrap"><sup style="font-size:70%;vertical-align:super">∂T(m,s,x)</sup>/<sub style="font-size:70%;vertical-align:sub">∂x</sub> = -[T(m-1,s,x) + T(m,s,x)]/x</var>.
+
+For the regularized incomplete beta function <var style="white-space:no-wrap">Iₓ(a,b)</var>, I haven't found any recurrent derivative formulas for computing <var style="white-space:no-wrap"><sup style="font-size:70%;vertical-align:super">∂ⁿIₓ</sup>/<sub style="font-size:70%;vertical-align:sub">∂aⁿ</sub></var> and <var style="white-space:no-wrap"><sup style="font-size:70%;vertical-align:super">∂ⁿIₓ</sup>/<sub style="font-size:70%;vertical-align:sub">∂bⁿ</sub></var>, so it may not be possible to implement these.
