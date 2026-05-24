@@ -1,23 +1,28 @@
 {
+	"name": "ad",
+	"description": "automatic differentiation library",
+	"version": "0.1.0",
 	"authors": [
 		"Tony Edgin"
 	],
 	"copyright": "Copyright © 2021, Tony Edgin",
-	"description": "automatic differentiation library",
 	"license": "BSD-2-Clause",
-	"name": "ad",
-	"version": "0.1.0",
+	"buildTypes": {
+		"docs": {
+			"buildOptions": [
+				"syntaxOnly"
+			],
+			"dflags": [
+				"-op",
+				"-Dddocs",
+				"ad.ddoc"
+			]
+		}
+	},
 	"configurations": [
 		{
 			"name": "library",
 			"targetType": "library"
 		}
-	],
-	"buildTypes": {
-		"docs": {
-			"buildOptions": [ "syntaxOnly" ],
-			"dflags": [ "-Dddocs", "ad.ddoc" ],
-			"excludedSourceFiles": [ "source/ad/math/internal.d", "source/ad/math/polygamma.d" ]
-		}
-	}
+	]
 }
