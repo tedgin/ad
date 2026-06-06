@@ -9,8 +9,8 @@ import std.math : LN10, LN2;
 import std.meta : allSatisfy, anySatisfy;
 import std.traits : isIntegral, Select;
 
+static import ad.core.math;
 static import ad.internal;
-static import ad.math.core;
 
 import ad;
 import ad.internal : asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinity, isNaN, signbit;
@@ -190,7 +190,7 @@ do {
  */
 pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
 do {
-	return ad.math.core.ldexp(g, c);
+	return ad.core.math.ldexp(g, c);
 }
 /***/ unittest {
 	assert(ldexp(GDN!1(1), 2) is GDN!1(4, 4));

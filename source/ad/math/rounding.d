@@ -9,9 +9,8 @@ import std.math : isInfinity, signbit;
 import std.meta : allSatisfy, anySatisfy;
 import std.traits : isIntegral;
 
+static import ad.core.math;
 static import ad.internal;
-
-static import ad.math.core;
 
 import ad;
 import ad.internal :
@@ -320,7 +319,7 @@ unittest {
  */
 pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.core.rndtol(g);
+	return ad.core.math.rndtol(g);
 }
 /***/ unittest {
 	assert(rndtol(GDN!1(0.2)) == 0L);

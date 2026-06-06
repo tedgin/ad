@@ -10,12 +10,12 @@ import std.math : abs, isFinite, pow, sqrt;
 import std.meta : allSatisfy, anySatisfy;
 import std.traits : Select;
 
-static import ad.math.core;
+static import ad.core.math;
 
 import ad;
 import ad.internal :
 	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, pow;
-import ad.math.core : sqrt;
+import ad.core.math : sqrt;
 
 
 /**
@@ -32,7 +32,7 @@ import ad.math.core : sqrt;
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sin(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.core.sin(g);
+	return ad.core.math.sin(g);
 }
 /***/ unittest {
 	assert(sin(GDN!1(0)) is GDN!1(0, 1));
@@ -53,7 +53,7 @@ do {
  */
 pure nothrow @nogc @safe GDN!Deg cos(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.core.cos(g);
+	return ad.core.math.cos(g);
 }
 /***/ unittest {
 	const f = cos(GDN!1(0));
@@ -75,7 +75,7 @@ do {
  */
 pure nothrow @nogc @safe GDN!Deg tan(ulong Deg)(in GDN!Deg g)
 do {
-	alias cosine = Select!(Deg == 1, core.math.cos, ad.math.core.cos);
+	alias cosine = Select!(Deg == 1, core.math.cos, ad.core.math.cos);
 
 	if (isNaN(g)) return g;
 	return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/pow(cosine(g.reduce()), 2));

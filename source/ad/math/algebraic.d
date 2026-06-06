@@ -11,7 +11,7 @@ import std.meta: allSatisfy, anySatisfy;
 import std.range: chain, only;
 import std.traits: Select;
 
-static import ad.math.core;
+static import ad.core.math;
 static import ad.internal;
 
 import ad;
@@ -34,7 +34,7 @@ import ad.internal:
 pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || f >= 0)
 do {
-	return ad.math.core.fabs(g);
+	return ad.core.math.fabs(g);
 }
 /***/ unittest {
 	assert(fabs(GDN!1(-3)) is GDN!1(3, -1));
@@ -64,7 +64,7 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || f >= 0)
 do {
-	return ad.math.core.sqrt(g);
+	return ad.core.math.sqrt(g);
 }
 /***/ unittest {
 	assert(sqrt(GDN!1(1)) is GDN!1(1, 0.5));

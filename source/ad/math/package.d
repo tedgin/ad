@@ -8,7 +8,6 @@ module ad.math;
 
 public import ad.math.algebraic;
 public import ad.math.constants;
-public import ad.math.core;
 public import ad.math.exponential;
 public import ad.math.operations;
 public import ad.math.remainder;

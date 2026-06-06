@@ -3,7 +3,7 @@
 *
 * To emulate being implemented as intrinsics, all functions are declared to be inlined.
 */
-module ad.math.core;
+module ad.core.math;
 
 static import core.math;
 
