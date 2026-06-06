@@ -16,13 +16,11 @@
 				"-op",
 				"-Dddocs",
 				"ad.ddoc"
+			],
+			"excludedSourceFiles": [
+				"source/ad/internal.d",
+				"source/ad/mathspecial/polygamma.d"
 			]
 		}
-	},
-	"configurations": [
-		{
-			"name": "library",
-			"targetType": "library"
-		}
-	]
+	}
 }
