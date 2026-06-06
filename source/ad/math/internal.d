@@ -3,7 +3,6 @@
  */
 module ad.math.internal;
 
-static import core.math;
 static import std.math.exponential;
 static import std.math.operations;
 static import std.math.rounding;
@@ -170,31 +169,6 @@ package
 	pure nothrow @nogc @safe int signbit(ulong Deg)(in GDN!Deg f)
 	do {
 		return std.math.traits.signbit(f.val);
-	}
-}
-
-
-/*
- * std.math.algebraic shared internals
- */
-package
-{
-	pragma(inline, true) pure nothrow @nogc @safe  GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
-	do {
-		if (isNaN(g)) return g;
-
-		const dfdg = signbit(g) == 1 ? GDN!Deg.DerivType!1.nan : g.reduce()^^-0.5/2;
-		return GDN!Deg(core.math.sqrt(g.val), dfdg * g.d);
-	}
-	unittest {
-		import std.format : format;
-
-		assert(sqrt(GDN!1(-0.)) is GDN!1(-0., real.nan), "sqrt(-0) incorrect");
-
-		const x = sqrt(-GDN!1.one);
-		assert(isNaN(x), format("sqrt(-1) = %s, should be %s", x, GDN!1.nan));
-
-		assert(sqrt(GDN!1.infinity) is GDN!1(real.infinity, 0), "sqrt(inf) incorrect");
 	}
 }
 

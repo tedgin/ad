@@ -3,7 +3,6 @@
  */
 module ad.math.rounding;
 
-static import core.math;
 static import std.math.rounding;
 
 import std.math : isInfinity, signbit;
@@ -11,6 +10,8 @@ import std.meta : allSatisfy, anySatisfy;
 import std.traits : isIntegral;
 
 static import ad.math.internal;
+
+static import ad.math.core;
 
 import ad;
 import ad.math.internal :
@@ -317,12 +318,12 @@ unittest {
  * Returns:
  *   the rounded value of `g`.
  */
-pragma(inline, true) pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
+pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
 do {
-	return core.math.rndtol(g.val);
+	return ad.math.core.rndtol(g);
 }
 /***/ unittest {
-	assert(rndtol(GDN!1(1.1)) == 1L);
+	assert(rndtol(GDN!1(0.2)) == 0L);
 }
 
 

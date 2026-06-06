@@ -4,12 +4,12 @@
 module ad.math.exponential;
 
 static import std.math.exponential;
-static import core.math;
 
 import std.math : LN10, LN2;
 import std.meta : allSatisfy, anySatisfy;
 import std.traits : isIntegral, Select;
 
+static import ad.math.core;
 static import ad.math.internal;
 
 import ad;
@@ -188,19 +188,12 @@ do {
  * Returns:
  *   A `GDN` object resulting from the computation.
  */
-pragma(inline, true) pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
+pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
 do {
-	alias ldexp_red = Select!(Deg == 1, core.math.ldexp, ldexp);
-	if (isNaN(g)) return g;
-	return GDN!Deg(core.math.ldexp(g.val, c), ldexp_red(g.d, c));
+	return ad.math.core.ldexp(g, c);
 }
 /***/ unittest {
-	assert(ldexp(GDN!2(1), 2) is GDN!2(4, 4, 0));
-}
-unittest {
-	import std.math : NaN;
-
-	assert(ldexp(GDN!1(NaN(2)), 1) is GDN!1(NaN(2)));
+	assert(ldexp(GDN!1(1), 2) is GDN!1(4, 4));
 }
 
 

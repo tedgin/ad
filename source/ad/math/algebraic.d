@@ -5,14 +5,13 @@ module ad.math.algebraic;
 
 public import std.math.algebraic;
 
-static import core.math;
-
 import std.algorithm: any, map;
 import std.math: isInfinity;
 import std.meta: allSatisfy, anySatisfy;
 import std.range: chain, only;
 import std.traits: Select;
 
+static import ad.math.core;
 static import ad.math.internal;
 
 import ad;
@@ -32,30 +31,13 @@ import ad.math.internal:
  * Returns:
  *   the absolute value of the `GDN` object
  */
-pragma(inline, true) pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
+pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || f >= 0)
 do {
-	const df_val = signbit(g) == 0 ? 1.0L : -1.0L;
-
-	static if (Deg == 1)
-		const df = df_val;
-	else
-		const df = GDN!Deg.DerivType!1.mkConst(df_val);
-
-	return GDN!Deg(core.math.fabs(g.val), df * g.d);
+	return ad.math.core.fabs(g);
 }
 /***/ unittest {
-	assert(fabs(GDN!2(-3)) is GDN!2(3, -1, 0));
-}
-unittest {
-	import std.math: NaN;
-
-	assert(fabs(GDN!2(-3)) is GDN!2(3, -1, 0));
-	assert(fabs(GDN!1(+0.)) is GDN!1(+0., 1));
-	assert(fabs(GDN!1(-0.)) is GDN!1(+0., -1));
-	assert(fabs(GDN!1(-1)) is GDN!1(1, -1));
-	assert(fabs(GDN!1.nan) is GDN!1.nan);
-	assert(fabs(GDN!1(-NaN(1))) is GDN!1(NaN(1)));
+	assert(fabs(GDN!1(-3)) is GDN!1(3, -1));
 }
 
 
@@ -82,10 +64,10 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || f >= 0)
 do {
-	return ad.math.internal.sqrt(g);
+	return ad.math.core.sqrt(g);
 }
 /***/ unittest {
-	assert(sqrt(GDN!2(1)) is GDN!2(1, 0.5, -0.25));
+	assert(sqrt(GDN!1(1)) is GDN!1(1, 0.5));
 	assert(sqrt(GDN!1(+0.)) is GDN!1(0, real.infinity));
 }
 

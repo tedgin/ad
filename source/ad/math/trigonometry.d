@@ -10,9 +10,12 @@ import std.math : abs, isFinite, pow, sqrt;
 import std.meta : allSatisfy, anySatisfy;
 import std.traits : Select;
 
+static import ad.math.core;
+
 import ad;
+import ad.math.core : sqrt;
 import ad.math.internal :
-	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, pow, sqrt;
+	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, pow;
 
 
 /**
@@ -29,29 +32,10 @@ import ad.math.internal :
  */
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sin(ulong Deg)(in GDN!Deg g)
 do {
-	alias cosine = Select!(Deg == 1, core.math.cos, cos);
-
-	if (isNaN(g)) return g;
-	return GDN!Deg(core.math.sin(g.val), cosine(g.reduce())*g.d);
+	return ad.math.core.sin(g);
 }
 /***/ unittest {
-	assert(sin(GDN!2(0)) is GDN!2(0, 1, 0));
-}
-unittest {
-	import std.math : isClose, NaN, PI_2;
-
-	assert(sin(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
-	assert(sin(GDN!1.zero) is GDN!1.zero);
-
-	const g = sin(GDN!1(PI_2));
-	assert(g == 1 && isClose(g.d, 0., 0., real.epsilon));
-
-	assert(isNaN(sin(GDN!1.infinity)));
-	assert(isNaN(sin(-GDN!1.infinity)));
-
-	assert(sin(GDN!2(0)) is GDN!2(0, 1, 0));
-	// f = 0
-	// <f',f"> = cos(<0,1>)<1,0> = <1,0><1,0> = <1, 0>
+	assert(sin(GDN!1(0)) is GDN!1(0, 1));
 }
 
 
@@ -67,32 +51,13 @@ unittest {
  * Returns:
  *   the cosine of `g`
  */
-pragma(inline, true) pure nothrow @nogc @safe GDN!Deg cos(ulong Deg)(in GDN!Deg g)
+pure nothrow @nogc @safe GDN!Deg cos(ulong Deg)(in GDN!Deg g)
 do {
-	alias sine = Select!(Deg == 1, core.math.sin, sin);
-
-	if (isNaN(g)) return g;
-	return GDN!Deg(core.math.cos(g.val), -sine(g.reduce())*g.d);
+	return ad.math.core.cos(g);
 }
 /***/ unittest {
-	const g = GDN!2(0);
-	const f = cos(g);
-	assert(f == 1 && f.d == 0 && f.d!2 == -1);
-}
-unittest {
-	import std.math : isClose, NaN, PI_2;
-
-	assert(cos(GDN!1(NaN(1), NaN(2))) is GDN!1(NaN(1), NaN(2)));
-
-	const g = cos(GDN!1(PI_2));
-	assert(isClose(g.val, 0., 0., real.epsilon) && g.d == -1);
-
-	assert(isNaN(cos(GDN!1.infinity)));
-	assert(isNaN(cos(-GDN!1.infinity)));
-
-	assert(cos(GDN!2(0)) is GDN!2(1, -0., -1));
-	// f = 1
-	// <f',f"> = -sin(<0,1>)<1,0> = -<0,1><1,0> = <-0,-1>
+	const f = cos(GDN!1(0));
+	assert(f == 1 && f.d == 0);
 }
 
 
@@ -110,7 +75,7 @@ unittest {
  */
 pure nothrow @nogc @safe GDN!Deg tan(ulong Deg)(in GDN!Deg g)
 do {
-	alias cosine = Select!(Deg == 1, core.math.cos, cos);
+	alias cosine = Select!(Deg == 1, core.math.cos, ad.math.core.cos);
 
 	if (isNaN(g)) return g;
 	return GDN!Deg(std.math.trigonometry.tan(g.val), g.d/pow(cosine(g.reduce()), 2));
