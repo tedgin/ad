@@ -1,4 +1,4 @@
-module ad.math.polygamma;
+module ad.mathspecial.polygamma;
 
 import core.math : cos, fabs, rndtol, sin;
 import std.math :

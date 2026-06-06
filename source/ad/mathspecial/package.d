@@ -1,7 +1,7 @@
 /**
  * It extends the `std.mathspecial` module to support `GDN` objects.
  */
-module ad.math.special;
+module ad.mathspecial;
 
 static import std.math.exponential;
 static import std.mathspecial;
@@ -12,7 +12,7 @@ import std.meta : allSatisfy, anySatisfy;
 import std.range : only;
 import std.traits : Select;
 
-static import ad.math.polygamma;
+static import ad.mathspecial.polygamma;
 
 import ad;
 import ad.internal :
@@ -21,16 +21,18 @@ import ad.internal :
 
 private pure nothrow @nogc @safe GDN!Deg polygamma(ulong N, ulong Deg)(in GDN!Deg g) if (N > 0)
 do {
-	alias pgDeriv = Select!(Deg == 1, ad.math.polygamma.polygamma, polygamma);
-	return GDN!Deg(ad.math.polygamma.polygamma!N(g.val), pgDeriv!(N+1)(g.reduce())*g.d);
+	alias pgDeriv = Select!(Deg == 1, ad.mathspecial.polygamma.polygamma, polygamma);
+	return GDN!Deg(ad.mathspecial.polygamma.polygamma!N(g.val), pgDeriv!(N+1)(g.reduce())*g.d);
 }
 unittest {
 	import std.format : format;
 
-	const q = GDN!1(ad.math.polygamma.polygamma!1(1), ad.math.polygamma.polygamma!2(1));
+	const q = GDN!1(
+		ad.mathspecial.polygamma.polygamma!1(1), ad.mathspecial.polygamma.polygamma!2(1));
 	assert(polygamma!1(GDN!1(1)) is q);
 
-	const a_exp = GDN!1(ad.math.polygamma.polygamma!1(2), 3*ad.math.polygamma.polygamma!2(2));
+	const a_exp = GDN!1(
+		ad.mathspecial.polygamma.polygamma!1(2), 3*ad.mathspecial.polygamma.polygamma!2(2));
 	const a_act = polygamma!1(GDN!1(2, 3));
 	assert(a_act is a_exp, format("Ψ₁(<2,3>) = %s != %s", a_act, a_exp));
 
@@ -44,14 +46,15 @@ unittest {
 	assert(isNaN(w.val) && isNaN(w.d));
 
 	const e = polygamma!1(GDN!1(1, real.nan));
-	assert(e == ad.math.polygamma.polygamma!1(1) && isNaN(e.d));
+	assert(e == ad.mathspecial.polygamma.polygamma!1(1) && isNaN(e.d));
 
 	assert(polygamma!1(GDN!1(real.infinity)) == GDN!1(+0., -0.));
 
 	const t = polygamma!1(GDN!1(-real.infinity));
 	assert(t.val == real.infinity && isNaN(t.d), format("Ψ₁(-∞) != %s", t));
 
-	const y = GDN!1(ad.math.polygamma.polygamma!2(2), ad.math.polygamma.polygamma!3(2));
+	const y = GDN!1(
+		ad.mathspecial.polygamma.polygamma!2(2), ad.mathspecial.polygamma.polygamma!3(2));
 	assert(polygamma!2(GDN!1(2)) is y);
 
 	assert(polygamma!2(GDN!1(+0.)) is GDN!1(-real.infinity, real.infinity));
@@ -61,9 +64,9 @@ unittest {
 	assert(isNaN(i.val) && isNaN(i.d));
 
 	const o_exp = GDN!2(
-		ad.math.polygamma.polygamma!1(3),
-		ad.math.polygamma.polygamma!2(3),
-		ad.math.polygamma.polygamma!3(3));
+		ad.mathspecial.polygamma.polygamma!1(3),
+		ad.mathspecial.polygamma.polygamma!2(3),
+		ad.mathspecial.polygamma.polygamma!3(3));
 	// <f',f"> = <1,0>Ψ₂(<3,1>) = <1,0><Ψ₂(3),Ψ₃(3)> = <Ψ₂(3),Ψ₃(3)>
 	const o_act = polygamma!1(GDN!2(3));
 	assert(o_act is o_exp, format("Ψ₁(3) = %s != %s", o_exp, o_act));
@@ -125,7 +128,7 @@ unittest {
 	const r = GDN!2(
 		2,
 		2*std.mathspecial.digamma(3),
-		2*std.mathspecial.digamma(3)^^2 + 2*ad.math.polygamma.polygamma!1(3));
+		2*std.mathspecial.digamma(3)^^2 + 2*ad.mathspecial.polygamma.polygamma!1(3));
 	// <f',f"> = Γ(<3,1>)Ψ(<3,1>)<1,0>
 	//         = <2,2Ψ(3)><Ψ(3),Ψ₁(3)><1,0>
 	//         = <2Ψ(3),2Ψ²(3)+2Ψ₁(3)>
@@ -176,7 +179,7 @@ unittest {
 
 	assert(logGamma(GDN!1(real.infinity)) is GDN!1(real.infinity, real.infinity));
 
-	const r = GDN!2(log(24.0L), std.mathspecial.digamma(5), ad.math.polygamma.polygamma!1(5));
+	const r = GDN!2(log(24.0L), std.mathspecial.digamma(5), ad.mathspecial.polygamma.polygamma!1(5));
 	// <f',f"> = Ψ(<5,1>)*<1,0> = <Ψ(5), Ψ₁(5)>
 	assert(logGamma(GDN!2(5)) == r);
 
@@ -449,7 +452,7 @@ unittest {
  */
 pure nothrow @nogc @safe GDN!Deg digamma(ulong Deg)(in GDN!Deg g)
 do {
-	alias pg = Select!(Deg == 1, ad.math.polygamma.polygamma, polygamma);
+	alias pg = Select!(Deg == 1, ad.mathspecial.polygamma.polygamma, polygamma);
 
 	if (isNaN(g)) return g;
 	return GDN!Deg(std.mathspecial.digamma(g.val), pg!1(g.reduce())*g.d);
@@ -470,7 +473,7 @@ do {
 unittest {
 	import std.math : NaN;
 
-	const e = GDN!1(std.mathspecial.digamma(2), 3*ad.math.polygamma.polygamma!1(2));
+	const e = GDN!1(std.mathspecial.digamma(2), 3*ad.mathspecial.polygamma.polygamma!1(2));
 	assert(digamma(GDN!1(2, 3)) is e);
 
 // NB: Fails because of https://github.com/dlang/phobos/issues/10802, fixed on stable
@@ -489,8 +492,8 @@ unittest {
 
 	const w = GDN!2(
 		std.mathspecial.digamma(2),
-		ad.math.polygamma.polygamma!1(2),
-		ad.math.polygamma.polygamma!2(2));
+		ad.mathspecial.polygamma.polygamma!1(2),
+		ad.mathspecial.polygamma.polygamma!2(2));
 
 	assert(digamma(GDN!2(2)) is w);
 	assert(digamma(GDN!1(NaN(1))) is GDN!1(NaN(1)));
@@ -513,7 +516,7 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg logmdigamma(ulong Deg)(in GDN!Deg g)
 in(signbit(g) == 0 || isNaN(g), "the argument must be positive")
 do {
-	alias pg = Select!(Deg == 1, ad.math.polygamma.polygamma, polygamma);
+	alias pg = Select!(Deg == 1, ad.mathspecial.polygamma.polygamma, polygamma);
 
 	if (isNaN(g)) return g;
 
@@ -572,7 +575,7 @@ do {
 	alias ln_m_digamma_inv = Select!(
 		Deg == 1, std.mathspecial.logmdigammaInverse, logmdigammaInverse);
 
-	alias pg = Select!(Deg == 1, ad.math.polygamma.polygamma, polygamma);
+	alias pg = Select!(Deg == 1, ad.mathspecial.polygamma.polygamma, polygamma);
 
 	auto naive_derivative(in GDN!Deg.DerivType!1 g) { return f.d * g / (1 - g*pg!1(g)); }
 
