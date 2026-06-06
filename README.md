@@ -12,19 +12,21 @@ This is an automatic differentiation library written in D supporting one-dimensi
 
 ## Overview
 
-This library consists of a handful of modules. [`ad`](source/ad/package.d) provides the generalized dual number type `GDN` and its basic arithmetic operations that are available to the floating point type `real`. The remaining modules provide implementations of all of the mathematical operations defined in the phobos modules `core.math`, `std.math`, and `std.mathspecial` for real numbers to generalized dual numbers. The are organized similarly to the modules in the `std.math` package. Here is the mapping.
+This library consists of a handful of modules. [`ad`](source/ad/package.d) provides the generalized dual number type `GDN` and its basic arithmetic operations that are available to the floating point type `real`. The remaining modules provide implementations for `GDN` objects of all of the mathematical operations defined for `real` values in the phobos modules `core.math`, `std.math`, and `std.mathspecial`. They are organized similarly to the modules in the `std.math` package. Here is the mapping.
 
+* [`ad.core.math`](source/ad/core/math.d) → `core.math`
+* [`ad.math`](source/ad/math/package.d) → `std.math`
 * [`ad.math.algebraic`](source/ad/math/algebraic.d) → `std.math.algebraic`
 * [`ad.math.constants`](source/ad/math/constants.d) → `std.math.constants`
 * [`ad.math.exponential`](source/ad/math/exponential.d) → `std.math.exponential`
 * [`ad.math.operations`](source/ad/math/operations.d) → `std.math.operations`
 * [`ad.math.remainder`](source/ad/math/remainder.d) → `std.math.remainder`
 * [`ad.math.rounding`](source/ad/math/rounding.d) → `std.math.rounding`
-* [`ad.math.special`](source/ad/math/special.d) → `std.mathspecial`
 * [`ad.math.traits`](source/ad/math/traits.d) → `std.math.traits`
 * [`ad.math.trigonometry`](source/ad/math/trigonometry.d) → `std.math.trigonometry`
+* [`ad.mathspecial`](source/ad/mathspecial/package.d) → `std.mathspecial`
 
-The module [`ad.math`](source/ad/math/package.d) provides implementations of all of the operations defined in `core.math` for real numbers to the `GDN` type. It also aggregates and exposes all of the functions defined in its submodules in the same way the Phobos package `std.math` does.
+The module [`ad.math`](source/ad/math/package.d) aggregates and exposes all of the functions defined in its submodules in the same way the Phobos package `std.math` does.
 
 ## Examples
 
@@ -86,6 +88,7 @@ import std.mathspecial : digamma;
 
 import ad;
 import ad.math;
+import ad.mathspecial;
 
 void main()
 do {
@@ -149,7 +152,7 @@ To build the API documentation from the DDoc configuration, run:
 dub build --config=docs
 ```
 
-This command will generate `docs/` folder with HTML reference pages.
+This command will generate a `docs/` folder with HTML reference pages.
 
 ## Using the library in an application
 
