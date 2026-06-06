@@ -13,9 +13,9 @@ import std.traits : Select;
 static import ad.math.core;
 
 import ad;
-import ad.math.core : sqrt;
-import ad.math.internal :
+import ad.internal :
 	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, pow;
+import ad.math.core : sqrt;
 
 
 /**

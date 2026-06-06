@@ -12,7 +12,7 @@ import std.meta : allSatisfy, anySatisfy;
 import std.traits : isFloatingPoint, Select;
 
 import ad;
-import ad.math.internal : asGDN, CommonGDN, isConvertibleToGDN, isGDN, isNaN, signbit;
+import ad.internal : asGDN, CommonGDN, isConvertibleToGDN, isGDN, isNaN, signbit;
 
 
 /**

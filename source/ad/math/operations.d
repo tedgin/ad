@@ -12,10 +12,10 @@ import std.meta : allSatisfy, anySatisfy;
 import std.range : ElementType, empty, front, isInputRange, only, popFront;
 import std.traits : isImplicitlyConvertible, Select;
 
-static import ad.math.internal;
+static import ad.internal;
 
 import ad;
-import ad.math.internal : asGDN, asReal, CommonGDN, isConvertibleToGDN, isGDN, isNaN, sgn, signbit;
+import ad.internal : asGDN, asReal, CommonGDN, isConvertibleToGDN, isGDN, isNaN, sgn, signbit;
 
 
 /*The default relative difference for operations
@@ -243,7 +243,7 @@ do {
  */
 pure nothrow @nogc @safe ulong getNaNPayload(ulong Deg)(in GDN!Deg f)
 do {
-	return ad.math.internal.getNaNPayload(f);
+	return ad.internal.getNaNPayload(f);
 }
 /***/ unittest {
 	assert(getNaNPayload(NaN!1(1)) == 1);
@@ -532,7 +532,7 @@ unittest {
  */
 pure nothrow @nogc @safe GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.nextDown(g);
+	return ad.internal.nextDown(g);
 }
 /***/ unittest {
 	assert(nextDown(GDN!2(1)) is GDN!2(1 - real.epsilon/2));
@@ -553,7 +553,7 @@ do {
  */
 pure nothrow @nogc @safe GDN!Deg nextUp(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.nextUp(g);
+	return ad.internal.nextUp(g);
 }
 /***/ unittest {
 	assert(nextUp(GDN!2(1)) is GDN!2(1 + real.epsilon));

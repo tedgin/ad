@@ -7,10 +7,10 @@ static import std.math.traits;
 
 import std.traits : isFloatingPoint, isIntegral, Select;
 
-static import ad.math.internal;
+static import ad.internal;
 
 import ad;
-import ad.math.internal : asReal, isConvertibleToGDN;
+import ad.internal : asReal, isConvertibleToGDN;
 
 
 /**
@@ -25,7 +25,7 @@ import ad.math.internal : asReal, isConvertibleToGDN;
  */
 pure nothrow @nogc @safe bool isFinite(ulong Deg)(in GDN!Deg f)
 do {
-	return ad.math.internal.isFinite(f);
+	return ad.internal.isFinite(f);
 }
 /***/ unittest {
 	assert(isFinite(GDN!1(1)));
@@ -73,7 +73,7 @@ do {
  */
 pure nothrow @nogc @safe bool isInfinity(ulong Deg)(in GDN!Deg f)
 do {
-	return ad.math.internal.isInfinity(f);
+	return ad.internal.isInfinity(f);
 }
 /***/ unittest {
 	assert(isInfinity(GDN!1(real.infinity)));
@@ -92,7 +92,7 @@ do {
  */
 pure nothrow @nogc @safe bool isNaN(ulong Deg)(in GDN!Deg f)
 do {
-	return ad.math.internal.isNaN(f);
+	return ad.internal.isNaN(f);
 }
 /***/ unittest {
 	assert(isNaN(GDN!1.nan));
@@ -169,7 +169,7 @@ do {
  */
 pure nothrow @nogc @safe int signbit(ulong Deg)(in GDN!Deg f)
 do {
-	return ad.math.internal.signbit(f);
+	return ad.internal.signbit(f);
 }
 /***/ unittest {
 	assert(signbit(GDN!1(-1.0)) == 1);
@@ -234,7 +234,7 @@ unittest {
  */
 pure nothrow @nogc @safe GDN!Deg sgn(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.sgn(g);
+	return ad.internal.sgn(g);
 }
 /***/ unittest {
 	assert(isIdentical(sgn(GDN!1(-2)), GDN!1(-1, 0)));

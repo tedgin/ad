@@ -1,7 +1,7 @@
 /*
- * This module implements functions used internally by the `ad.math` module.
+ * This module implements functions used internally by the `ad` module.
  */
-module ad.math.internal;
+module ad.internal;
 
 static import std.math.exponential;
 static import std.math.operations;

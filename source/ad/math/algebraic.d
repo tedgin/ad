@@ -12,10 +12,10 @@ import std.range: chain, only;
 import std.traits: Select;
 
 static import ad.math.core;
-static import ad.math.internal;
+static import ad.internal;
 
 import ad;
-import ad.math.internal:
+import ad.internal:
 	asGDN, asReal, ceil, CommonGDN, floor, isConvertibleToGDN, isGDN, isNaN, log2, sgn, signbit;
 
 

@@ -9,12 +9,12 @@ import std.math : isInfinity, signbit;
 import std.meta : allSatisfy, anySatisfy;
 import std.traits : isIntegral;
 
-static import ad.math.internal;
+static import ad.internal;
 
 static import ad.math.core;
 
 import ad;
-import ad.math.internal :
+import ad.internal :
 	asGDN, CommonGDN, dirac, isConvertibleToGDN, isGDN, isNaN, nextDown, nextUp, pow;
 
 
@@ -32,7 +32,7 @@ import ad.math.internal :
  */
 pure nothrow @nogc @safe GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.ceil(g);
+	return ad.internal.ceil(g);
 }
 /***/ unittest {
 	assert(ceil(GDN!1(1)) is GDN!1(1, real.infinity));
@@ -54,7 +54,7 @@ do {
  */
 pure nothrow @nogc @safe GDN!Deg floor(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.floor(g);
+	return ad.internal.floor(g);
 }
 /***/ unittest {
 	assert(floor(GDN!1(1)) is GDN!1(1, real.infinity));
@@ -341,7 +341,7 @@ do {
  */
 nothrow @nogc @trusted GDN!Deg round(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.round(g);
+	return ad.internal.round(g);
 }
 /***/ unittest {
 	assert(round(GDN!1(4.5)) is GDN!1(5, real.infinity));
@@ -363,7 +363,7 @@ do {
  */
 pure nothrow @nogc @trusted GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.trunc(g);
+	return ad.internal.trunc(g);
 }
 /***/ unittest {
 	assert(trunc(GDN!1(0.01)) is GDN!1(+0., 0));

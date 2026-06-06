@@ -15,7 +15,7 @@ import std.traits : Select;
 static import ad.math.polygamma;
 
 import ad;
-import ad.math.internal :
+import ad.internal :
 	asGDN, asReal, CommonGDN, dirac, exp, isConvertibleToGDN, isGDN, isNaN, signbit;
 
 

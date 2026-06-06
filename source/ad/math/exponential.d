@@ -9,11 +9,11 @@ import std.math : LN10, LN2;
 import std.meta : allSatisfy, anySatisfy;
 import std.traits : isIntegral, Select;
 
+static import ad.internal;
 static import ad.math.core;
-static import ad.math.internal;
 
 import ad;
-import ad.math.internal : asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinity, isNaN, signbit;
+import ad.internal : asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinity, isNaN, signbit;
 
 
 /**
@@ -30,7 +30,7 @@ import ad.math.internal : asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfini
  */
 pure nothrow @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.exp!Deg(g);
+	return ad.internal.exp!Deg(g);
 }
 /***/ unittest {
 	assert(exp(GDN!1(0, 3)) is GDN!1(1, 3));
@@ -246,7 +246,7 @@ unittest {
 	import std.math : isNaN, LOG2;
 
 	const q = log10(GDN!1(-1));
-	assert(ad.math.internal.isNaN(q) && isNaN(q.d), format("log10(-1) = %s", q));
+	assert(ad.internal.isNaN(q) && isNaN(q.d), format("log10(-1) = %s", q));
 
 	assert(log10(GDN!2(2)) is GDN!2(LOG2, 0.5/LN10, -0.25/LN10));
 	// f = log(2)
@@ -304,7 +304,7 @@ unittest {
  */
 pure nothrow @nogc @safe GDN!Deg log2(ulong Deg)(in GDN!Deg g)
 do {
-	return ad.math.internal.log2(g);
+	return ad.internal.log2(g);
 }
 /***/ unittest {
 	import std.math : LN2;
@@ -351,7 +351,7 @@ do {
  */
 pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in GDN!Deg g, in I n) if (isIntegral!I)
 do {
-	return ad.math.internal.pow(g, n);
+	return ad.internal.pow(g, n);
 }
 /***/ unittest {
 	assert(pow(GDN!1(2), 3) is GDN!1(8, 12));

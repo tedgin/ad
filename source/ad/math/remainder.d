@@ -9,7 +9,7 @@ import std.math : sgn;
 import std.meta : allSatisfy, anySatisfy;
 
 import ad;
-import ad.math.internal :
+import ad.internal :
 	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, round, trunc;
 
 
