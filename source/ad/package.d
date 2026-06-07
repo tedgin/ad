@@ -1,5 +1,5 @@
 /**
-* This module implements automatic differentiation of arbitrary order using forward.
+* This module implements automatic differentiation of arbitrary order.
 *
 * It supports differentiating functions of the form $(MATH f:ℝ→ℝ).
 *
