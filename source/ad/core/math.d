@@ -16,17 +16,17 @@ import ad.internal : asGDN, CommonGDN, isConvertibleToGDN, isGDN, isNaN, signbit
 
 
 /**
- * This function computes the cosine of the argument.
- *
- * If $(MATH f(x) = cos(g(x))), then $(MATH f' = -sin(g)g').
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to compute the cosine of
- *
- * Returns:
- *   the cosine of `g`
- */
+* This function computes the cosine of the argument.
+*
+* If $(MATH f(x) = cos(g(x))), then $(MATH f' = -sin(g)g').
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` to compute the cosine of
+*
+* Returns:
+*   the cosine of `g`
+*/
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg cos(ulong Deg)(in GDN!Deg g)
 do {
 	alias sine = Select!(Deg == 1, core.math.sin, sin);
@@ -57,17 +57,17 @@ unittest {
 
 
 /**
- * This function computes the sine of its argument.
- *
- * If $(MATH f(x) = sin(g(x))), then $(MATH f' = cos(g)g').
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to compute the sine of`
- *
- * Returns:
- *   the sine expressed as a `GDN`.
- */
+* This function computes the sine of its argument.
+*
+* If $(MATH f(x) = sin(g(x))), then $(MATH f' = cos(g)g').
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` to compute the sine of`
+*
+* Returns:
+*   the sine expressed as a `GDN`.
+*/
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sin(ulong Deg)(in GDN!Deg g)
 do {
 	alias cosine = Select!(Deg == 1, core.math.cos, cos);
@@ -97,17 +97,17 @@ unittest {
 
 
 /**
- * This function computes the absolute value of the argument.
- *
- * If $(MATH f(x) = |g(x)|), then $(MATH f' = sgn(g)g'), when $(MATH g ≠ 0)
- *
- * Params:
- *   Deg = the degree of the `GDN` object to compute the absolute value of
- *   g = the `GDN` object to compute the absolute value of
- *
- * Returns:
- *   the absolute value of the `GDN` object
- */
+* This function computes the absolute value of the argument.
+*
+* If $(MATH f(x) = |g(x)|), then $(MATH f' = sgn(g)g'), when $(MATH g ≠ 0)
+*
+* Params:
+*   Deg = the degree of the `GDN` object to compute the absolute value of
+*   g = the `GDN` object to compute the absolute value of
+*
+* Returns:
+*   the absolute value of the `GDN` object
+*/
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || f >= 0)
 do {
@@ -136,18 +136,18 @@ unittest {
 
 
 /**
- * This function computes $(MATH 2$(SUP c)g).
- *
- * If $(MATH f(x) = 2$(SUP c)g(x)), then $(MATH f' = 2$(SUP c)g').
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the generalized dual number being scaled.
- *   c = the power of $(MATH 2) used to scale `g`,
- *
- * Returns:
- *   A `GDN` object resulting from the computation.
- */
+* This function computes $(MATH 2$(SUP c)g).
+*
+* If $(MATH f(x) = 2$(SUP c)g(x)), then $(MATH f' = 2$(SUP c)g').
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the generalized dual number being scaled.
+*   c = the power of $(MATH 2) used to scale `g`,
+*
+* Returns:
+*   A `GDN` object resulting from the computation.
+*/
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
 do {
 	alias ldexp_red = Select!(Deg == 1, core.math.ldexp, ldexp);
@@ -165,16 +165,17 @@ unittest {
 
 
 /**
- * This function rounds `g` to a `long` using the current rounding mode. All of the derivative terms
- * are lost.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- *
- * Returns:
- *   the rounded value of `g`.
- */
+* This function rounds a `GDN` to a `long` using the current rounding mode.
+*
+* All of the derivative terms are lost.
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` object to be rounded.
+*
+* Returns:
+*   the rounded value of `g`.
+*/
 pragma(inline, true) pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
 do {
 	return core.math.rndtol(g.val);
@@ -185,17 +186,17 @@ do {
 
 
 /**
- * This function computes the square root of its argument.
- *
- * If $(MATH f(x) = √g(x)), then $(MATH f' = g$(SUP -½)g'/2).
- *
- * Params:
- *   Deg = the degree of the `GDN` object to compute the square root of
- *   g = the `GDN` object to compute the square root of
- *
- * Returns:
- *   the square root of the `GDN` object
- */
+* This function computes the square root of its argument.
+*
+* If $(MATH f(x) = √g(x)), then $(MATH f' = g$(SUP -½)g'/2).
+*
+* Params:
+*   Deg = the degree of the `GDN` object to compute the square root of
+*   g = the `GDN` object to compute the square root of
+*
+* Returns:
+*   the square root of the `GDN` object
+*/
 pragma(inline, true) pure nothrow @nogc @safe  GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || f >= 0)
 do {
@@ -220,18 +221,19 @@ unittest {
 
 
 /**
- * This function rounds the value of a `GDN` to a given floating point type removing all derivative
- * information.
- *
- * Params:
- *   F = the float point type to be converted to
- *   Deg = the degree of `g`
- *   g = the generalized dual number to be converted
- *
- * Returns:
- *  the rounded valued with precision determined by `F`.
- *
- */
+* This function rounds the value of a `GDN` to a given floating point type.
+*
+* All derivative information is removed.
+*
+* Params:
+*   F = the float point type to be converted to
+*   Deg = the degree of `g`
+*   g = the generalized dual number to be converted
+*
+* Returns:
+*  the rounded valued with precision determined by `F`.
+*
+*/
 pragma(inline, true) pure nothrow @nogc @safe
 F toPrec(F, ulong Deg)(in GDN!Deg g) if (isFloatingPoint!F)
 do {
@@ -246,21 +248,23 @@ do {
 
 
 /**
- * This function computes $(MATH h⋅lg(g)). It either `g` or `h` has type `real`, it is converted to
- * a constant generalized dual number with the same degree as the other parameter.
- *
- * If $(MATH f(x) = h(x)lg(g(x))), then $(MATH f' = h'lg(g) + hg'/(ln(2)g))
- *
- * Params:
- *   G = the type of `g`
- *   H = the type of `h`
- *   g = the argument of logarithm
- *   h = the multiplier of the logarithm
- *
- * Returns:
- *   The resulting generalized dual number will have a degree equal to the lesser of the degrees of
- *   `g` and `h`.
- */
+* This function computes $(MATH h⋅lg(g)).
+*
+* If either `g` or `h` has type `real`, it is converted to a constant generalized dual number with
+* the same degree as the other parameter.
+*
+* If $(MATH f(x) = h(x)lg(g(x))), then $(MATH f' = h'lg(g) + hg'/(ln(2)g))
+*
+* Params:
+*   G = the type of `g`
+*   H = the type of `h`
+*   g = the argument of logarithm
+*   h = the multiplier of the logarithm
+*
+* Returns:
+*   The resulting generalized dual number will have a degree equal to the lesser of the degrees of
+*   `g` and `h`.
+*/
 pragma(inline, true) pure nothrow @nogc @safe
 CommonGDN!(G, H) yl2x(G, H)(in G g, in H h)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
@@ -318,22 +322,24 @@ unittest {
 
 
 /**
- * Computes $(MATH h⋅lg(g + 1)), for $(MATH -(1 - √½) ≤ x ≤ +(1 - √½)). When $(MATH g) is outside of
- * this interval, the results are undefined. It either `g` or `h` has type `real`, it is converted
- * to a constant generalized dual number with the same degree as the other parameter.
- *
- * If $(MATH f(x) = h(x)lg(g(x) + 1)), then $(MATH f' = h'lg(g + 1) + hg'/[ln(2)(g + 1)])
- *
- * Params:
- *   G = the type of `g`
- *   H = the type of `h`
- *   g = the argument of logarithm
- *   h = the multiplier of the logarithm
- *
- * Returns:
- *   The resulting generalized dual number will have a degree equal to the lesser of the degree of
- *   `g` and `h`.
- */
+* Computes $(MATH h⋅lg(g + 1)), for $(MATH -(1 - √½) ≤ x ≤ +(1 - √½)).
+*
+* When $(MATH g) is outside of that interval, the results are undefined. If either `g` or `h` has
+* type `real`, it is converted to a constant generalized dual number with the same degree as the
+* other parameter.
+*
+* If $(MATH f(x) = h(x)lg(g(x) + 1)), then $(MATH f' = h'lg(g + 1) + hg'/[ln(2)(g + 1)])
+*
+* Params:
+*   G = the type of `g`
+*   H = the type of `h`
+*   g = the argument of logarithm
+*   h = the multiplier of the logarithm
+*
+* Returns:
+*   The resulting generalized dual number will have a degree equal to the lesser of the degree of
+*   `g` and `h`.
+*/
 pragma(inline, true) pure nothrow @nogc @safe
 CommonGDN!(G, H) yl2xp1(G, H)(in G g, in H h)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
