@@ -1,6 +1,6 @@
 /**
- * It extends the `std.mathspecial` Phobos module to support `GDN` objects.
- */
+* This module extends the `std.mathspecial` Phobos module to support `GDN` objects.
+*/
 module ad.mathspecial;
 
 static import std.math.exponential;
@@ -74,17 +74,17 @@ unittest {
 
 
 /**
- * the gamma function, $(MATH Γ), of a generalized dual number
- *
- * If $(MATH f(x) = Γ(g(x))), then $(MATH f' = Γ(g)Ψ(g)g')
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN`argument
- *
- * Returns:
- *   $(MATH Γ(g)) as a `GDN`
- */
+* the gamma function, $(MATH Γ), of a generalized dual number
+*
+* If $(MATH f(x) = Γ(g(x))), then $(MATH f' = Γ(g)Ψ(g)g')
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN`argument
+*
+* Returns:
+*   $(MATH Γ(g)) as a `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg gamma(ulong Deg)(in GDN!Deg g)
 do {
 	alias gamma_fn = Select!(Deg == 1, std.mathspecial.gamma, gamma);
@@ -139,17 +139,17 @@ unittest {
 
 
 /**
- * Computes the natural logarithm of the gamma function for generalized dual number.
- *
- * If $(MATH f(x) = ln|Γ(g(x))|), $(MATH f' = Ψ(g)g').
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN` argument
- *
- * Returns:
- *   $(MATH ln|Γ(g)|) as a `GDN`
- */
+* Computes the natural logarithm of the gamma function for generalized dual number.
+*
+* If $(MATH f(x) = ln|Γ(g(x))|), $(MATH f' = Ψ(g)g').
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` argument
+*
+* Returns:
+*   $(MATH ln|Γ(g)|) as a `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg logGamma(ulong Deg)(in GDN!Deg g)
 do {
 	alias digamma_fn = Select!(Deg == 1, std.mathspecial.digamma, digamma);
@@ -188,19 +188,19 @@ unittest {
 
 
 /**
- * Computes the sign of the gamma function of a generalized dual number.
- *
- * If $(MATH f(x) = sgn(Γ(g(x)))), then $(MATH f' = 2𝛿(Γ(g))Γ(g)Ψ(g)g'). Since $(MATH Γ(g) ≠ 0, ∀g),
- * $(MATH f' = 0), if it exists. It doesn't exists when $(MATH g) is a non-positive integer or
- * $(MATH -∞) or when $(MATH g') is infinite.
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN` argument
- *
- * Returns:
- *   It returns $(MATH  sgn(Γ(g))) as a `GDN`.
- */
+* Computes the sign of the gamma function of a generalized dual number.
+*
+* If $(MATH f(x) = sgn(Γ(g(x)))), then $(MATH f' = 2𝛿(Γ(g))Γ(g)Ψ(g)g'). Since $(MATH Γ(g) ≠ 0, ∀g),
+* $(MATH f' = 0), if it exists. It doesn't exists when $(MATH g) is a non-positive integer or
+* $(MATH -∞) or when $(MATH g') is infinite.
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` argument
+*
+* Returns:
+*   It returns $(MATH  sgn(Γ(g))) as a `GDN`.
+*/
 pure nothrow @nogc @safe GDN!Deg sgnGamma(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -244,22 +244,22 @@ unittest {
 
 
 /**
- * Computes the beta function where at least one of the arguments is a generalized dual number.
- *
- * If $(MATH f(x) = B(g(x),h(x))), then $(MATH f' = $(SUP ∂B)/$(SUB ∂g)g' + $(SUP ∂B)/$(SUB ∂h)h').
- * $(MATH $(SUP ∂B(x$(SUB 1),x$(SUB 2)))/$(SUB ∂x$(SUB i)) = B⋅[Ψ(x$(SUB i)) - Ψ(x$(SUB 1)+x$(SUB 2))]),
- * so $(MATH f' = B⋅[Ψ(g) - Ψ(g+h)]g' + B⋅[Ψ(h) - Ψ(g+h)]h'). This reduces to
- * $(MATH f' = B(g,h)[Ψ(g)g' + Ψ(h)h' - Ψ(g+h)(g' + h')]).
- *
- * Params:
- *   G = the first `GDN` argument
- *   H = the second `GDN` argument
- *   g = the first `GDN` argument
- *   h = the second `GDN` argument
- *
- * Returns:
- *   $(MATH B(g,h)) as a `GDN`.
- */
+* Computes the beta function where at least one of the arguments is a generalized dual number.
+*
+* If $(MATH f(x) = B(g(x),h(x))), then $(MATH f' = $(SUP ∂B)/$(SUB ∂g)g' + $(SUP ∂B)/$(SUB ∂h)h').
+* $(MATH $(SUP ∂B(x$(SUB 1),x$(SUB 2)))/$(SUB ∂x$(SUB i)) = B⋅[Ψ(x$(SUB i)) - Ψ(x$(SUB 1)+x$(SUB 2))]),
+* so $(MATH f' = B⋅[Ψ(g) - Ψ(g+h)]g' + B⋅[Ψ(h) - Ψ(g+h)]h'). This reduces to
+* $(MATH f' = B(g,h)[Ψ(g)g' + Ψ(h)h' - Ψ(g+h)(g' + h')]).
+*
+* Params:
+*   G = the first `GDN` argument
+*   H = the second `GDN` argument
+*   g = the first `GDN` argument
+*   h = the second `GDN` argument
+*
+* Returns:
+*   $(MATH B(g,h)) as a `GDN`.
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H) beta(G, H)(in G g, in H h)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
@@ -438,18 +438,18 @@ unittest {
 
 
 /**
- * the digamma function,$(MATH Ψ), of a generalized dual number
- *
- * If $(MATH f(x) = Ψ(g(x))), then $(MATH f' = Ψ₁(g)g'), where $(MATH Ψ₁) is the polygamma function
- * of order $(MATH 1) (trigamma function).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN`argument
- *
- * Returns:
- *   $(MATH Ψ(g)) as a `GDN`
- */
+* The digamma function $(MATH Ψ) for a generalized dual number.
+*
+* If $(MATH f(x) = Ψ(g(x))), then $(MATH f' = Ψ₁(g)g'), where $(MATH Ψ₁) is the polygamma function
+* of order $(MATH 1) (trigamma function).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN`argument
+*
+* Returns:
+*   $(MATH Ψ(g)) as a `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg digamma(ulong Deg)(in GDN!Deg g)
 do {
 	alias pg = Select!(Deg == 1, ad.mathspecial.polygamma.polygamma, polygamma);
@@ -501,18 +501,18 @@ unittest {
 
 
 /**
- * The natural logarithm of a `GDN` minus digamma of the same `GDN`.
- *
- * If $(MATH f(x) = ln(g(x)) - Ψ(g(x))), then $(MATH f' = [1/g - Ψ₁(g)]g'), where $(MATH Ψ₁) is the
- * polygamma function of order one (trigamma function).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the argument, must be positive
- *
- * Returns:
- *   a GDN representing the natural logarithm of g minus digamma of g.
- */
+* The natural logarithm of a `GDN` minus digamma of the same `GDN`.
+*
+* If $(MATH f(x) = ln(g(x)) - Ψ(g(x))), then $(MATH f' = [1/g - Ψ₁(g)]g'), where $(MATH Ψ₁) is the
+* polygamma function of order one (trigamma function).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the argument, must be positive
+*
+* Returns:
+*   a GDN representing the natural logarithm of g minus digamma of g.
+*/
 pure nothrow @nogc @safe GDN!Deg logmdigamma(ulong Deg)(in GDN!Deg g)
 in(signbit(g) == 0 || isNaN(g), "the argument must be positive")
 do {
@@ -556,20 +556,19 @@ unittest {
 
 
 /**
- * The inverse of the function formed from the natural logarithm of a `GDN` minus digamma of the
- * same `GDN`.
- *
- * If $(MATH f(x) = ln(g(x)) - Ψ(g(x))), then $(MATH g = f⁻¹(f)) and $(MATH f' = [1/g - Ψ₁(g)]g'),
- * where $(MATH Ψ₁) is the polygamma function of order one (trigamma function). Thus
- * $(MATH g' = f' / [1/g - Ψ₁(g)] = f'g / [1 - gΨ₁(g)])
- *
- * Params:
- *   Deg = the degree of f
- *   f = the `GDN` argument
- *
- * Return:
- *   It returns `g` such that the natural logarithm of `g` minus digamma of `g` is equal to f.
- */
+* The inverse of the natural logarithm of a `GDN` minus digamma of the same `GDN`.
+*
+* If $(MATH f(x) = ln(g(x)) - Ψ(g(x))), then $(MATH g = f⁻¹(f)) and $(MATH f' = [1/g - Ψ₁(g)]g'),
+* where $(MATH Ψ₁) is the polygamma function of order one (trigamma function). Thus
+* $(MATH g' = f' / [1/g - Ψ₁(g)] = f'g / [1 - gΨ₁(g)])
+*
+* Params:
+*   Deg = the degree of f
+*   f = the `GDN` argument
+*
+* Return:
+*   It returns `g` such that the natural logarithm of `g` minus digamma of `g` is equal to f.
+*/
 pure nothrow @nogc @safe GDN!Deg logmdigammaInverse(ulong Deg)(in GDN!Deg f)
 do {
 	alias ln_m_digamma_inv = Select!(
@@ -672,56 +671,56 @@ unittest {
 }
 
 
-/* This function computes Pₓ(s,x), the partial derivative of the regularized
- * lower incomplete gamma function with respect to x.
- *
- * In summary:
- *
- *    - Pₓ(0⁺,x) = 𝛿(x)
- *    - Pₓ(s,0) = { ∞, 0<s<1; 1, s=1; 0, 1<s<∞ }
- *    - Pₓ(s,x) = xˢ⁻¹e⁻ˣ/𝛤(s), 0 < s < ∞, x > 0
- *    - Pₓ(∞,x) = { 0, 0≤x<∞; ∞, x=∞ }
- *
- * In detail:
- *
- * P(s,x) = 𝛾(s,x)/𝛤(s), where 𝛾(s,x) is the lower incomplete gamma function.
- * Pₓ(s,x) = 𝛾ₓ(s,x)/𝛤(s).
- *
- * 𝛾(s,x) = ∫₀ˣtˢ⁻¹e⁻ᵗdt. The integrand tˢ⁻¹e⁻ᵗ is Lebesgue integrable over
- * 0 ≤ t ≤ ∞. Therefore, 𝛾ₓ(s,x) = xˢ⁻¹e⁻ˣ almost everywhere. x = 0 is the only
- * value where xˢ⁻¹e⁻ˣ doesn't exist for every positive s, but the one-sided
- * limit from above does. This algorithm defines
- * 𝛾ₓ(s,0) = lim{x→0⁺} xˢ⁻¹e⁻ˣ = { ∞, 0<s<1; 1, s=1; 0, s>1 }.
- *
- * Thus when 0 < s < ∞, Pₓ(s,x) = xˢ⁻¹e⁻ˣ/𝛤(s), if x > 0, and
- * Pₓ(s,0) = { ∞, 0<s<1; 1, s=1; 0, s>1 }, if x = 0.
- *
- * Define P(0,x) = lim{s→0⁺} P(s,x). P : (0,∞)⨯[0,∞] → [0,1] and is
- * non-decreasing, since it is a special case of the gamma CDF. This means
- * P(s,0) = 0 for all s, i.e., P(0,0) = 0. Now assume x > 0.
- * P(0,x) = lim{s→0⁺} 𝛾(s,x)/𝛤(s). Thus
- * P(0,x) = lim{s→0⁺} ∫₀ⁱtˢ⁻¹e⁻ᵗdt/𝛤(s) + lim{s→0⁺} ∫ᵢˣtˢ⁻¹e⁻ᵗdt/𝛤(s), where
- * 0 < i < x. Choose i to be small enough that e⁻ᵗ ≈ 1 when 0 ≤ t ≤ i.
- * ∫₀ⁱtˢ⁻¹e⁻ᵗdt ≈ ∫₀ⁱtˢ⁻¹dt = [tˢ/s]₀ⁱ = iˢ/s. As s→0⁺, 𝛤(s) ~ 1/s, so
- * lim{s→0⁺} ∫₀ⁱtˢ⁻¹e⁻ᵗdt/𝛤(s) = lim{s→0⁺} (iˢ/s)/(1/s) = lim{s→0⁺} iˢ = 1.
- *
- * lim{s→0⁺} ∫ᵢˣtˢ⁻¹e⁻ᵗdt = ∫ᵢˣ(lim{s→0⁺} tˢ⁻¹e⁻ᵗ)dt = ∫ᵢˣ(e⁻ᵗ/t)dt.
- * 0 < ∫ᵢˣ(e⁻ᵗ/t)dt < ∫ᵢˣe⁻ᵗdt/i = [-e⁻ᵗ]ᵢˣ/i = (e⁻ⁱ - e⁻ˣ)/i < 1/i.
- * lim{s→0⁺} ∫ᵢˣtˢ⁻¹e⁻ᵗdt/𝛤(s) ≤ lim{s→0⁺} 1/(i𝛤(s)) = 0.
- *
- * Thus P(0⁺,x) = { 0, x=0; 1, x>0 }, and Pₓ(0⁺,x) = 𝛿(x).
- *
- * Define P(∞,x) = lim{s→∞} P(s,x). P(s,∞) = 1 for all s, since it is a special
- * case of the gamma CDF. I.e., P(∞,∞) = 1. Now assume x < ∞.
- * P(∞,x) = lim{s→∞} 𝛾(s,x)/𝛤(s). 𝛾(s,x) = 𝛤(s)xˢe⁻ˣ𝛴ₖ₌₀xᵏ/𝛤(s+k+1). The series
- * converges uniformly for all s and x, so
- * P(∞,x) = e⁻ˣ𝛴ₖ₌₀lim{s→∞}xˢ⁺ᵏ/𝛤(s+k+1).
- * lim{s→∞} xˢ⁺ᵏ/𝛤(s+k+1) = lim{s→∞} [ex/(s+k)]ˢ⁺ᵏ/√[2𝜋(s+k)]. There exists sₖ
- * such that when s > sₖ, ex/(s+k) < 1. Thus lim{s→∞} [ex/(s+k)]ˢ⁺ᵏ = 0. Since
- * lim{s→∞} √[2𝜋(s+k)] = ∞, lim{s→∞} xˢ⁺ᵏ/𝛤(s+k+1) = 0, and
- * P(∞,x) = e⁻ˣ𝛴ₖ₌₀0 = 0 when x < ∞. This means that
- * P(∞,x) = { 0, 0≤x<∞; 1, x=∞ }, and Pₓ(∞,x) = { 0, 0≤x<∞; ∞, x=∞ }.
- */
+/*
+* This function computes Pₓ(s,x), the partial derivative of the regularized
+* lower incomplete gamma function with respect to x.
+*
+* In summary:
+*
+*    - Pₓ(0⁺,x) = 𝛿(x)
+*    - Pₓ(s,0) = { ∞, 0<s<1; 1, s=1; 0, 1<s<∞ }
+*    - Pₓ(s,x) = xˢ⁻¹e⁻ˣ/𝛤(s), 0 < s < ∞, x > 0
+*    - Pₓ(∞,x) = { 0, 0≤x<∞; ∞, x=∞ }
+*
+* In detail:
+*
+* P(s,x) = 𝛾(s,x)/𝛤(s), where 𝛾(s,x) is the lower incomplete gamma function.
+* Pₓ(s,x) = 𝛾ₓ(s,x)/𝛤(s).
+*
+* 𝛾(s,x) = ∫₀ˣtˢ⁻¹e⁻ᵗdt. The integrand tˢ⁻¹e⁻ᵗ is Lebesgue integrable over
+* 0 ≤ t ≤ ∞. Therefore, 𝛾ₓ(s,x) = xˢ⁻¹e⁻ˣ almost everywhere. x = 0 is the only
+* value where xˢ⁻¹e⁻ˣ doesn't exist for every positive s, but the one-sided
+* limit from above does. This algorithm defines
+* 𝛾ₓ(s,0) = lim{x→0⁺} xˢ⁻¹e⁻ˣ = { ∞, 0<s<1; 1, s=1; 0, s>1 }.
+*
+* Thus when 0 < s < ∞, Pₓ(s,x) = xˢ⁻¹e⁻ˣ/𝛤(s), if x > 0, and
+* Pₓ(s,0) = { ∞, 0<s<1; 1, s=1; 0, s>1 }, if x = 0.
+*
+* Define P(0,x) = lim{s→0⁺} P(s,x). P : (0,∞)⨯[0,∞] → [0,1] and is
+* non-decreasing, since it is a special case of the gamma CDF. This means
+* P(s,0) = 0 for all s, i.e., P(0,0) = 0. Now assume x > 0.
+* P(0,x) = lim{s→0⁺} 𝛾(s,x)/𝛤(s). Thus
+* P(0,x) = lim{s→0⁺} ∫₀ⁱtˢ⁻¹e⁻ᵗdt/𝛤(s) + lim{s→0⁺} ∫ᵢˣtˢ⁻¹e⁻ᵗdt/𝛤(s), where
+* 0 < i < x. Choose i to be small enough that e⁻ᵗ ≈ 1 when 0 ≤ t ≤ i.
+* ∫₀ⁱtˢ⁻¹e⁻ᵗdt ≈ ∫₀ⁱtˢ⁻¹dt = [tˢ/s]₀ⁱ = iˢ/s. As s→0⁺, 𝛤(s) ~ 1/s, so
+* lim{s→0⁺} ∫₀ⁱtˢ⁻¹e⁻ᵗdt/𝛤(s) = lim{s→0⁺} (iˢ/s)/(1/s) = lim{s→0⁺} iˢ = 1.
+*
+* lim{s→0⁺} ∫ᵢˣtˢ⁻¹e⁻ᵗdt = ∫ᵢˣ(lim{s→0⁺} tˢ⁻¹e⁻ᵗ)dt = ∫ᵢˣ(e⁻ᵗ/t)dt.
+* 0 < ∫ᵢˣ(e⁻ᵗ/t)dt < ∫ᵢˣe⁻ᵗdt/i = [-e⁻ᵗ]ᵢˣ/i = (e⁻ⁱ - e⁻ˣ)/i < 1/i.
+* lim{s→0⁺} ∫ᵢˣtˢ⁻¹e⁻ᵗdt/𝛤(s) ≤ lim{s→0⁺} 1/(i𝛤(s)) = 0.
+*
+* Thus P(0⁺,x) = { 0, x=0; 1, x>0 }, and Pₓ(0⁺,x) = 𝛿(x).
+*
+* Define P(∞,x) = lim{s→∞} P(s,x). P(s,∞) = 1 for all s, since it is a special
+* case of the gamma CDF. I.e., P(∞,∞) = 1. Now assume x < ∞.
+* P(∞,x) = lim{s→∞} 𝛾(s,x)/𝛤(s). 𝛾(s,x) = 𝛤(s)xˢe⁻ˣ𝛴ₖ₌₀xᵏ/𝛤(s+k+1). The series
+* converges uniformly for all s and x, so P(∞,x) = e⁻ˣ𝛴ₖ₌₀lim{s→∞}xˢ⁺ᵏ/𝛤(s+k+1).
+* lim{s→∞} xˢ⁺ᵏ/𝛤(s+k+1) = lim{s→∞} [ex/(s+k)]ˢ⁺ᵏ/√[2𝜋(s+k)]. There exists sₖ
+* such that when s > sₖ, ex/(s+k) < 1. Thus lim{s→∞} [ex/(s+k)]ˢ⁺ᵏ = 0. Since
+* lim{s→∞} √[2𝜋(s+k)] = ∞, lim{s→∞} xˢ⁺ᵏ/𝛤(s+k+1) = 0, and P(∞,x) = e⁻ˣ𝛴ₖ₌₀0 = 0
+* when x < ∞. This means that P(∞,x) = { 0, 0≤x<∞; 1, x=∞ }, and
+* Pₓ(∞,x) = { 0, 0≤x<∞; ∞, x=∞ }.
+*/
 private pure nothrow @nogc @safe
 GDN!Deg.DerivType!1 gammaIncompleteDeriv(ulong Deg)(in real s, in GDN!Deg x)
 do {
@@ -833,22 +832,23 @@ unittest {
 }
 
 
-/** The regularized lower incomplete gamma function $(MATH P(a,g)).
- *
- * $(MATH P(a,g) = 𝛾(a,g)/𝛤(a)), where $(MATH 𝛾(a,g) = ∫$(SUB 0)$(SUP g)t$(SUP a-1)e$(SUP -t)dt) is
- * the lower incomplete gamma function.
- *
- * Let $(MATH f(x) = P(a,g(x))). Then
- * $(MATH f' = $(SUP ∂P)/$(SUB ∂g)g' = g'g$(SUP a-1)e$(SUP -g)/𝛤(a)).
- *
- * Params:
- *   Deg = the degree of g
- *   a = the shape parameter, must be positive
- *   g = the argument, must be $(MATH ≥ 0).
- *
- * Returns:
- *   _a GDN representing $(MATH P(a,g)).
- */
+/**
+* The regularized lower incomplete gamma function $(MATH P(a,g)).
+*
+* $(MATH P(a,g) = 𝛾(a,g)/𝛤(a)), where $(MATH 𝛾(a,g) = ∫$(SUB 0)$(SUP g)t$(SUP a-1)e$(SUP -t)dt) is
+* the lower incomplete gamma function.
+*
+* Let $(MATH f(x) = P(a,g(x))). Then
+* $(MATH f' = $(SUP ∂P)/$(SUB ∂g)g' = g'g$(SUP a-1)e$(SUP -g)/𝛤(a)).
+*
+* Params:
+*   Deg = the degree of g
+*   a = the shape parameter, must be positive
+*   g = the argument, must be $(MATH ≥ 0).
+*
+* Returns:
+*   _a GDN representing $(MATH P(a,g)).
+*/
 pure nothrow @nogc @safe GDN!Deg gammaIncomplete(ulong Deg)(in real a, in GDN!Deg g)
 in {
 	if (!any!(std.math.isNaN)(only(a, g.val))) {
@@ -895,22 +895,23 @@ unittest {
 }
 
 
-/** The regularized upper incomplete gamma function $(MATH Q(a,g)).
- *
- * $(MATH Q(a,g) = 𝛤(a,g)/𝛤(a)), where $(MATH 𝛤(a,g) = ∫$(SUB g)$(SUP ∞)t$(SUP a-1)e$(SUP -t)dt) is
- * the upper incomplete gamma function. Notice that $(MATH Q(a,g) = 1 - P(a,g)).
- *
- * Let $(MATH f(x) = Q(a,g(x))).
- * Then $(MATH f' = $(SUP ∂Q)/$(SUB ∂g)g' = -g'g$(SUP a-1)e$(SUP -g)/𝛤(a)).
- *
- * Params:
- *   Deg = the degree of g
- *   a = the shape parameter, must be positive
- *   g = the argument, must be $(MATH ≥ 0).
- *
- * Returns:
- *   _a GDN representing $(MATH Q(a,g)).
- */
+/**
+* The regularized upper incomplete gamma function $(MATH Q(a,g)).
+*
+* $(MATH Q(a,g) = 𝛤(a,g)/𝛤(a)), where $(MATH 𝛤(a,g) = ∫$(SUB g)$(SUP ∞)t$(SUP a-1)e$(SUP -t)dt) is
+* the upper incomplete gamma function. Notice that $(MATH Q(a,g) = 1 - P(a,g)).
+*
+* Let $(MATH f(x) = Q(a,g(x))).
+* Then $(MATH f' = $(SUP ∂Q)/$(SUB ∂g)g' = -g'g$(SUP a-1)e$(SUP -g)/𝛤(a)).
+*
+* Params:
+*   Deg = the degree of g
+*   a = the shape parameter, must be positive
+*   g = the argument, must be $(MATH ≥ 0).
+*
+* Returns:
+*   _a GDN representing $(MATH Q(a,g)).
+*/
 pure nothrow @nogc @safe GDN!Deg gammaIncompleteCompl(ulong Deg)(in real a, in GDN!Deg g)
 in {
 	if (!any!(std.math.isNaN)(only(a, g.val))) {
@@ -971,19 +972,20 @@ unittest {
 }
 
 
-/** The inverse regularized upper incomplete gamma function $(MATH Q$(SUP -1)(a,q)), fixed $(MATH a)
- *
- * If $(MATH q(x) = Q(a,g(x))), then $(MATH g = q$(SUP -1)(q)). $(MATH q' = $(SUP ∂Q)/$(SUB ∂g)g').
- * Thus $(MATH g' = q'/$(SUP ∂Q)/$(SUB ∂g)).
- *
- * Params:
- *   a = the shape parameter, must be positive
- *   q = $(MATH Q(a,x)), must be in the interval $(MATH [0,1])
- *
- * Returns:
- *   the inverse of the regularized upper incomplete gamma function evaluated at q expressed as _a
- *   `GDN`
- */
+/**
+* The inverse regularized upper incomplete gamma function $(MATH Q$(SUP -1)(a,q)), fixed $(MATH a)
+*
+* If $(MATH q(x) = Q(a,g(x))), then $(MATH g = q$(SUP -1)(q)). $(MATH q' = $(SUP ∂Q)/$(SUB ∂g)g').
+* Thus $(MATH g' = q'/$(SUP ∂Q)/$(SUB ∂g)).
+*
+* Params:
+*   a = the shape parameter, must be positive
+*   q = $(MATH Q(a,x)), must be in the interval $(MATH [0,1])
+*
+* Returns:
+*   the inverse of the regularized upper incomplete gamma function evaluated at q expressed as _a
+*   `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg gammaIncompleteComplInverse(ulong Deg)(in real a, in GDN!Deg q)
 in {
 	if (!any!(std.math.isNaN)(only(a, q.val))) {
@@ -1071,37 +1073,38 @@ unittest {
 }
 
 
-/* This function computes the derivative of the regularized incomplete beta
- * function I(x; a,b) with respect to x, where a and b are constants.
- *
- * I'(x; a,b) = (d/dx)B(x; a,b)/B(a,b)) where B(x; a,b) = ∫₀ˣtᵃ⁻¹(1-t)ᵇ⁻¹dt is
- * the incomplete beta function.
- *
- * The integrand tᵃ⁻¹(1-t)ᵇ⁻¹ is Lebesgue integrable over 0 ≤ t ≤ 1. Therefore,
- * B' = xᵃ⁻¹(1-x)ᵇ⁻¹ almost everywhere. x = 0 and 1 are the only values where
- * xᵃ⁻¹(1-x)ᵇ⁻¹ doesn't exist for every a and b, but the one-sided limits do.
- * This algorithm defines
- * B'(0; a,b) = lim{x→0⁺} xᵃ⁻¹(1-x)ᵇ⁻¹ = { ∞, 0<a<1; 1, a=1; 0, a>1 }), and
- * B'(1; a,b) = lim{x→1⁻} xᵃ⁻¹(1-x)ᵇ⁻¹ = { ∞, 0<b<1; 1, b=1; 0, b>1 }).
- *
- * Thus I'(x; a,b) has the following form when 0 < a,b < ∞.
- *
- *    - I'(x; a,b) = xᵃ⁻¹(1-x)ᵇ⁻¹/B(a,b), 0 < x < 1
- *    - I'(0; a,b) = { ∞, a<1; 1/B(1,b), a=1; 0, a>1 }
- *    - I'(1; a,b) = { ∞, b<1; 1/B(a,1), b=1; 0, b>1 }
- *
- * Here are the degenerate cases of I'. Let H(x) = { 0, x<0; 1, x≥0 } be the
- * Heaviside step function in the following.
- *
- *    - I'(x; 0,b) = (d/dx)lim{a→0⁺} I(x; a,b) = (d/dx)(1 - H(-x)) = 𝛿(x)
- *    - I'(x; ∞,b) = (d/dx)lim{a→∞} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
- *    - I'(x; a,0) = (d/dx)lim{b→0⁺} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
- *    - I'(x; a,∞) = (d/dx)lim{b→∞} I(x; a,b) = (d/dx)[1 - H(-x)] = 𝛿(x)
- *    - I'(x; 0,0) = (d/dx)lim{a,b→0⁺} I(x; a,b), does not exist
- *    - I'(x; 0,∞) = (d/dx)lim{a→0⁺,b→∞) I(x; a,b) = (d/dx)[1 - H(-x)] = 𝛿(x)
- *    - I'(x; ∞,0) = (d/dx)lim{a→∞,b→0⁺} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
- *    - I'(x; ∞,∞) = (d/dx)lim{a,b→∞) I(x; a,b), does not exist
- */
+/*
+* This function computes the derivative of the regularized incomplete beta
+* function I(x; a,b) with respect to x, where a and b are constants.
+*
+* I'(x; a,b) = (d/dx)B(x; a,b)/B(a,b)) where B(x; a,b) = ∫₀ˣtᵃ⁻¹(1-t)ᵇ⁻¹dt is
+* the incomplete beta function.
+*
+* The integrand tᵃ⁻¹(1-t)ᵇ⁻¹ is Lebesgue integrable over 0 ≤ t ≤ 1. Therefore,
+* B' = xᵃ⁻¹(1-x)ᵇ⁻¹ almost everywhere. x = 0 and 1 are the only values where
+* xᵃ⁻¹(1-x)ᵇ⁻¹ doesn't exist for every a and b, but the one-sided limits do.
+* This algorithm defines
+* B'(0; a,b) = lim{x→0⁺} xᵃ⁻¹(1-x)ᵇ⁻¹ = { ∞, 0<a<1; 1, a=1; 0, a>1 }), and
+* B'(1; a,b) = lim{x→1⁻} xᵃ⁻¹(1-x)ᵇ⁻¹ = { ∞, 0<b<1; 1, b=1; 0, b>1 }).
+*
+* Thus I'(x; a,b) has the following form when 0 < a,b < ∞.
+*
+*    - I'(x; a,b) = xᵃ⁻¹(1-x)ᵇ⁻¹/B(a,b), 0 < x < 1
+*    - I'(0; a,b) = { ∞, a<1; 1/B(1,b), a=1; 0, a>1 }
+*    - I'(1; a,b) = { ∞, b<1; 1/B(a,1), b=1; 0, b>1 }
+*
+* Here are the degenerate cases of I'. Let H(x) = { 0, x<0; 1, x≥0 } be the
+* Heaviside step function in the following.
+*
+*    - I'(x; 0,b) = (d/dx)lim{a→0⁺} I(x; a,b) = (d/dx)(1 - H(-x)) = 𝛿(x)
+*    - I'(x; ∞,b) = (d/dx)lim{a→∞} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
+*    - I'(x; a,0) = (d/dx)lim{b→0⁺} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
+*    - I'(x; a,∞) = (d/dx)lim{b→∞} I(x; a,b) = (d/dx)[1 - H(-x)] = 𝛿(x)
+*    - I'(x; 0,0) = (d/dx)lim{a,b→0⁺} I(x; a,b), does not exist
+*    - I'(x; 0,∞) = (d/dx)lim{a→0⁺,b→∞) I(x; a,b) = (d/dx)[1 - H(-x)] = 𝛿(x)
+*    - I'(x; ∞,0) = (d/dx)lim{a→∞,b→0⁺} I(x; a,b) = (d/dx)H(x-1) = 𝛿(x-1)
+*    - I'(x; ∞,∞) = (d/dx)lim{a,b→∞) I(x; a,b), does not exist
+*/
 private pure nothrow @nogc @safe
 GDN!Deg.DerivType!1 betaIncompleteDeriv(ulong Deg)(in real a, in real b, in GDN!Deg x)
 do {
@@ -1364,20 +1367,20 @@ unittest {
 
 
 /**
- * The regularized incomplete beta function $(MATH I$(SUB g)(a,b)).
- *
- * For fixed $(MATH a,b > 0), let $(MATH f(x) = I$(SUB g(x))(a,b)). Then
- * $(MATH f' = g'$(SUP dI$(SUB g))/$(SUB dg)).
- *
- * Params:
- *   Deg = the degree of g
- *   a = the first shape parameter, must be positive
- *   b = the second shape parameter, must be positive
- *   g = the argument, must belong to the interval $(MATH [0,1])
- *
- * Returns:
- *   the regularized incomplete beta function evaluated at g expressed as _a `GDN`
- */
+* The regularized incomplete beta function $(MATH I$(SUB g)(a,b)).
+*
+* For fixed $(MATH a,b > 0), let $(MATH f(x) = I$(SUB g(x))(a,b)). Then
+* $(MATH f' = g'$(SUP dI$(SUB g))/$(SUB dg)).
+*
+* Params:
+*   Deg = the degree of g
+*   a = the first shape parameter, must be positive
+*   b = the second shape parameter, must be positive
+*   g = the argument, must belong to the interval $(MATH [0,1])
+*
+* Returns:
+*   the regularized incomplete beta function evaluated at g expressed as _a `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg betaIncomplete(ulong Deg)(in real a, in real b, in GDN!Deg g)
 in {
 	assert(isNaN(a) || signbit(a) == 0, "the first shape parameter must be positive");
@@ -1406,22 +1409,22 @@ unittest {
 
 /+ NB: In master, but not released.
 /**
- * The regularized incomplete beta complement function $(MATH I$(SUB g)$(SUP C)(a,b)).
- *
- * For fixed $(MATH a,b > 0), if $(MATH f(x) = I$(SUB g(x))$(SUP C)(a,b)), then
- * $(MATH f' = g'$(SUP dI$(SUB g)$(SUP C))/$(SUB dg)). Since
- * $(MATH I$(SUB g)$(SUP C) = 1 - I$(SUB g)), $(MATH I$(SUB g)$(SUP C)' = -I$(SUB g)'). Thus
- * $(MATH f' = -g'$(SUP dI$(SUB g))$(SUB dg)).
- *
- * Params:
- *   Deg = the degree of g
- *   a = the first shape parameter, must be positive
- *   b = the second shape parameter, must be positive
- *   g = the argument, must belong to the interval $(MATH [0,1])
- *
- * Returns:
- *   the regularized incomplete beta complement function evaluated at g expressed as _a `GDN`
- */
+* The regularized incomplete beta complement function $(MATH I$(SUB g)$(SUP C)(a,b)).
+*
+* For fixed $(MATH a,b > 0), if $(MATH f(x) = I$(SUB g(x))$(SUP C)(a,b)), then
+* $(MATH f' = g'$(SUP dI$(SUB g)$(SUP C))/$(SUB dg)). Since
+* $(MATH I$(SUB g)$(SUP C) = 1 - I$(SUB g)), $(MATH I$(SUB g)$(SUP C)' = -I$(SUB g)'). Thus
+* $(MATH f' = -g'$(SUP dI$(SUB g))$(SUB dg)).
+*
+* Params:
+*   Deg = the degree of g
+*   a = the first shape parameter, must be positive
+*   b = the second shape parameter, must be positive
+*   g = the argument, must belong to the interval $(MATH [0,1])
+*
+* Returns:
+*   the regularized incomplete beta complement function evaluated at g expressed as _a `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg betaIncompleteCompl(ulong Deg)(in real a, in real b, in GDN!Deg g)
 in {
 	assert(isNaN(a) || signbit(a) == 0, "the first shape parameter must be positive");
@@ -1451,20 +1454,20 @@ unittest {
 
 
 /**
- * The inverse of the regularized incomplete beta function.
- *
- * If $(MATH f(x) = I$(SUB g(x))(a,b)), then $(MATH g = f$(SUP -1)(f)). For fixed $(MATH a,b > 0),
- * $(MATH f' = g'$(SUP dI$(SUB g))/$(SUB dg)). Thus $(MATH g' = f'/$(SUP dI$(SUB g))/$(SUB dg)).
- *
- * Params:
- *   Deg = the degree of Ig
- *   a = the first shape parameter, must be positive
- *   b = the second shape parameter, must be positive
- *   Ig = $(MATH I$(SUB g)(a,b)), must belong to the interval $(MATH [0,1])
- *
- * Returns:
- *   the inverse of the regularized incomplete beta function evaluated at Ig expressed as _a `GDN`
- */
+* The inverse of the regularized incomplete beta function.
+*
+* If $(MATH f(x) = I$(SUB g(x))(a,b)), then $(MATH g = f$(SUP -1)(f)). For fixed $(MATH a,b > 0),
+* $(MATH f' = g'$(SUP dI$(SUB g))/$(SUB dg)). Thus $(MATH g' = f'/$(SUP dI$(SUB g))/$(SUB dg)).
+*
+* Params:
+*   Deg = the degree of Ig
+*   a = the first shape parameter, must be positive
+*   b = the second shape parameter, must be positive
+*   Ig = $(MATH I$(SUB g)(a,b)), must belong to the interval $(MATH [0,1])
+*
+* Returns:
+*   the inverse of the regularized incomplete beta function evaluated at Ig expressed as _a `GDN`
+*/
 pure nothrow @nogc @safe
 GDN!Deg betaIncompleteInverse(ulong Deg)(in real a, in real b, in GDN!Deg Ig)
 in {
@@ -1512,20 +1515,21 @@ unittest {
 }
 
 
-/** the error function
- *
- * Let $(MATH f(x) = erf(g(x))).
- * $(MATH f' = g'$(SUP d)/$(SUB dg)erf(g))
- * $(MATH = g'$(SUP d)/$(SUB dg)(2/√𝜋)∫$(SUB 0)$(SUP g)e$(SUP -t$(SUP 2))dt)
- * $(MATH = 2g'e$(SUP -g$(SUP 2))/√𝜋).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the GDN argument
- *
- * Returns:
- *   $(MATH erf(g)) expressed as a GDN
- */
+/**
+* the error function
+*
+* Let $(MATH f(x) = erf(g(x))).
+* $(MATH f' = g'$(SUP d)/$(SUB dg)erf(g))
+* $(MATH = g'$(SUP d)/$(SUB dg)(2/√𝜋)∫$(SUB 0)$(SUP g)e$(SUP -t$(SUP 2))dt)
+* $(MATH = 2g'e$(SUP -g$(SUP 2))/√𝜋).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the GDN argument
+*
+* Returns:
+*   $(MATH erf(g)) expressed as a GDN
+*/
 pure nothrow @nogc @safe GDN!Deg erf(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || (f >= -1.0L && f <= 1.0L))
 do {
@@ -1564,19 +1568,20 @@ unittest {
 }
 
 
-/** The complementary error function
- *
- * Let $(MATH f(x) = erfc(g(x))). $(MATH f' = g'$(SUP d)/$(SUB dg)erfc(g)). Since
- * $(MATH erfc(g) = 1 - erf(g)),
- * $(MATH f' = -g'$(SUP d)/$(SUB dg)erf(g) = -2g'e$(SUP -g$(SUP 2))/√𝜋).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN` argument
- *
- * Returns:
- *   $(MATH erfc(g)) expressed as a `GDN`.
- */
+/**
+* The complementary error function
+*
+* Let $(MATH f(x) = erfc(g(x))). $(MATH f' = g'$(SUP d)/$(SUB dg)erfc(g)). Since
+* $(MATH erfc(g) = 1 - erf(g)),
+* $(MATH f' = -g'$(SUP d)/$(SUB dg)erf(g) = -2g'e$(SUP -g$(SUP 2))/√𝜋).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` argument
+*
+* Returns:
+*   $(MATH erfc(g)) expressed as a `GDN`.
+*/
 pure nothrow @nogc @safe GDN!Deg erfc(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || (f >= 0.0L && f <= 2.0L))
 do {
@@ -1623,19 +1628,20 @@ unittest {
 }
 
 
-/** the standard normal CDF $(MATH 𝛷) of a `GDN`
- *
- * Let $(MATH f(x) = 𝛷(g(x))), then ($MATH f' = 𝛷'(g)g'). Since $(MATH 𝛷(g) = (1 + erf(g/√2))/2),
- * $(MATH f' = g'$(SUP d)/$(SUB dg)erf(g/√2)/2 = (g'/2)(2/√𝜋)e$(SUP -g$(SUP 2)/2)/√2)
- * $(MATH = g'e$(SUP -g$(SUP 2)/2)/√(2𝜋)).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN` argument
- *
- * Returns:
- *   $(MATH 𝛷(g)) as a `GDN`
- */
+/**
+* the standard normal CDF $(MATH 𝛷) of a `GDN`
+*
+* Let $(MATH f(x) = 𝛷(g(x))), then ($MATH f' = 𝛷'(g)g'). Since $(MATH 𝛷(g) = (1 + erf(g/√2))/2),
+* $(MATH f' = g'$(SUP d)/$(SUB dg)erf(g/√2)/2 = (g'/2)(2/√𝜋)e$(SUP -g$(SUP 2)/2)/√2)
+* $(MATH = g'e$(SUP -g$(SUP 2)/2)/√(2𝜋)).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` argument
+*
+* Returns:
+*   $(MATH 𝛷(g)) as a `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg normalDistribution(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || (f >= 0.0L && f <= 1.0L))
 do {
@@ -1684,19 +1690,20 @@ unittest {
 }
 
 
-/** The inverse of the standard normal CDF, $(MATH 𝛷$(SUP -1)).
- *
- * Let $(MATH f(x) = 𝛷(g(x))), then $(MATH f' = 𝛷'(g)g') and $(MATH g' = f'/ 𝛷'(g)). Since
- * $(MATH 𝛷(g) = (1 + erf(g/√2))/2), $(MATH 𝛷' = e$(SUP -g$(SUP 2)/2)/√(2𝜋)). Thus
- * $(MATH g' = √(2𝜋)f'e$(SUP g$(SUP 2)/2)).
- *
- * Params:
- *   Deg = the degree of f
- *   f = the probability that $(MATH X ≤ g), where $(MATH X ~ 𝓝(0,1)) and $(MATH g = 𝛷$(SUP -1)(f))
- *
- * Returns:
- *   The value $(MATH g) such that $(MATH f = 𝛷(g)).
- */
+/**
+* The inverse of the standard normal CDF, $(MATH 𝛷$(SUP -1)).
+*
+* Let $(MATH f(x) = 𝛷(g(x))), then $(MATH f' = 𝛷'(g)g') and $(MATH g' = f'/ 𝛷'(g)). Since
+* $(MATH 𝛷(g) = (1 + erf(g/√2))/2), $(MATH 𝛷' = e$(SUP -g$(SUP 2)/2)/√(2𝜋)). Thus
+* $(MATH g' = √(2𝜋)f'e$(SUP g$(SUP 2)/2)).
+*
+* Params:
+*   Deg = the degree of f
+*   f = the probability that $(MATH X ≤ g), where $(MATH X ~ 𝓝(0,1)) and $(MATH g = 𝛷$(SUP -1)(f))
+*
+* Returns:
+*   The value $(MATH g) such that $(MATH f = 𝛷(g)).
+*/
 pure nothrow @nogc @safe GDN!Deg normalDistributionInverse(ulong Deg)(in GDN!Deg f)
 in(isNaN(f) || (f >= 0.0L && f <= 1.0L), "the argument must be in the interval [0,1]")
 do {
