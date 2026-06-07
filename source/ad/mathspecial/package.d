@@ -1,5 +1,5 @@
 /**
- * It extends the `std.mathspecial` module to support `GDN` objects.
+ * It extends the `std.mathspecial` Phobos module to support `GDN` objects.
  */
 module ad.mathspecial;
 
