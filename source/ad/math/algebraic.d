@@ -1,22 +1,21 @@
 /**
- * It extends the `std.math.algebraic` module to support `GDN` objects.
+ * It extends the `std.math.algebraic` Phobos module to support `GDN` objects.
  */
 module ad.math.algebraic;
 
-public import std.math.algebraic;
+static import std.math.algebraic;
 
-import std.algorithm: any, map;
-import std.math: isInfinity;
-import std.meta: allSatisfy, anySatisfy;
-import std.range: chain, only;
-import std.traits: Select;
+import std.algorithm : any, map;
+import std.math : isInfinity;
+import std.meta : allSatisfy, anySatisfy;
+import std.range : chain, only;
+import std.traits : Select;
 
 static import ad.core.math;
-static import ad.internal;
 
 import ad;
-import ad.internal:
-	asGDN, asReal, ceil, CommonGDN, floor, isConvertibleToGDN, isGDN, isNaN, log2, sgn, signbit;
+import ad.internal :
+	asGDN, asReal, ceil, CommonGDN, floor, isConvertibleToGDN, isGDN, isNaN, log2, sgn;
 
 
 /**
@@ -43,9 +42,9 @@ do {
 
 // abs support
 unittest {
-	assert(
-		std.math.algebraic.abs(GDN!1(-1)) is GDN!1(1, -1),
-		"std.math.algebraic.abs(GDN) not working");
+	import std.math : abs;
+
+	assert(abs(GDN!1(-1)) is GDN!1(1, -1), "abs(GDN) not working");
 }
 
 
@@ -94,13 +93,13 @@ do {
 	return GDN!Deg(std.math.algebraic.cbrt(g.val), g.d * g_pow / 3);
 }
 /***/ unittest {
-	import std.math: isClose;
+	import std.math : isClose;
 
 	const f = cbrt(GDN!2(8));
 	assert(f == 2 && f.d == 1/12.0L && isClose(f.d!2, -1/144.0L));
 }
 unittest {
-	import std.format: format;
+	import std.format : format;
 
 	assert(cbrt(GDN!1(1)) is GDN!1(1, 1/3.0L), "cbrt(1) incorrect");
 	assert(cbrt(GDN!1(+0.)) is GDN!1(+0., real.infinity), "cbrt(0) incorrect");
@@ -157,12 +156,12 @@ do {
 	return GDN!Deg(asReal(f_red), df);
 }
 /***/ unittest {
-	import std.math: sqrt;
+	import std.math : sqrt;
 
 	assert(hypot(GDN!1(1), GDN!1(2)) is GDN!1(sqrt(5.0L), 3/sqrt(5.0L)));
 }
 unittest {
-	import std.math: isClose, NaN, sqrt;
+	import std.math : isClose, NaN, sqrt;
 
 	assert(hypot(GDN!1(NaN(2)), GDN!1(0, NaN(1))) is GDN!1(NaN(2), NaN(1)));
 
@@ -223,14 +222,14 @@ do {
 	return GDN!Deg(asReal(f_red), df);
 }
 /***/ unittest {
-	import std.math: isClose, sqrt;
+	import std.math : isClose, sqrt;
 
 	const f = hypot(GDN!1(1), GDN!1(2), GDN!1(3));
 	assert(isClose(f.val, sqrt(14.0L)) && isClose(f.d, 6/sqrt(14.0L)));
 }
 unittest {
-	import std.format: format;
-	import std.math: isClose, NaN, sqrt;
+	import std.format : format;
+	import std.math : isClose, NaN, sqrt;
 
 	assert(typeof(hypot(GDN!2.one, GDN!2.one, GDN!1.one)).DEGREE == 1);
 	assert(typeof(hypot(GDN!2.one, GDN!1.one, GDN!3.one)).DEGREE == 1);
@@ -322,8 +321,7 @@ unittest {
 	assert(poly(GDN!2(-1), [-2., -3., 4.]) is GDN!2(5, -11, 8));
 }
 
-private pure nothrow @nogc @safe
-GDN!Deg poly_impl(ulong Deg, Range)(in GDN!Deg g, Range h)
+private pure nothrow @nogc @safe GDN!Deg poly_impl(ulong Deg, Range)(in GDN!Deg g, Range h)
 do {
 	// adapted from std.math.algebraic.polyImplBase
 
@@ -339,8 +337,8 @@ do {
 	return acc;
 }
 unittest {
-	import std.format: format;
-	import std.math: NaN;
+	import std.format : format;
+	import std.math : NaN;
 
 	assert(poly_impl(GDN!1(NaN(1), NaN(2)), [GDN!1(NaN(3))]) is GDN!1(NaN(3), NaN(2)));
 
@@ -395,8 +393,8 @@ do {
 	assert(nextPow2(GDN!1(1)) is GDN!1(2, real.infinity));
 }
 unittest {
-	import std.format: format;
-	import std.math: NaN;
+	import std.format : format;
+	import std.math : NaN;
 
 	assert(nextPow2(GDN!1(NaN(3))) is GDN!1(NaN(3)));
 
@@ -476,7 +474,7 @@ do {
 	assert(truncPow2(GDN!1(1)) is GDN!1(1, real.infinity));
 }
 unittest {
-	import std.math: NaN;
+	import std.math : NaN;
 
 	assert(truncPow2(GDN!1(NaN(2))) is GDN!1(NaN(2)));
 	assert(truncPow2(GDN!1(-1)) is GDN!1(-1, real.infinity));
