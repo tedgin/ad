@@ -122,7 +122,7 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg asin(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
-	return GDN!Deg(std.math.trigonometry.asin(g.val), g.d/sqrt(1 - pow(g.reduce(), 2)));
+	return GDN!Deg(std.math.trigonometry.asin(g.val), g.d/sqrt(1.0L - pow(g.reduce(), 2)));
 }
 /***/ unittest {
 	import std.math : PI_2;
@@ -165,7 +165,7 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg acos(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
-	return GDN!Deg(std.math.trigonometry.acos(g.val), -g.d/sqrt(1 - pow(g.reduce(), 2)));
+	return GDN!Deg(std.math.trigonometry.acos(g.val), -g.d/sqrt(1.0L - pow(g.reduce(), 2)));
 }
 /***/ unittest {
 	import std.math : PI_2;
@@ -198,7 +198,7 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg atan(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
-	return GDN!Deg(std.math.trigonometry.atan(g.val), g.d/(1 + pow(g.reduce(), 2)));
+	return GDN!Deg(std.math.trigonometry.atan(g.val), g.d/(1.0L + pow(g.reduce(), 2)));
 }
 /***/ unittest {
 	assert(atan(GDN!1(0)) is GDN!1(0, 1));
@@ -444,7 +444,7 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg asinh(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
-	return GDN!Deg(std.math.trigonometry.asinh(g.val), g.d/sqrt(pow(g.reduce(), 2) + 1));
+	return GDN!Deg(std.math.trigonometry.asinh(g.val), g.d/sqrt(pow(g.reduce(), 2) + 1.0L));
 }
 /***/ unittest {
 	assert(asinh(GDN!1(0)) is GDN!1(0, 1));
@@ -478,7 +478,7 @@ unittest {
 pure nothrow @nogc @safe GDN!Deg acosh(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
-	return GDN!Deg(std.math.trigonometry.acosh(g.val), g.d / sqrt(pow(g.reduce(), 2) - 1));
+	return GDN!Deg(std.math.trigonometry.acosh(g.val), g.d / sqrt(pow(g.reduce(), 2) - 1.0L));
 }
 /***/ unittest {
 	assert(isNaN(acosh(GDN!1(0.9))));
@@ -521,8 +521,8 @@ do {
 	if (isNaN(g)) return g;
 
 	GDN!Deg.DerivType!1 df;
-	if (abs(g) < 1) {
-		df =  g.d/(1 - pow(g.reduce(), 2));
+	if (abs(g) < 1.0L) {
+		df =  g.d/(1.0L - pow(g.reduce(), 2));
 	}
 
 	return GDN!Deg(std.math.trigonometry.atanh(g.val), df);

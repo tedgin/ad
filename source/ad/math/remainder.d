@@ -5,7 +5,7 @@ module ad.math.remainder;
 
 static import std.math.remainder;
 
-import std.math : sgn;
+import std.math : copysign;
 import std.meta : allSatisfy, anySatisfy;
 
 import ad;
@@ -62,7 +62,7 @@ do {
 	if (isNaN(g)) return g;
 
 	if (isInfinity(g)) {
-		return GDN!Deg(sgn(g.val) * 0., GDN!Deg.mkNaNDeriv());
+		return GDN!Deg(copysign(0.0L, g.val), GDN!Deg.mkNaNDeriv());
 	}
 
 	return g - i;
@@ -129,7 +129,7 @@ do {
 
 	if (isNaN(gg) || isNaN(hh)) return nanCombine(gg, hh);
 
-	if (gg == 0 && hh != 0) {
+	if (gg == 0.0L && hh != 0.0L) {
 		n = 0;
 		return gg;
 	}

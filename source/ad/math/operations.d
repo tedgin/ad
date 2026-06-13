@@ -139,14 +139,14 @@ unittest {
 *   are met for each pair of elements.
 */
 pure nothrow @nogc @safe
-bool isClose(T, U)(in T lhs, in U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
+bool isClose(T, U)(in T lhs, in U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0.0L)
 if (allSatisfy!(isConvertibleToGDN, T, U) && anySatisfy!(isGDN, T, U))
 do {
 	return std.math.operations.isClose(asReal(lhs), asReal(rhs), maxRelDiff, maxAbsDiff);
 }
 /// ditto
 pure nothrow @nogc @safe
-bool isClose(T, U)(in T lhs, U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
+bool isClose(T, U)(in T lhs, U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0.0L)
 if (isConvertibleToGDN!T && isInputRange!U && isConvertibleToGDN!(ElementType!U))
 do {
 	for(; !rhs.empty; rhs.popFront()) {
@@ -159,7 +159,7 @@ do {
 }
 /// ditto
 pure nothrow @nogc @safe
-bool isClose(T, U)(T lhs, in U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
+bool isClose(T, U)(T lhs, in U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0.0L)
 if (isInputRange!T && isConvertibleToGDN!(ElementType!T) && isConvertibleToGDN!U)
 do {
 	for(; !lhs.empty; lhs.popFront()) {
@@ -172,7 +172,7 @@ do {
 }
 /// ditto
 pure nothrow @nogc @safe
-bool isClose(T, U)(T lhs, U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0)
+bool isClose(T, U)(T lhs, U rhs, in real maxRelDiff=DEFAULT_REL_DIFF, in real maxAbsDiff=0.0L)
 if (allSatisfy!(isInputRange, T, U)
 	&& allSatisfy!(isConvertibleToGDN, ElementType!T, ElementType!U))
 do {
@@ -183,7 +183,7 @@ do {
 	}
 }
 /***/ unittest {
-	assert(isClose(GDN!1(1),GDN!2(0.999_999_999_9)));
+	assert(isClose(GDN!1(1.0L),GDN!2(0.999_999_999_9)));
 	assert(isClose(GDN!1(2), [GDN!1(2), GDN!1(1.999_999_999_9), GDN!1(2.000_000_000_1)]));
 
 	assert(isClose(

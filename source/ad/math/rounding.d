@@ -112,7 +112,7 @@ do {
 		auto fn = std.math.rounding.nearbyint(nextDown(g).val);
 		auto fp = std.math.rounding.nearbyint(nextUp(g).val);
 
-		if (f == 0) {
+		if (f == 0.0L) {
 			if (signbit(f) == 1) {
 				fp = f;
 			} else {
@@ -299,7 +299,7 @@ private pure nothrow @nogc @safe
 GDN!Deg quantize_impl(alias round, ulong Deg)(in GDN!Deg val, in GDN!Deg unit)
 if (is(typeof(round(GDN!Deg.init)) : GDN!Deg))
 do {
-	return round(val / unit) * unit;
+	return round(val/unit) * unit;
 }
 unittest {
 	const f = quantize_impl!rint(GDN!1(1.5), GDN!1(0.5, 0));

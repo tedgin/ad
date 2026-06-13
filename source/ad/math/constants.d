@@ -3,7 +3,7 @@
 */
 module ad.math.constants;
 
-public import std.math.constants;
+static import std.math.constants;
 
 import ad;
 

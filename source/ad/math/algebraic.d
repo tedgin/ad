@@ -88,9 +88,9 @@ do {
 	if (isNaN(g)) return g;
 	if (g == 0) return GDN!Deg(g.val, GDN!Deg.DerivType!1.infinity);
 
-	const p = -2.0L / 3;
+	const p = -2.0L / 3.0L;
 	const g_pow = isInfinity(g.val) && g < 0 ? -(-g.reduce())^^p : g.reduce()^^p;
-	return GDN!Deg(std.math.algebraic.cbrt(g.val), g.d * g_pow / 3);
+	return GDN!Deg(std.math.algebraic.cbrt(g.val), g.d * g_pow / 3.0L);
 }
 /***/ unittest {
 	import std.math : isClose;
@@ -313,12 +313,12 @@ do {
 	assert(poly(GDN!2(-2), e) is GDN!2(-4, 3, 0));
 }
 unittest {
-	assert(typeof(poly(GDN!1(0), [GDN!2(-1)])).DEGREE == 1);
-	assert(typeof(poly(GDN!3(-2), [GDN!1(-3), GDN!1(4)])).DEGREE == 1);
+	static assert(typeof(poly(GDN!1(0), [GDN!2(-1)])).DEGREE == 1);
+	static assert(typeof(poly(GDN!3(-2), [GDN!1(-3), GDN!1(4)])).DEGREE == 1);
 
 	static const a = [GDN!2(1)];
-	assert(typeof(poly(GDN!1(2), a)).DEGREE == 1);
-	assert(typeof(poly(GDN!3(2), a)).DEGREE == 2);
+	static assert(typeof(poly(GDN!1(2), a)).DEGREE == 1);
+	static assert(typeof(poly(GDN!3(2), a)).DEGREE == 2);
 
 	assert(poly(1, [GDN!1(2)]) is GDN!1(2));
 	assert(poly(GDN!2(-1), [-2., -3., 4.]) is GDN!2(5, -11, 8));
@@ -389,7 +389,7 @@ do {
 		power = power + 1;
 	}
 
-	return sgn(g) * 2^^power;
+	return sgn(g) * 2.0L^^power;
 }
 /***/ unittest {
 	assert(nextPow2(GDN!1(3)) is GDN!1(4, 0));
@@ -470,7 +470,7 @@ pure nothrow @nogc @safe GDN!Deg truncPow2(ulong Deg)(in GDN!Deg g)
 out (f; isNaN(f) || f == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")
 do {
 	if (isNaN(g)) return g;
-	return  sgn(g) * 2^^floor(log2(fabs(g)));
+	return  sgn(g) * 2.0L^^floor(log2(fabs(g)));
 }
 /***/ unittest {
 	assert(truncPow2(GDN!1(3)) is GDN!1(2, 0));

@@ -234,7 +234,7 @@ pure nothrow @nogc @safe GDN!Deg log10(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
 
-	const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN10*g.reduce());
+	const df = signbit(g) == 1 ? GDN!Deg.mkNaNDeriv : 1.0L / (LN10 * g.reduce());
 	return GDN!Deg(std.math.exponential.log10(g.val), df * g.d);
 }
 /***/ unittest
@@ -273,7 +273,7 @@ pure nothrow @nogc @safe GDN!Deg log1p(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
 
-	const df = g <= -1.0L ? GDN!Deg.mkNaNDeriv() : 1.0L / (1.0L+g.reduce());
+	const df = g <= -1.0L ? GDN!Deg.mkNaNDeriv() : 1.0L / (1.0L + g.reduce());
 	return GDN!Deg(std.math.exponential.log1p(g.val), df*g.d);
 }
 /***/ unittest {
@@ -381,7 +381,7 @@ do {
 		return GDN!Deg(f_val, f_val * g.d * std.math.exponential.log(cast(real)n));
 	} else {
 		const f_red = pow(n, g.reduce());
-		return GDN!Deg(f_red.val(), f_red * g.d * std.math.exponential.log(cast(real)n));
+		return GDN!Deg(f_red.val, f_red * g.d * std.math.exponential.log(cast(real)n));
 	}
 }
 /***/ unittest {
