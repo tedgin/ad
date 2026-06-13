@@ -1,6 +1,6 @@
 /**
- * It extends `std.math.traits` module to support `GDN` objects.
- */
+* This module extends `std.math.traits` module to support `GDN` objects.
+*/
 module ad.math.traits;
 
 static import std.math.traits;
@@ -14,15 +14,15 @@ import ad.internal : asReal, isConvertibleToGDN;
 
 
 /**
- * Checks if the given `GDN` object has a finite value.
- *
- * Params:
- *   Deg = The degree of the `GDN` object.
- *   f = The `GDN` object to check.
- *
- * Returns:
- *   `true` if the value of the `GDN` object is finite, `false` otherwise.
- */
+* This function checks if the given `GDN` object has a finite value.
+*
+* Params:
+*   Deg = The degree of the `GDN` object
+*   f = The `GDN` object to check
+*
+* Returns:
+*   `true` if the value of the `GDN` object is finite, `false` otherwise
+*/
 pure nothrow @nogc @safe bool isFinite(ulong Deg)(in GDN!Deg f)
 do {
 	return ad.internal.isFinite(f);
@@ -33,17 +33,17 @@ do {
 
 
 /**
- * Checks if two `GDN` objects have the same binary representation.
- *
- * Params:
- *   FDeg = The degree of the first `GDN` object.
- *   GDeg = The degree of the second `GDN` object.
- *   f = The first `GDN` object to compare.
- *   g = The second `GDN` object to compare.
- *
- * Returns:
- *   `true` if the two `GDN` objects are identical, `false` otherwise.
- */
+* This function checks if two `GDN` objects have the same binary representation.
+*
+* Params:
+*   FDeg = The degree of the first `GDN` object.
+*   GDeg = The degree of the second `GDN` object.
+*   f = The first `GDN` object to compare.
+*   g = The second `GDN` object to compare.
+*
+* Returns:
+*   `true` if the two `GDN` objects are identical, `false` otherwise.
+*/
 pure nothrow @nogc @safe bool isIdentical(ulong FDeg, ulong GDeg)(in GDN!FDeg f, in GDN!GDeg g)
 do {
 	alias isIdenticalDeriv = Select!(FDeg == 1, std.math.traits.isIdentical, isIdentical);
@@ -62,15 +62,15 @@ do {
 
 
 /**
- * Checks if the given `GDN` object has an infinite value.
- *
- * Params:
- *   Deg = The degree of the `GDN` object.
- *   f = The `GDN` object to check.
- *
- * Returns:
- *   `true` if the value of the `GDN` object is infinite, `false` otherwise.
- */
+* This function checks if the given `GDN` object has an infinite value.
+*
+* Params:
+*   Deg = The degree of the `GDN` object
+*   f = The `GDN` object to check
+*
+* Returns:
+*   `true` if the value of the `GDN` object is infinite, `false` otherwise
+*/
 pure nothrow @nogc @safe bool isInfinity(ulong Deg)(in GDN!Deg f)
 do {
 	return ad.internal.isInfinity(f);
@@ -81,15 +81,15 @@ do {
 
 
 /**
- * This function determines whether the value of the given `GDN` object is `NaN`.
- *
- * Params:
- *   Deg = the degree of the `GDN` object
- *   f = the `GDN` object to check
- *
- * Returns:
- *   `true` if the value of the `GDN` object is `NaN`, `false` otherwise.
- */
+* This function determines whether the value of the given `GDN` object is NaN.
+*
+* Params:
+*   Deg = the degree of the `GDN` object
+*   f = the `GDN` object to check
+*
+* Returns:
+*   `true` if the value of the `GDN` object is `NaN`, `false` otherwise
+*/
 pure nothrow @nogc @safe bool isNaN(ulong Deg)(in GDN!Deg f)
 do {
 	return ad.internal.isNaN(f);
@@ -100,16 +100,17 @@ do {
 
 
 /**
- * Checks if the given `GDN` object has a normal value, i.e., it is finite, non-zero, and not
- * subnormal.
- *
- * Params:
- *   Deg = The degree of the `GDN` object.
- *   f = The `GDN` object to check.
- *
- * Returns:
- *   `true` if the value of the `GDN` object is normal, `false` otherwise.
- */
+* This function checks if the given `GDN` object has a normal value.
+*
+* A normal value is one that is finite, non-zero, and not subnormal.
+*
+* Params:
+*   Deg = The degree of the `GDN` object
+*   f = The `GDN` object to check.
+*
+* Returns:
+*   `true` if the value of the `GDN` object is normal, `false` otherwise
+*/
 pure nothrow @nogc @safe bool isNormal(ulong Deg)(in GDN!Deg f)
 do {
 	return std.math.traits.isNormal(f.val);
@@ -120,15 +121,15 @@ do {
 
 
 /**
- * Checks if the given `GDN` object is a power of 2.
- *
- * Params:
- *   Deg = The degree of the `GDN` object.
- *   f = The `GDN` object to check.
- *
- * Returns:
- *   `true` if the value of the `GDN` object is a power of 2, `false` otherwise.
- */
+* This function checks if the given `GDN` object is a power of 2.
+*
+* Params:
+*   Deg = The degree of the `GDN` object
+*   f = The `GDN` object to check
+*
+* Returns:
+*   `true` if the value of the `GDN` object is a power of 2, `false` otherwise
+*/
 pure nothrow @nogc @safe bool isPowerOf2(ulong Deg)(in GDN!Deg f)
 do {
 	return std.math.traits.isPowerOf2(f.val);
@@ -139,15 +140,15 @@ do {
 
 
 /**
- * Checks if the given `GDN` object has a subnormal value.
- *
- * Params:
- *   Deg = The degree of the `GDN` object.
- *   f = The `GDN` object to check.
- *
- * Returns:
- *   `true` if the value of the `GDN` object is subnormal, `false` otherwise.
- */
+* This function checks if the given `GDN` object has a subnormal value.
+*
+* Params:
+*   Deg = The degree of the `GDN` object
+*   f = The `GDN` object to check
+*
+* Returns:
+*   `true` if the value of the `GDN` object is subnormal, `false` otherwise
+*/
 pure nothrow @nogc @safe bool isSubnormal(ulong Deg)(in GDN!Deg f)
 do {
 	return std.math.traits.isSubnormal(f.val);
@@ -158,15 +159,15 @@ do {
 
 
 /**
- * Checks if the sign bit of the value of a given `GDN` object is set.
- *
- * Params:
- *   Deg = The degree of the `GDN` object.
- *   f = The `GDN` object to check.
- *
- * Returns:
- *   `1` if the sign bit of the `GDN` object's value is set, `0` otherwise.
- */
+* This function checks if the sign bit of the value of a given `GDN` object is set.
+*
+* Params:
+*   Deg = The degree of the `GDN` object
+*   f = The `GDN` object to check
+*
+* Returns:
+*   `1` if the sign bit of the `GDN` object's value is set, `0` otherwise
+*/
 pure nothrow @nogc @safe int signbit(ulong Deg)(in GDN!Deg f)
 do {
 	return ad.internal.signbit(f);
@@ -177,20 +178,20 @@ do {
 
 
 /**
- * This function makes `to` have the same sign as `from`.
- *
- * Params:
- *   G = GDN or implicitly convertible to real
- *   F = a floating-point type
- *   I = an integral type
- *   TDeg = the degree of the `GDN` object to change the sign of
- *   FDeg = the degree of the `GDN` object to copy the sign from
- *   to = the  value to change the sign of
- *   from = the value to copy the sign from
- *
- * Returns:
- *   `to` with the same sign as `from`
- */
+* This function makes to have the same sign as from.
+*
+* Params:
+*   G = GDN or implicitly convertible _to real
+*   F = a floating-point type
+*   I = an integral type
+*   TDeg = the degree of the `GDN` object _to change the sign of
+*   FDeg = the degree of the `GDN` object _to copy the sign _from
+*   to = the value _to change the sign of
+*   from = the value _to copy the sign _from
+*
+* Returns:
+*   to with the same sign as from
+*/
 pure nothrow @nogc @safe
 GDN!TDeg copysign(G, ulong TDeg)(in GDN!TDeg to, in G from) if (isConvertibleToGDN!G)
 do {
@@ -218,20 +219,20 @@ unittest {
 
 
 /**
- * This function computes the sign of a `GDN` Object.
- *
- * If $(MATH f(x) = sgn(g(x))), then $(MATH f' = 2𝛿(g)g'), where $(MATH 𝛿) is the Dirac delta
- * function.
- *
- * To be in agreement with `std.math.traits.sgn`, the sign of  $(MATH sgn(±0) = ±0).
- *
- * Params:
- *   Deg = the degree of the `GDN` object
- *   g = the `GDN` object to compute the sign of
- *
- * Returns:
- *   the sign of the `GDN` object
- */
+* This function computes the sign of a `GDN` Object.
+*
+* If $(MATH f(x) = sgn(g(x))), then $(MATH f' = 2𝛿(g)g'), where $(MATH 𝛿) is the Dirac delta
+* function.
+*
+* To be in agreement with `std.math.traits.sgn`, the sign of  $(MATH sgn(±0) = ±0).
+*
+* Params:
+*   Deg = the degree of the `GDN` object
+*   g = the `GDN` object to compute the sign of
+*
+* Returns:
+*   the sign of the `GDN` object
+*/
 pure nothrow @nogc @safe GDN!Deg sgn(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.internal.sgn(g);

@@ -1,6 +1,6 @@
 /**
- * It extends the `std.math.algebraic` Phobos module to support `GDN` objects.
- */
+* This module extends the `std.math.algebraic` Phobos module to support `GDN` objects.
+*/
 module ad.math.algebraic;
 
 static import std.math.algebraic;
@@ -19,17 +19,17 @@ import ad.internal :
 
 
 /**
- * This function computes the absolute value of the argument.
- *
- * If $(MATH f(x) = |g(x)|), then $(MATH f' = sgn(g)g'), when $(MATH g ≠ 0)
- *
- * Params:
- *   Deg = the degree of the `GDN` object to compute the absolute value of
- *   g = the `GDN` object to compute the absolute value of
- *
- * Returns:
- *   the absolute value of the `GDN` object
- */
+* This function computes the absolute value of the argument.
+*
+* If $(MATH f(x) = |g(x)|), then $(MATH f' = sgn(g)g'), when $(MATH g ≠ 0)
+*
+* Params:
+*   Deg = the degree of the `GDN` object to compute the absolute value of
+*   g = the `GDN` object to compute the absolute value of
+*
+* Returns:
+*   the absolute value of the `GDN` object
+*/
 pure nothrow @nogc @safe GDN!Deg fabs(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || f >= 0)
 do {
@@ -49,17 +49,17 @@ unittest {
 
 
 /**
- * This function computes the square root of its argument.
- *
- * If $(MATH f(x) = √g(x)), then $(MATH f' = g$(SUP -½)g'/2).
- *
- * Params:
- *   Deg = the degree of the `GDN` object to compute the square root of
- *   g = the `GDN` object to compute the square root of
- *
- * Returns:
- *   the square root of the `GDN` object
- */
+* This function computes the square root of its argument.
+*
+* If $(MATH f(x) = √g(x)), then $(MATH f' = g$(SUP -½)g'/2).
+*
+* Params:
+*   Deg = the degree of the `GDN` object to compute the square root of
+*   g = the `GDN` object to compute the square root of
+*
+* Returns:
+*   the square root of the `GDN` object
+*/
 pure nothrow @nogc @safe GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
 out(f; isNaN(f) || f >= 0)
 do {
@@ -72,17 +72,17 @@ do {
 
 
 /**
- * This function computes the cube root of the argument.
- *
- * If $(MATH f(x) = ∛g(x)), then $(MATH f' = g$(SUP -⅔)g'/3)
- *
- * Params:
- *   Deg = the degree of the `GDN` object to compute the cube root of
- *   g = the `GDN` object to compute the cube root of
- *
- * Returns:
- *   the cube root of the `GDN` object
- */
+* This function computes the cube root of the argument.
+*
+* If $(MATH f(x) = ∛g(x)), then $(MATH f' = g$(SUP -⅔)g'/3)
+*
+* Params:
+*   Deg = the degree of the `GDN` object to compute the cube root of
+*   g = the `GDN` object to compute the cube root of
+*
+* Returns:
+*   the cube root of the `GDN` object
+*/
 nothrow @nogc @safe GDN!Deg cbrt(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -119,23 +119,24 @@ unittest {
 
 
 /**
- * Calculates the distance of the point $(MATH (g, h)) from the origin $(MATH (0, 0)). It either `g`
- * or `h` has type `real`, it is converted to a constant generalized dual number with the same
- * degree as the other parameter.
- *
- * If $(MATH f(x) = [g(x)$(SUP 2) + h(x)$(SUP 2)]$(SUP ½)), then
- * $(MATH f' = (gg' + hh')(g$(SUP 2) + h$(SUP 2))$(SUP -½)).
- *
- * Params:
- *   G = the type of `g`, either a `GDN` or a `real`
- *   H = the type of `h`, either a `GDN` or a `real`
- *   g = the `GDN` object representing the x-coordinate
- *   h = the `GDN` object representing the y-coordinate
- *
- * Returns:
- *   The distance to the origin. The resulting `GDN` will have a degree equal to the lesser of the
- *   degrees of `g` and `h`.
- */
+* Calculates the Euclidean distance from the point $(MATH (g, h)) to the origin.
+*
+* If $(MATH f(x) = [g(x)$(SUP 2) + h(x)$(SUP 2)]$(SUP ½)), then
+* $(MATH f' = (gg' + hh')(g$(SUP 2) + h$(SUP 2))$(SUP -½)).
+*
+* If either `g` or `h` has type `real`, it is converted to a constant generalized dual number with
+* the same degree as the other parameter.
+*
+* Params:
+*   G = the type of `g`, either a `GDN` or a `real`
+*   H = the type of `h`, either a `GDN` or a `real`
+*   g = the `GDN` object representing the x-coordinate
+*   h = the `GDN` object representing the y-coordinate
+*
+* Returns:
+*   The distance to the origin. The resulting `GDN` will have a degree equal to the lesser of the
+*   degrees of `g` and `h`.
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H) hypot(G, H)(in G g, in H h)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
@@ -181,25 +182,26 @@ unittest {
 
 
 /**
- * Calculates the distance of the point $(MATH (g, h, i)) from the origin $(MATH (0, 0, 0)). If any
- * of `g`, `h` or `i` has type `real`, it is converted to a constant generalized dual number with
- * the same degree as the lesser degree of the other parameters.
- *
- * If $(MATH f(x) = [g(x)$(SUP 2) + h(x)$(SUP 2) + i(x)$(SUP 2)]$(SUP ½)), then
- * $(MATH f' = (gg' + hh' + ii')(g$(SUP 2) + h$(SUP 2) + i$(SUP 2))$(SUP -½)).
- *
- * Params:
- *   G = the type of `g`, either a `GDN` or a `real`
- *   H = the type of `h`, either a `GDN` or a `real`
- *   I = the type of `i`, either a `GDN` or a `real`
- *   g = the `GDN` object representing the x-coordinate
- *   h = the `GDN` object representing the y-coordinate
- *   i = the `GDN` object representing the z-coordinate
- *
- * Returns:
- *   The resulting generalized dual number will have a degree equal to the least of the degrees of
- *   `g`, `h`, and `i`.
- */
+* Calculates the Euclidean distance from  the point $(MATH (g, h, i)) to the origin.
+*
+* If $(MATH f(x) = [g(x)$(SUP 2) + h(x)$(SUP 2) + i(x)$(SUP 2)]$(SUP ½)), then
+* $(MATH f' = (gg' + hh' + ii')(g$(SUP 2) + h$(SUP 2) + i$(SUP 2))$(SUP -½)).
+*
+* If any of `g`, `h`, or `i` has type `real`, it is converted to a constant generalized dual number
+* with the same degree as the lesser degree of the other parameters.
+*
+* Params:
+*   G = the type of `g`, either a `GDN` or a `real`
+*   H = the type of `h`, either a `GDN` or a `real`
+*   I = the type of `i`, either a `GDN` or a `real`
+*   g = the `GDN` object representing the x-coordinate
+*   h = the `GDN` object representing the y-coordinate
+*   i = the `GDN` object representing the z-coordinate
+*
+* Returns:
+*   The resulting generalized dual number will have a degree equal to the least of the degrees of
+*   `g`, `h`, and `i`.
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H, I) hypot(G, H, I)(in G g, in H h, in I i)
 if (anySatisfy!(isGDN, G, H, I) && allSatisfy!(isConvertibleToGDN, G, H, I))
@@ -266,25 +268,26 @@ unittest {
 
 
 /**
- * This evaluates the polynomial $(MATH H(g) = h$(SUB 0) + h$(SUB 1)g + h$(SUB 2)g$(SUP 2) + ...)
- * using Horner's rule $(MATH H(g) = h$(SUB 0) + g⋅(h$(SUB 1) + g⋅(h$(SUB 2) + ...))). If either
- * $(MATH g) or $(MATH h$(SUB i)) have type `real`, they are converted to a constant GDN with the
- * same degree as the other parameters.
- *
- * If $(MATH f(x) = h$(SUB 0)(x) + h$(SUB 1)(x)g(x) + h$(SUB 2)(x)g(x)$(SUP 2) + ... + h$(SUB n)(x)g(x)$(SUP n)),
- * then
- * $(MATH f' = h$(SUB 0)' + h$(SUB 1)g' + g⋅(h$(SUB 1)' + 2h$(SUB 2)g' + g⋅(h$(SUB 2)' + 3h$(SUB 3)g' + g⋅(...(h$(SUB n)')...)))).
- *
- * Params:
- *   G = the type of `g`
- *   H = the type of `h`
- *   g = the argument of the polynomial
- *   h = the coefficients of the polynomial
- *
- * Returns:
- *   the polynomial evaluated at `g`. The resulting GDN will have a degree equal to the lesser of
- *   the degrees of `G` and `H`.
- */
+* This evaluates the polynomial $(MATH H(g) = h$(SUB 0) + h$(SUB 1)g + h$(SUB 2)g$(SUP 2) + ...).
+*
+* If $(MATH f(x) = h$(SUB 0)(x) + h$(SUB 1)(x)g(x) + h$(SUB 2)(x)g(x)$(SUP 2) + ... + h$(SUB n)(x)g(x)$(SUP n)),
+* then
+* $(MATH f' = h$(SUB 0)' + h$(SUB 1)g' + g⋅(h$(SUB 1)' + 2h$(SUB 2)g' + g⋅(h$(SUB 2)' + 3h$(SUB 3)g' + g⋅(...(h$(SUB n)')...)))).
+*
+* It uses Horner's rule $(MATH H(g) = h$(SUB 0) + g⋅(h$(SUB 1) + g⋅(h$(SUB 2) + ...))). If $(MATH g)
+* or any $(MATH h$(SUB i)) has type `real`, it is converted to a constant GDN with the same degree
+* as the other parameters.
+*
+* Params:
+*   G = the type of `g`
+*   H = the type of `h`
+*   g = the argument of the polynomial
+*   h = the coefficients of the polynomial
+*
+* Returns:
+*   the polynomial evaluated at `g`. The resulting GDN will have a degree equal to the lesser of the
+*   degrees of `G` and `H`.
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H) poly(G, H)(in G g, in H[] h)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
@@ -363,17 +366,17 @@ unittest {
 
 
 /**
- * Gives the next power of two after `g`.
- *
- * This function is equivalent to $(MATH lim$(SUB 𝜀⟶0$(SUP +)) sgn(g)2$(SUP ⌈lg|g| + 𝜀⌉)).
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the GDN to find the next power of 2 from
- *
- * Returns:
- *   The GDN object whose value is the next power of 2 after `g`.
- */
+* Gives the next power of two after `g`.
+*
+* This function is equivalent to $(MATH lim$(SUB 𝜀⟶0$(SUP +)) sgn(g)2$(SUP ⌈lg|g| + 𝜀⌉)).
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the GDN to find the next power of 2 from
+*
+* Returns:
+*   The GDN object whose value is the next power of 2 after `g`.
+*/
 pure nothrow @nogc @safe GDN!Deg nextPow2(ulong Deg)(in GDN!Deg g)
 out (f; isNaN(f) || f == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextPow2")
 do {
@@ -452,17 +455,17 @@ unittest {
 
 
 /**
- * Gives the previous power of two no larger than `g`.
- *
- * This function is equivalent to $(MATH sgn(g)2$(SUP ⌊lg|g|⌋)).
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the GDN to truncate to a poser of two
- *
- * Returns:
- *   `g` truncated to a power of 2
- */
+* Gives the previous power of two no larger than `g`.
+*
+* This function is equivalent to $(MATH sgn(g)2$(SUP ⌊lg|g|⌋)).
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the GDN to truncate to a poser of two
+*
+* Returns:
+*   `g` truncated to a power of 2
+*/
 pure nothrow @nogc @safe GDN!Deg truncPow2(ulong Deg)(in GDN!Deg g)
 out (f; isNaN(f) || f == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")
 do {

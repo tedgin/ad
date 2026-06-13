@@ -1,6 +1,6 @@
 /**
- * It extends the `std.math.trigonometry` module to support `GDN` objects.
- */
+* This module extends the `std.math.trigonometry` module to support `GDN` objects.
+*/
 module ad.math.trigonometry;
 
 static import core.math;
@@ -19,17 +19,17 @@ import ad.core.math : sqrt;
 
 
 /**
- * This function computes the sine of its argument.
- *
- * If $(MATH f(x) = sin(g(x))), then $(MATH f' = cos(g)g').
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to compute the sine of`
- *
- * Returns:
- *   the sine expressed as a `GDN`.
- */
+* This function computes the sine of its argument.
+*
+* If $(MATH f(x) = sin(g(x))), then $(MATH f' = cos(g)g').
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` to compute the sine of
+*
+* Returns:
+*   the sine expressed as a `GDN`
+*/
 pragma(inline, true) pure nothrow @nogc @safe GDN!Deg sin(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.core.math.sin(g);
@@ -40,17 +40,17 @@ do {
 
 
 /**
- * This function computes the cosine of the argument.
- *
- * If $(MATH f(x) = cos(g(x))), then $(MATH f' = -sin(g)g').
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to compute the cosine of
- *
- * Returns:
- *   the cosine of `g`
- */
+* This function computes the cosine of the argument.
+*
+* If $(MATH f(x) = cos(g(x))), then $(MATH f' = -sin(g)g').
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to compute the cosine of
+*
+* Returns:
+*   the cosine of g
+*/
 pure nothrow @nogc @safe GDN!Deg cos(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.core.math.cos(g);
@@ -62,17 +62,17 @@ do {
 
 
 /**
- * This function computes the tangent of its argument
- *
- * If $(MATH f(x) = tan(g(x))), then $(MATH f' = g'sec$(SUP 2)(g)).
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to take the tangent of
- *
- * Returns:
- *   the tangent of `g`
- */
+* This function computes the tangent of its argument
+*
+* If $(MATH f(x) = tan(g(x))), then $(MATH f' = g'sec$(SUP 2)(g)).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to take the tangent of
+*
+* Returns:
+*   the tangent of g
+*/
 pure nothrow @nogc @safe GDN!Deg tan(ulong Deg)(in GDN!Deg g)
 do {
 	alias cosine = Select!(Deg == 1, core.math.cos, ad.core.math.cos);
@@ -108,17 +108,17 @@ unittest {
 
 
 /**
- * This function computes the arcsine (inverse sine) of its argument `g`.
- *
- * If $(MATH f(x) = sin$(SUP -1)g(x)), then $(MATH f' = g'/√(1 - g$(SUP 2)), |g| ≤ 1).
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to compute the arcsine of
- *
- * Returns:
- *   the arcsine of `g`
- */
+* This function computes the arcsine (inverse sine) of its argument g.
+*
+* If $(MATH f(x) = sin$(SUP -1)g(x)), then $(MATH f' = g'/√(1 - g$(SUP 2)), |g| ≤ 1).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to compute the arcsine of
+*
+* Returns:
+*   the arcsine of g
+*/
 pure nothrow @nogc @safe GDN!Deg asin(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -151,17 +151,17 @@ unittest {
 
 
 /**
- * This function computes the arccosine (inverse cosine) of its argument `g`.
- *
- * If $(MATH f(x) = cos$(SUP -1)g(x)), then $(MATH f' = -g'/√(1 - g$(SUP 2)), |g| ≤ 1).
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to compute the arccosine of
- *
- * Returns:
- *   the arccosine of `g`
- */
+* This function computes the arccosine (inverse cosine) of its argument g.
+*
+* If $(MATH f(x) = cos$(SUP -1)g(x)), then $(MATH f' = -g'/√(1 - g$(SUP 2)), |g| ≤ 1).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to compute the arccosine of
+*
+* Returns:
+*   the arccosine of g
+*/
 pure nothrow @nogc @safe GDN!Deg acos(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -184,17 +184,17 @@ unittest {
 
 
 /**
- * This function computes the arctangent (inverse tangent) of its argument `g`.
- *
- * If $(MATH f(x) = tan$(SUP -1)g(x)), then $(MATH f' = g'/(1 + g$(SUP 2))).
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to compute the arctangent of
- *
- * Returns:
- *   the arctangent of `g`
- */
+* This function computes the arctangent (inverse tangent) of its argument g.
+*
+* If $(MATH f(x) = tan$(SUP -1)g(x)), then $(MATH f' = g'/(1 + g$(SUP 2))).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to compute the arctangent of
+*
+* Returns:
+*   the arctangent of g
+*/
 pure nothrow @nogc @safe GDN!Deg atan(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -214,19 +214,19 @@ unittest {
 
 
 /**
- * This function computes the arctangent (inverse tangent) of $(MATH g/h).
- *
- * If $(MATH f(x) = tan$(SUP -1)(g(x)/h(x))), then $(MATH f' = (g'h - gh')/(h$(SUP 2) + g$(SUP 2))).
- *
- * Params:
- *   G = the type of g
- *   H = the type of h
- *   g = the numerator of the arctangent argument
- *   h = the denominator of the arctangent argument
- *
- * Returns:
- *   It returns the angle resulting from the arctan(g/h).
- */
+* This function computes the arctangent (inverse tangent) of $(MATH g/h).
+*
+* If $(MATH f(x) = tan$(SUP -1)(g(x)/h(x))), then $(MATH f' = (g'h - gh')/(h$(SUP 2) + g$(SUP 2))).
+*
+* Params:
+*   G = the type of g
+*   H = the type of h
+*   g = the numerator of the arctangent argument
+*   h = the denominator of the arctangent argument
+*
+* Returns:
+*   It returns the angle resulting from the arctan(g/h).
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H) atan2(G, H)(in G g, in H h)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
@@ -331,17 +331,17 @@ unittest {
 
 
 /**
- * This function calculates the hyperbolic sine of its argument `g`.
- *
- * If $(MATH f(x) = sinh(g(x))), then $(MATH f' = g'cosh(g)).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the argument of the hyperbolic sine.
- *
- * Returns:
- *   It returns the hyperbolic sine of g.
- */
+* This function calculates the hyperbolic sine of its argument g.
+*
+* If $(MATH f(x) = sinh(g(x))), then $(MATH f' = g'cosh(g)).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the argument of the hyperbolic sine.
+*
+* Returns:
+*   It returns the hyperbolic sine of g.
+*/
 pure nothrow @nogc @safe GDN!Deg sinh(ulong Deg)(in GDN!Deg g)
 do {
 	alias ch = Select!(Deg == 1, std.math.trigonometry.cosh, cosh);
@@ -364,17 +364,17 @@ unittest {
 
 
 /**
- * This function calculates the hyperbolic cosine of its argument `g`.
- *
- * If $(MATH f(x) = cosh(g(x))), then $(MATH f' = g'sinh(g)).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the argument of the hyperbolic cosine.
- *
- * Returns:
- *   It returns the hyperbolic cosine of g.
- */
+* This function calculates the hyperbolic cosine of its argument g.
+*
+* If $(MATH f(x) = cosh(g(x))), then $(MATH f' = g'sinh(g)).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the argument of the hyperbolic cosine.
+*
+* Returns:
+*   It returns the hyperbolic cosine of g.
+*/
 pure nothrow @nogc @safe GDN!Deg cosh(ulong Deg)(in GDN!Deg g)
 do {
 	alias sh = Select!(Deg == 1, std.math.trigonometry.sinh, sinh);
@@ -394,17 +394,17 @@ unittest {
 
 
 /**
- * This function calculates the hyperbolic tangent of its argument `g`.
- *
- * If $(MATH f(x) = tanh(g(x))), then $(MATH f' = g'/cosh$(SUP 2)(g)).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the argument of the hyperbolic tangent.
- *
- * Returns:
- *   It returns the hyperbolic tangent of g.
- */
+* This function calculates the hyperbolic tangent of its argument g.
+*
+* If $(MATH f(x) = tanh(g(x))), then $(MATH f' = g'/cosh$(SUP 2)(g)).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the argument of the hyperbolic tangent.
+*
+* Returns:
+*   It returns the hyperbolic tangent of g.
+*/
 pure nothrow @nogc @safe GDN!Deg tanh(ulong Deg)(in GDN!Deg g)
 do {
 	alias ch = Select!(Deg == 1, std.math.trigonometry.cosh, cosh);
@@ -430,17 +430,17 @@ unittest {
 
 
 /**
- * This function calculates the inverse hyperbolic sine of its argument `g`.
- *
- * If $(MATH f(x) = sinh$(SUP -1)g(x)), then $(MATH f' = g'/√(1 + g$(SUP 2))).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the argument of the inverse hyperbolic sine.
- *
- * Returns:
- *   It returns the inverse hyperbolic sine of g.
- */
+* This function calculates the inverse hyperbolic sine of its argument g.
+*
+* If $(MATH f(x) = sinh$(SUP -1)g(x)), then $(MATH f' = g'/√(1 + g$(SUP 2))).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the argument of the inverse hyperbolic sine.
+*
+* Returns:
+*   It returns the inverse hyperbolic sine of g.
+*/
 pure nothrow @nogc @safe GDN!Deg asinh(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -464,17 +464,17 @@ unittest {
 
 
 /**
- * This function calculates the inverse hyperbolic cosine of its argument `g`.
- *
- * If $(MATH f(x) = cosh$(SUP -1)g(x)), then $(MATH f' = g'/√(g$(SUP 2) - 1)).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the argument of the inverse hyperbolic cosine.
- *
- * Returns:
- *   It returns the inverse hyperbolic cosine of g.
- */
+* This function calculates the inverse hyperbolic cosine of its argument g.
+*
+* If $(MATH f(x) = cosh$(SUP -1)g(x)), then $(MATH f' = g'/√(g$(SUP 2) - 1)).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the argument of the inverse hyperbolic cosine.
+*
+* Returns:
+*   It returns the inverse hyperbolic cosine of g.
+*/
 pure nothrow @nogc @safe GDN!Deg acosh(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -505,17 +505,17 @@ unittest {
 
 
 /**
- * This function calculates the inverse hyperbolic tangent of its argument `g`.
- *
- * If $(MATH f(x) = tanh$(SUP -1)g(x)), then $(MATH f' = g'/(1 - g$(SUP 2)), |g| < 1).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the argument of the inverse hyperbolic tangent.
- *
- * Returns:
- *   It returns the inverse hyperbolic tangent of g.
- */
+* This function calculates the inverse hyperbolic tangent of its argument g.
+*
+* If $(MATH f(x) = tanh$(SUP -1)g(x)), then $(MATH f' = g'/(1 - g$(SUP 2)), |g| < 1).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the argument of the inverse hyperbolic tangent
+*
+* Returns:
+*   It returns the inverse hyperbolic tangent of g.
+*/
 pure nothrow @nogc @safe GDN!Deg atanh(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;

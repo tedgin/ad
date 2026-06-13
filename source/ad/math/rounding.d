@@ -1,6 +1,6 @@
 /**
- * It extends `std.math.rounding` module to support `GDN` objects.
- */
+* This module extends `std.math.rounding` module to support `GDN` objects.
+*/
 module ad.math.rounding;
 
 static import std.math.rounding;
@@ -18,17 +18,17 @@ import ad.internal :
 
 
 /**
- * Returns the value of `g` rounded upward to the nearest integer.
- *
- * If $(MATH f(x) = ⌈g(x)⌉), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to round
- *
- * Returns:
- *   the rounded `GDN`
- */
+* This function determines the value of g rounded upward to the nearest integer.
+*
+* If $(MATH f(x) = ⌈g(x)⌉), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` to round
+*
+* Returns:
+*   the rounded `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg ceil(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.internal.ceil(g);
@@ -40,17 +40,17 @@ do {
 
 
 /**
- * Returns the value of `g` rounded downward to the nearest integer.
- *
- * If $(MATH f(x) = ⌊g(x)⌋), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` to round
- *
- * Returns:
- *   the rounded `GDN`
- */
+* This function determins the value of g rounded downward to the nearest integer.
+*
+* If $(MATH f(x) = ⌊g(x)⌋), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to round
+*
+* Returns:
+*   the rounded `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg floor(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.internal.floor(g);
@@ -62,15 +62,15 @@ do {
 
 
 /**
- * Rounds `g` to the nearest integer value, using the current rounding mode.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- *
- * Returns:
- *   An integer representing the rounded value of `g`.
- */
+* This function rounds g to the nearest integer value, using the current rounding mode.
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` object to be rounded.
+*
+* Returns:
+*   an integer representing the rounded value of g.
+*/
 pure nothrow @nogc @safe long lrint(ulong Deg)(in GDN!Deg g)
 do {
 	return std.math.rounding.lrint(g.val);
@@ -81,14 +81,14 @@ do {
 
 
 /**
- * Returns the value of a `GDN` rounded to the nearest integer.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- * Returns:
- *   An integer representing the rounded value of `g`.
- */
+* This function determines the value of a `GDN` rounded to the nearest integer.
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` object to be rounded.
+* Returns:
+*   An integer representing the rounded value of g.
+*/
 nothrow @nogc @safe long lround(ulong Deg)(in GDN!Deg g)
 do {
 	return std.math.rounding.lround(g.val);
@@ -145,18 +145,18 @@ unittest {
 
 
 /**
- * Rounds `g` to the nearest integer value, using the current rounding mode.
- *
- * If $(MATH f(x) = nearbyint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
- * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- *
- * Returns:
- *   A `GDN` object representing the rounded value of `g`.
- */
+* This function rounds g to the nearest integer value, using the current rounding mode.
+*
+* If $(MATH f(x) = nearbyint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
+* $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` object to be rounded
+*
+* Returns:
+*   a `GDN` object representing the rounded value of g
+*/
 pure nothrow @nogc @safe GDN!Deg nearbyint(ulong Deg)(in GDN!Deg g)
 do {
 	return nearbyint_impl!"std.math.rounding.nearbyint"(g);
@@ -170,19 +170,20 @@ do {
 
 
 /**
- * Rounds `g` to the nearest integer value, using the current rounding mode. If the return value is
- * not identical to `g`, the `FE_INEXACT` exception is raised.
- *
- * If $(MATH f(x) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
- * $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- *
- * Returns:
- *   A `GDN` object representing the rounded value of `g`.
- */
+* This function rounds g to the nearest integer value, using the current rounding mode.
+*
+* If the return value is not identical to g, the `FE_INEXACT` exception is raised.
+*
+* If $(MATH f(x) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
+* $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` object to be rounded.
+*
+* Returns:
+*   a `GDN` object representing the rounded value of g
+*/
 pure nothrow @nogc @safe GDN!Deg rint(ulong Deg)(in GDN!Deg g)
 do {
    return nearbyint_impl!"std.math.rounding.rint"(g);
@@ -206,23 +207,23 @@ unittest {
 
 
 /**
- * Round val to a multiple of unit. rfunc specifies the rounding function to use.
- *
- * Params:
- *   V = the value type
- *   U = the unit type
- *   round = the rounding function to use
- *   val = the value to round
- *   unit = the unit to round to
- *
- * Returns:
- *   The rounded value of `val` to the nearest multiple of `unit`.
- */
+* This function round val to a multiple of unit using the function rfunc.
+*
+* Params:
+*   V = the value type
+*   U = the unit type
+*   rfunc = the rounding function to use
+*   val = the value to round
+*   unit = the unit to round to
+*
+* Returns:
+*   the rounded value of val to the nearest multiple of unit
+*/
 pure nothrow @nogc @safe
-CommonGDN!(U, V) quantize(alias round=rint, U, V)(in V val, in U unit)
-if (is(typeof(round(CommonGDN!(U, V).init)) : CommonGDN!(U, V)))
+CommonGDN!(U, V) quantize(alias rfunc=rint, U, V)(in V val, in U unit)
+if (is(typeof(rfunc(CommonGDN!(U, V).init)) : CommonGDN!(U, V)))
 do {
-	return quantize_impl!round(val, unit);
+	return quantize_impl!rfunc(val, unit);
 }
 /***/ unittest {
 	const q = quantize!nearbyint(GDN!1(5), GDN!1(3));
@@ -231,24 +232,24 @@ do {
 
 
 /**
- * Round `g` to a multiple of `base ^^ exp`. `rfunc` specifies the rounding function to use.
- *
- * Params:
- *   G = the type of `g`
- *   I = the exponent type
- *   round = the rounding function to use
- *   base = the base of the number to round to
- *   g = the `GDN` object to round
- *   exp = the exponent of the number to round to
- *
- * Returns:
- *   The rounded `GDN` object.
- */
+* This function rounds g to a multiple of `base ^^ exp` using the function rfunc.
+*
+* Params:
+*   G = the type of g
+*   I = the exponent type
+*   rfunc = the rounding function to use
+*   base = the base of the number to round to
+*   g = the `GDN` object to round
+*   exp = the exponent of the number to round to
+*
+* Returns:
+*   the rounded `GDN` object
+*/
 pure nothrow @nogc @safe
-CommonGDN!(G, typeof(base)) quantize(alias base, alias round=rint, G, I)(in G g, in I exp)
+CommonGDN!(G, typeof(base)) quantize(alias base, alias rfunc=rint, G, I)(in G g, in I exp)
 if (anySatisfy!(isGDN, G, typeof(base))
 	&& allSatisfy!(isConvertibleToGDN, G, typeof(base))
-	&& (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base)))
+	&& (is(typeof(rfunc(G.init)) : G) || is(typeof(rfunc(typeof(base).init)) : typeof(base)))
 	&& isIntegral!I)
 do {
 	alias Deg = typeof(return).DEGREE;
@@ -257,14 +258,14 @@ do {
 	const gg = asGDN!Deg(g);
 
 	if (isNaN(b) || isNaN(gg)) return nanCombine(b, gg);
-	return quantize_impl!round(gg, pow(b, exp));
+	return quantize_impl!rfunc(gg, pow(b, exp));
 }
 /// ditto
 pure nothrow @nogc @safe
-CommonGDN!(G, typeof(base)) quantize(alias base, long exp=1, alias round=rint, G)(in G g)
+CommonGDN!(G, typeof(base)) quantize(alias base, long exp=1, alias rfunc=rint, G)(in G g)
 if (anySatisfy!(isGDN, G, typeof(base))
 	&& allSatisfy!(isConvertibleToGDN, G, typeof(base))
-	&& (is(typeof(round(G.init)) : G) || is(typeof(round(typeof(base).init)) : typeof(base))))
+	&& (is(typeof(rfunc(G.init)) : G) || is(typeof(rfunc(typeof(base).init)) : typeof(base))))
 do {
 	alias Deg = typeof(return).DEGREE;
 	enum b = asGDN!Deg(base);
@@ -273,7 +274,7 @@ do {
 	const gg = asGDN!Deg(g);
 
 	if (isNaN(b) || isNaN(gg)) return nanCombine(b, gg);
-	return quantize_impl!round(asGDN!Deg(g), unit);
+	return quantize_impl!rfunc(asGDN!Deg(g), unit);
 }
 /***/ unittest {
 	import ad.math.operations : isClose;
@@ -307,16 +308,17 @@ unittest {
 
 
 /**
- * This function rounds `g` to a `long` using the current rounding mode. All of the derivative terms
- * are lost.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be rounded.
- *
- * Returns:
- *   the rounded value of `g`.
- */
+* This function rounds g to a `long` using the current rounding mode.
+*
+* All of the derivative terms are lost.
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` object to be rounded.
+*
+* Returns:
+*   the rounded value of g.
+*/
 pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.core.math.rndtol(g);
@@ -327,17 +329,17 @@ do {
 
 
 /**
- * Returns a value g rounded to the nearest integer.
- *
- * If $(MATH f(x) = round(g(x))), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i-½)),
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN` to round.
- *
- * Returns:
- *   The rounded `GDN`,
- */
+* This function returns a value g rounded to the nearest integer.
+*
+* If $(MATH f(x) = round(g(x))), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i-½)),
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to round.
+*
+* Returns:
+*   the rounded `GDN`
+*/
 nothrow @nogc @trusted GDN!Deg round(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.internal.round(g);
@@ -349,17 +351,17 @@ do {
 
 
 /**
- * Returns a value g truncated to the integer part.
- *
- * Where $(MATH g(x) < 0), $(MATH f(x) = ⌈g(x)⌉), otherwise $(MATH f(x) = ⌊g(x)⌋).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN` to round.
- *
- * Returns:
- *   The truncated `GDN`,
- */
+* This function truncates g to an integer.
+*
+* Where $(MATH g(x) < 0), $(MATH f(x) = ⌈g(x)⌉), otherwise $(MATH f(x) = ⌊g(x)⌋).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to round.
+*
+* Returns:
+*   the truncated `GDN`
+*/
 pure nothrow @nogc @trusted GDN!Deg trunc(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.internal.trunc(g);

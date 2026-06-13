@@ -1,6 +1,6 @@
 /**
- * It extends the `std.math.remainder` module to support `GDN` objects.
- */
+* This module  extends the `std.math.remainder` module to support `GDN` objects.
+*/
 module ad.math.remainder;
 
 static import std.math.remainder;
@@ -14,20 +14,20 @@ import ad.internal :
 
 
 /**
- * Returns the remainder of `g` divided by `h`.
- *
- * If $(MATH f(x) = g(x) (mod h(x))), then $(MATH f' = g' - (g - f)h'/h - δ(f)(g'h - gh')/h), where
- * $(MATH δ) is the Dirac Delta function.
- *
- * Params:
- *   G = the type of g, either `GDN` or `real`.
- *   H = the type of h, either `GDN` or `real`.
- *   g = the dividend.
- *   h = the divisor.
- *
- * Returns:
- *   The remainder of `g` divided by `h`.
- */
+* This function determines the remainder of g divided by h.
+*
+* If $(MATH f(x) = g(x) (mod h(x))), then $(MATH f' = g' - (g - f)h'/h - δ(f)(g'h - gh')/h), where
+* $(MATH δ) is the Dirac Delta function.
+*
+* Params:
+*   G = the type of g, either `GDN` or `real`.
+*   H = the type of h, either `GDN` or `real`.
+*   g = the dividend.
+*   h = the divisor.
+*
+* Returns:
+*   The remainder of g divided by h.
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H) fmod(G, H)(in G g, in H h)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
@@ -41,20 +41,20 @@ do {
 
 
 /**
- * Breaks g into an integer and a fraction, each with the same sign as g.
- *
- * `f = modf(g, i)` can be expressed mathematically as follows. When $MATH(g ≥ 0), $(MATH i = ⌊g⌋),
- * and when $(MATH g < 0), $(MATH i = ⌈g⌉). This is the mathematical definition of `trunc(g)`.
- * $(MATH f = g - i).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the GDN object to break into an integer and a fraction.
- *   i = the integer part of g.
- *
- * Returns:
- *   The fractional part of g.
- */
+* This function breaks g into an integer and a fraction, each with the same sign as g.
+*
+* `f = modf(g, i)` can be expressed mathematically as follows. When $MATH(g ≥ 0), $(MATH i = ⌊g⌋),
+* and when $(MATH g < 0), $(MATH i = ⌈g⌉). This is the mathematical definition of `trunc(g)`.
+* $(MATH f = g - i).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the GDN object to break into an integer and a fraction.
+*   i = the integer part of g.
+*
+* Returns:
+*   The fractional part of g.
+*/
 pure nothrow @nogc @safe GDN!Deg modf(ulong Deg)(in GDN!Deg g, out GDN!Deg i)
 do {
 	i = trunc(g);
@@ -95,22 +95,29 @@ unittest {
 }
 
 
-/** Calculates integer quotient of `g` and `h` and its remainder using the definition of remainder
- * provided by IEC 60559.
- *
- * The integer quotient n is $(MATH n(x) = round(g(x)/h(x))), and the remainder is defined as
- * $(MATH f(g(x), h(x)) = g(x) - h(x)n(x)).
- *
- * Params:
- *   G = the type of g, either `GDN` or `real`.
- *   H = the type of h, either `GDN` or `real`.
- *   g = the dividend.
- *   h = the divisor.
- *   n = the integer quotient of g and h.
- *
- * Returns:
- *   The remainder of `g` divided by `h`.
- */
+/**
+* This function calculates the integer quotient of g and h and its remainder.
+*
+* It uses the definition of remainder provided by IEC 60559. The integer quotient n is
+* `round(g/h)`, and the remainder is defined as $(MATH g - hn), where `round` is
+* `ad.math.rounding.round`.
+*
+* Let $(MATH R) be the `round` function. $(MATH R'(x) = ∑$(SUB i∊ℤ)𝛿(x-i-½)). If
+* $(MATH n(x) = R(g(x)/h(x))), then
+* $(MATH n' = (g'/h - gh'/h$(SUP 2))R' = (g'/h - gh'/h$(SUP 2))∑$(SUB i∊ℤ)𝛿(g/h - i - ½)).
+*
+* If $(MATH f(x) = g(x) - h(x)n(x)), then $(MATH f' = g' - h'n - hn').
+*
+* Params:
+*   G = the type of g, either `GDN` or `real`
+*   H = the type of h, either `GDN` or `real`
+*   g = the dividend
+*   h = the divisor
+*   n = the integer quotient of g and h
+*
+* Returns:
+*   the remainder of g divided by h
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H) remquo(G, H)(in G g, in H h, out int n)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))
@@ -163,20 +170,25 @@ unittest {
 }
 
 
-/** Calculates the remainder of `g` divided by `h` using the definition of remainder provided by
- * IEC 60559.
- *
- * The remainder is defined as $(MATH f(g(x), h(x)) = g(x) - h(x)round(g(x)/h(x))).
- *
- * Params:
- *   G = the type of g, either `GDN` or `real`.
- *   H = the type of h, either `GDN` or `real`.
- *   g = the dividend.
- *   h = the divisor.
- *
- * Returns:
- *   The remainder of `g` divided by `h`.
- */
+/**
+* This function calculates the _remainder of g divided by h.
+*
+* It using the definition of _remainder provided by IEC 60559. In other words, it computes
+* `g - h*round(g/h)`, where the `round` function is `ad.math.rounding.round`.
+*
+* Let $(MATH R) be the `round` function. $(MATH R'(x) = ∑$(SUB i∊ℤ)𝛿(x-i-½)). If
+* $(MATH f(x) = g(x) - h(x)R(g(x)/h(x))) then
+* $(MATH f' = g' - h'R(g/h) - hR'(g/h)(g'h - gh')/h$(SUP 2)).
+*
+* Params:
+*   G = the type of g, either `GDN` or `real`.
+*   H = the type of h, either `GDN` or `real`.
+*   g = the dividend.
+*   h = the divisor.
+*
+* Returns:
+*   The remainder of g divided by h.
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H) remainder(G, H)(in G g, in H h)
 if (anySatisfy!(isGDN, G, H) && allSatisfy!(isConvertibleToGDN, G, H))

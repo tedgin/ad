@@ -1,6 +1,6 @@
 /**
- * It extends `std.math.exponential` module to support `GDN` objects.
- */
+* This module extends the `std.math.exponential` Phobos module to support `GDN` objects.
+*/
 module ad.math.exponential;
 
 static import std.math.exponential;
@@ -17,17 +17,17 @@ import ad.internal : asReal, CommonGDN, isConvertibleToGDN, isGDN, isInfinity, i
 
 
 /**
- * This function raises $(MATH e) to a given power.
- *
- * If $(MATH f(x) = e$(SUP g(x))), then $(MATH f' = e$(SUP g)g').
- *
- * Params:
- *   Deg = the degree of the GDN
- *   g = the power $(MATH e) is raised to.
- *
- * Returns:
- *   A GDN object representing $(MATH e) raised to the power of `g`.
- */
+* This function raises $(MATH e) to a given power.
+*
+* If $(MATH f(x) = e$(SUP g(x))), then $(MATH f' = e$(SUP g)g').
+*
+* Params:
+*   Deg = the degree of the GDN
+*   g = the power $(MATH e) is raised to.
+*
+* Returns:
+*   A GDN object representing $(MATH e) raised to the power of `g`.
+*/
 pure nothrow @nogc @safe GDN!Deg exp(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.internal.exp!Deg(g);
@@ -38,17 +38,17 @@ do {
 
 
 /**
- * This function computes the base-2 exponential of a given `GDN` object `g`.
- *
- * $(MATH f(x) = 2$(SUP g(x))), then $(MATH f' = 2$(SUP g)g'ln(2))
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object for which the base-2 exponential is to be calculated.
- *
- * Returns:
- *   A `GDN` object representing the base-2 exponential of `g`.
- */
+* This function computes the base-2 exponential of a given `GDN` object `g`.
+*
+* $(MATH f(x) = 2$(SUP g(x))), then $(MATH f' = 2$(SUP g)g'ln(2))
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` object for which the base-2 exponential is to be calculated.
+*
+* Returns:
+*   A `GDN` object representing the base-2 exponential of `g`.
+*/
 pure nothrow @nogc @safe GDN!Deg exp2(ulong Deg)(in GDN!Deg g)
 do {
 	alias exp2_fn = Select!(Deg == 1, std.math.exponential.exp2, exp2);
@@ -75,17 +75,17 @@ unittest {
 
 
 /**
- * Calculates the value of $(MATH e$(SUP g) - 1).
- *
- * If $(MATH f(x) = e$(SUP g(x)) - 1), then $(MATH f' = e$(SUP g)g').
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the exponent
- *
- * Returns:
- *   A `GDN` object representing $(MATH e$(SUP g) - 1).
- */
+* Calculates the value of $(MATH e$(SUP g) - 1).
+*
+* If $(MATH f(x) = e$(SUP g(x)) - 1), then $(MATH f' = e$(SUP g)g').
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the exponent
+*
+* Returns:
+*   A `GDN` object representing $(MATH e$(SUP g) - 1).
+*/
 pure nothrow @nogc @safe GDN!Deg expm1(ulong Deg)(in GDN!Deg g)
 do {
 	alias exp_fn = Select!(Deg == 1, std.math.exponential.exp, exp);
@@ -105,16 +105,16 @@ unittest {
 
 
 /**
- * Separates a `GDN` into its significand and exponent.
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object to be separated.
- *   e = the exponent of `g`
- *
- * Returns:
- *   A `GDN` object representing the significand of `g`.
- */
+* Separates a `GDN` into its significand and exponent.
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` object to be separated.
+*   e = the exponent of `g`
+*
+* Returns:
+*   A `GDN` object representing the significand of `g`.
+*/
 pure nothrow @nogc @safe GDN!Deg frexp(ulong Deg)(in GDN!Deg g, out int e)
 do {
 	std.math.exponential.frexp(g.val, e);
@@ -157,15 +157,15 @@ unittest {
 
 
 /**
- * Extracts the exponent of g as a signed integral value.
- *
- * Params:
- *   Deg = the degree of g
- *   g = the GDN to find the exponent of
- *
- * Returns:
- *   the integral exponent of g
- */
+* Extracts the exponent of g as a signed integral value.
+*
+* Params:
+*   Deg = the degree of g
+*   g = the GDN to find the exponent of
+*
+* Returns:
+*   the integral exponent of g
+*/
 pure nothrow @nogc @safe int ilogb(ulong Deg)(in GDN!Deg g)
 do {
 	return std.math.exponential.ilogb(g.val);
@@ -176,18 +176,18 @@ do {
 
 
 /**
- * This function computes $(MATH 2$(SUP c)g).
- *
- * If $(MATH f(x) = 2$(SUP c)g(x)), then $(MATH f' = 2$(SUP c)g').
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the generalized dual number being scaled.
- *   c = the power of $(MATH 2) used to scale `g`,
- *
- * Returns:
- *   A `GDN` object resulting from the computation.
- */
+* This function computes $(MATH 2$(SUP c)g).
+*
+* If $(MATH f(x) = 2$(SUP c)g(x)), then $(MATH f' = 2$(SUP c)g').
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the generalized dual number being scaled.
+*   c = the power of $(MATH 2) used to scale `g`,
+*
+* Returns:
+*   A `GDN` object resulting from the computation.
+*/
 pure nothrow @nogc @safe GDN!Deg ldexp(ulong Deg)(in GDN!Deg g, in int c)
 do {
 	return ad.core.math.ldexp(g, c);
@@ -198,17 +198,17 @@ do {
 
 
 /**
- * This function computes the natural logarithm of its argument.
- *
- * If $(MATH f(x) = ln(g(x))), then $(MATH f' = g'/g).
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the argument
- *
- * Returns:
- *   the natural logarithm of `g`.
- */
+* This function computes the natural logarithm of its argument.
+*
+* If $(MATH f(x) = ln(g(x))), then $(MATH f' = g'/g).
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the argument
+*
+* Returns:
+*   the natural logarithm of `g`.
+*/
 pure nothrow @nogc @safe GDN!Deg log(ulong Deg)(in GDN!Deg g)
 do {
 	return g.log();
@@ -219,17 +219,17 @@ do {
 
 
 /**
- * This function computes the logarithm of the given `GDN` object `g`.
- *
- * If $(MATH f(x) = log(g(x))), then $(MATH f' = g'/[g⋅ln(10)])
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object for which the logarithm is to be calculated.
- *
- * Returns:
- *   A `GDN` object representing the logarithm of `g`.
- */
+* This function computes the logarithm of the given `GDN` object `g`.
+*
+* If $(MATH f(x) = log(g(x))), then $(MATH f' = g'/[g⋅ln(10)])
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` object for which the logarithm is to be calculated.
+*
+* Returns:
+*   A `GDN` object representing the logarithm of `g`.
+*/
 pure nothrow @nogc @safe GDN!Deg log10(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -258,17 +258,17 @@ unittest {
 
 
 /**
- * Calculates the natural logarithm of 1 + g.
- *
- * If $(MATH f(x) = ln(1 + g(x))), then $(MATH f' = g'/(1 + g)).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the value to compute the shifted logarithm of
- *
- * Returns:
- *  $(MATH ln(1 + g)) as a `GDN`
- */
+* Calculates the natural logarithm of 1 + g.
+*
+* If $(MATH f(x) = ln(1 + g(x))), then $(MATH f' = g'/(1 + g)).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the value to compute the shifted logarithm of
+*
+* Returns:
+*   $(MATH ln(1 + g)) as a `GDN`
+*/
 pure nothrow @nogc @safe GDN!Deg log1p(ulong Deg)(in GDN!Deg g)
 do {
 	if (isNaN(g)) return g;
@@ -291,17 +291,17 @@ unittest {
 
 
 /**
- * This function computes the base-2 logarithm of the given `GDN` object `g`.
- *
- * If $(MATH f(x) = lg(g(x))), then $(MATH f' = g'/[g⋅ln(2)])
- *
- * Params:
- *   Deg = the degree of `g`
- *   g = the `GDN` object for which the base-2 logarithm is to be calculated.
- *
- * Returns:
- *   A `GDN` object representing the base-2 logarithm of `g`.
- */
+* This function computes the base-2 logarithm of the given `GDN` object `g`.
+*
+* If $(MATH f(x) = lg(g(x))), then $(MATH f' = g'/[g⋅ln(2)])
+*
+* Params:
+*   Deg = the degree of `g`
+*   g = the `GDN` object for which the base-2 logarithm is to be calculated.
+*
+* Returns:
+*   A `GDN` object representing the base-2 logarithm of `g`.
+*/
 pure nothrow @nogc @safe GDN!Deg log2(ulong Deg)(in GDN!Deg g)
 do {
 	return ad.internal.log2(g);
@@ -316,15 +316,15 @@ do {
 
 
 /**
- * Extracts the exponent of g as a signed integral valued real
- *
- * Params:
- *   Deg = the degree of g
- *   g = the `GDN` to extract the exponent from its value
- *
- * Returns:
- *   The exponent of g
- */
+* Extracts the exponent of g as a signed integral valued real
+*
+* Params:
+*   Deg = the degree of g
+*   g = the `GDN` to extract the exponent from its value
+*
+* Returns:
+*   The exponent of g
+*/
 nothrow @nogc @safe real logb(ulong Deg)(in GDN!Deg g)
 do {
 	return std.math.exponential.logb(g.val);
@@ -335,20 +335,20 @@ do {
 
 
 /**
- * This function determines the value of a `GDN` raised to an integer power.
- *
- * If $(MATH f(x) = g(x)$(SUP n)), where $(MATH n ∈ ℤ), then if $(MATH n = 0), $(MATH f' = 0g'),
- * otherwise $(MATH f' = ng$(SUP n-1)g').
- *
- * Params:
- *   I = the integer type of the exponent
- *   Deg = the degree of the `GDN` `g`
- *   g = the GDN base
- *   n = the exponent
- *
- * Returns:
- *   It returns a `GDN` representing `g` raised to `n`.
- */
+* This function determines the value of a `GDN` raised to an integer power.
+*
+* If $(MATH f(x) = g(x)$(SUP n)), where $(MATH n ∈ ℤ), then if $(MATH n = 0), $(MATH f' = 0g'),
+* otherwise $(MATH f' = ng$(SUP n-1)g').
+*
+* Params:
+*   I = the integer type of the exponent
+*   Deg = the degree of the `GDN` `g`
+*   g = the GDN base
+*   n = the exponent
+*
+* Returns:
+*   It returns a `GDN` representing `g` raised to `n`.
+*/
 pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in GDN!Deg g, in I n) if (isIntegral!I)
 do {
 	return ad.internal.pow(g, n);
@@ -359,19 +359,19 @@ do {
 
 
 /**
- * This function determine the value of a integer raised to a `GDN` power;
- *
- * If $(MATH f(x) = n$(SUP g(x))), then $(MATH f' = n$(SUP g)g'ln(n)).
- *
- * Params:
- *   I = the integer type of the base
- *   Deg = the degree of g
- *   n = the base
- *   g = the exponent
- *
- * Returns:
- *   A `GDN` representing `n` raised to `g`.
- */
+* This function determine the value of a integer raised to a `GDN` power;
+*
+* If $(MATH f(x) = n$(SUP g(x))), then $(MATH f' = n$(SUP g)g'ln(n)).
+*
+* Params:
+*   I = the integer type of the base
+*   Deg = the degree of g
+*   n = the base
+*   g = the exponent
+*
+* Returns:
+*   A `GDN` representing `n` raised to `g`.
+*/
 pure nothrow @nogc @safe GDN!Deg pow(I, ulong Deg)(in I n, in GDN!Deg g) if (isIntegral!I)
 do {
 	if (isNaN(g)) return g;
@@ -408,17 +408,17 @@ unittest {
 
 
 /**
- * This function calculates $(MATH g$(SUP h)). It is the same as `g ^^ h`.
- *
- * Params:
- *   G = the type of g, either real or a GDN
- *   H = the type of h, either real or a GDN
- *   g = the base
- *   h = the exponent
- *
- * Returns:
- *   It returns `g ^^ h`.
- */
+* This function calculates $(MATH g$(SUP h)). It is the same as `g ^^ h`.
+*
+* Params:
+*   G = the type of g, either real or a GDN
+*   H = the type of h, either real or a GDN
+*   g = the base
+*   h = the exponent
+*
+* Returns:
+*   It returns `g ^^ h`.
+*/
 pure nothrow @nogc @safe
 CommonGDN!(G, H) pow(G, H)(in G g, in H h)
 if (anySatisfy!(isGDN, G, H)
@@ -433,18 +433,18 @@ do {
 
 
 /**
- * Multiplies g by 2$(SUP n).
- *
- * If $(MATH f(x) = g(x)2$(SUP n)), then $(MATH  f' = g'2$(SUP n)).
- *
- * Params:
- *   Deg = the degree of g
- *   g = the GDN to scale.
- *   n = the exponent of the scale factor
- *
- * Returns:
- *   It returns the scaled `GDN`.
- */
+* Multiplies g by 2$(SUP n).
+*
+* If $(MATH f(x) = g(x)2$(SUP n)), then $(MATH  f' = g'2$(SUP n)).
+*
+* Params:
+*   Deg = the degree of g
+*   g = the GDN to scale.
+*   n = the exponent of the scale factor
+*
+* Returns:
+*   It returns the scaled `GDN`.
+*/
 pure nothrow @nogc @safe GDN!Deg scalbn(ulong Deg)(in GDN!Deg g, in int n)
 do {
 	alias dev_scale = Select!(Deg == 1, std.math.exponential.scalbn, scalbn);
