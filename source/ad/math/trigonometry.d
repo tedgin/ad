@@ -1,5 +1,5 @@
 /**
-* This module extends the `std.math.trigonometry` module to support `GDN` objects.
+* This extends the `std.math.trigonometry` Phobos module to support `GDN` objects.
 */
 module ad.math.trigonometry;
 
@@ -13,8 +13,7 @@ import std.traits : Select;
 static import ad.core.math;
 
 import ad;
-import ad.internal :
-	asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, pow;
+import ad.internal : asGDN, CommonGDN, isConvertibleToGDN, isFinite, isGDN, isInfinity, isNaN, pow;
 import ad.core.math : sqrt;
 
 
@@ -62,9 +61,9 @@ do {
 
 
 /**
-* This function computes the tangent of its argument
+* This function computes the tangent of its argument.
 *
-* If $(MATH f(x) = tan(g(x))), then $(MATH f' = g'sec$(SUP 2)(g)).
+* If $(MATH f(x) = tan(g(x))), then $(MATH f' = g'sec(g)$(SUP 2)).
 *
 * Params:
 *   Deg = the degree of g
@@ -218,6 +217,10 @@ unittest {
 *
 * If $(MATH f(x) = tan$(SUP -1)(g(x)/h(x))), then $(MATH f' = (g'h - gh')/(h$(SUP 2) + g$(SUP 2))).
 *
+* If either g or h has type `real`, it is converted to a constant generalized dual number with the
+* same degree as the other parameter. If g and h are `GDN` objects with different degrees, the one
+* with the greater degree is converted to have the same degree as the lesser.
+*
 * Params:
 *   G = the type of g
 *   H = the type of h
@@ -225,7 +228,7 @@ unittest {
 *   h = the denominator of the arctangent argument
 *
 * Returns:
-*   It returns the angle resulting from the arctan(g/h).
+*   It returns the angle resulting from the $(MATH tan$(SUP -1)(g/h)).
 */
 pure nothrow @nogc @safe
 CommonGDN!(G, H) atan2(G, H)(in G g, in H h)
@@ -337,7 +340,7 @@ unittest {
 *
 * Params:
 *   Deg = the degree of g
-*   g = the argument of the hyperbolic sine.
+*   g = the argument of the hyperbolic sine
 *
 * Returns:
 *   It returns the hyperbolic sine of g.
@@ -370,7 +373,7 @@ unittest {
 *
 * Params:
 *   Deg = the degree of g
-*   g = the argument of the hyperbolic cosine.
+*   g = the argument of the hyperbolic cosine
 *
 * Returns:
 *   It returns the hyperbolic cosine of g.
@@ -400,7 +403,7 @@ unittest {
 *
 * Params:
 *   Deg = the degree of g
-*   g = the argument of the hyperbolic tangent.
+*   g = the argument of the hyperbolic tangent
 *
 * Returns:
 *   It returns the hyperbolic tangent of g.
@@ -436,7 +439,7 @@ unittest {
 *
 * Params:
 *   Deg = the degree of g
-*   g = the argument of the inverse hyperbolic sine.
+*   g = the argument of the inverse hyperbolic sine
 *
 * Returns:
 *   It returns the inverse hyperbolic sine of g.
@@ -470,7 +473,7 @@ unittest {
 *
 * Params:
 *   Deg = the degree of g
-*   g = the argument of the inverse hyperbolic cosine.
+*   g = the argument of the inverse hyperbolic cosine
 *
 * Returns:
 *   It returns the inverse hyperbolic cosine of g.

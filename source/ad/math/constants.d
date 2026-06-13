@@ -1,5 +1,5 @@
 /**
-* This module extends the `std.math.constants` Phobos module to support `GDN` objects.
+* This  extends the `std.math.constants` Phobos module to support `GDN` objects.
 */
 module ad.math.constants;
 
@@ -9,7 +9,7 @@ import ad;
 
 
 /**
-* Euler's constant $(MATH e)
+* This is Euler's constant $(MATH e).
 */
 enum GDN!Deg E(ulong Deg) = GDN!Deg.mkConst(std.math.constants.E);
 unittest {
@@ -18,7 +18,7 @@ unittest {
 
 
 /**
-* $(MATH π)
+* This is $(MATH π).
 */
 enum GDN!Deg PI(ulong Deg) = GDN!Deg.mkConst(std.math.constants.PI);
 unittest {
@@ -27,7 +27,7 @@ unittest {
 
 
 /**
-* $(MATH π/2)
+* This is $(MATH π/2).
 */
 enum GDN!Deg PI_2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.PI_2);
 unittest {
@@ -36,7 +36,7 @@ unittest {
 
 
 /**
-* $(MATH π/4)
+* This is $(MATH π/4).
 */
 enum GDN!Deg PI_4(ulong Deg) = GDN!Deg.mkConst(std.math.constants.PI_4);
 unittest {
@@ -45,7 +45,7 @@ unittest {
 
 
 /**
-* $(MATH 1/π)
+* This is $(MATH 1/π).
 */
 enum GDN!Deg M_1_PI(ulong Deg) = GDN!Deg.mkConst(std.math.constants.M_1_PI);
 unittest {
@@ -54,7 +54,7 @@ unittest {
 
 
 /**
-* $(MATH 2/π)
+* This is $(MATH 2/π).
 */
 enum GDN!Deg M_2_PI(ulong Deg) = GDN!Deg.mkConst(std.math.constants.M_2_PI);
 unittest {
@@ -63,7 +63,7 @@ unittest {
 
 
 /**
-* $(MATH 2/√π)
+* This is $(MATH 2/√π).
 */
 enum GDN!Deg M_2_SQRTPI(ulong Deg) = GDN!Deg.mkConst(std.math.constants.M_2_SQRTPI);
 unittest {
@@ -72,7 +72,7 @@ unittest {
 
 
 /**
-* $(MATH ln(10))
+* This is $(MATH ln(10)).
 */
 enum GDN!Deg LN10(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LN10);
 unittest {
@@ -81,7 +81,7 @@ unittest {
 
 
 /**
-* $(MATH ln(2))
+* This is $(MATH ln(2)).
 */
 enum GDN!Deg LN2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LN2);
 unittest {
@@ -90,7 +90,7 @@ unittest {
 
 
 /**
-* $(MATH log(2))
+* This is $(MATH log(2)).
 */
 enum GDN!Deg LOG2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LOG2);
 unittest {
@@ -99,7 +99,7 @@ unittest {
 
 
 /**
-* $(MATH lg(e))
+* This is $(MATH lg(e)).
 */
 enum GDN!Deg LOG2E(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LOG2E);
 unittest {
@@ -108,7 +108,7 @@ unittest {
 
 
 /**
-* $(MATH lg(10))
+* This is $(MATH lg(10)).
 */
 enum GDN!Deg LOG2T(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LOG2T);
 unittest {
@@ -117,7 +117,7 @@ unittest {
 
 
 /**
-* $(MATH log(e))
+* This is $(MATH log(e)).
 */
 enum GDN!Deg LOG10E(ulong Deg) = GDN!Deg.mkConst(std.math.constants.LOG10E);
 unittest {
@@ -126,7 +126,7 @@ unittest {
 
 
 /**
-* $(MATH √2)
+* This is $(MATH √2).
 */
 enum GDN!Deg SQRT2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.SQRT2);
 unittest {
@@ -135,7 +135,7 @@ unittest {
 
 
 /**
-* $(MATH √½)
+* This is $(MATH √½).
 */
 enum GDN!Deg SQRT1_2(ulong Deg) = GDN!Deg.mkConst(std.math.constants.SQRT1_2);
 unittest {

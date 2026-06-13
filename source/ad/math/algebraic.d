@@ -1,5 +1,5 @@
 /**
-* This module extends the `std.math.algebraic` Phobos module to support `GDN` objects.
+* This extends the `std.math.algebraic` Phobos module to support `GDN` objects.
 */
 module ad.math.algebraic;
 
@@ -61,7 +61,7 @@ unittest {
 *   the square root of the `GDN` object
 */
 pure nothrow @nogc @safe GDN!Deg sqrt(ulong Deg)(in GDN!Deg g)
-out(f; isNaN(f) || f >= 0)
+out(f; isNaN(f) || f >= 0.0L)
 do {
 	return ad.core.math.sqrt(g);
 }
@@ -124,18 +124,18 @@ unittest {
 * If $(MATH f(x) = [g(x)$(SUP 2) + h(x)$(SUP 2)]$(SUP ½)), then
 * $(MATH f' = (gg' + hh')(g$(SUP 2) + h$(SUP 2))$(SUP -½)).
 *
-* If either `g` or `h` has type `real`, it is converted to a constant generalized dual number with
-* the same degree as the other parameter.
+* If either g or h has type `real`, it is converted to a constant generalized dual number with the
+* same degree as the other parameter. If g and h are `GDN` objects with different degrees, the one
+* with the greater degree is converted to have the same degree as the lesser.
 *
 * Params:
-*   G = the type of `g`, either a `GDN` or a `real`
-*   H = the type of `h`, either a `GDN` or a `real`
+*   G = the type of g, either a `GDN` or a `real`
+*   H = the type of h, either a `GDN` or a `real`
 *   g = the `GDN` object representing the x-coordinate
 *   h = the `GDN` object representing the y-coordinate
 *
 * Returns:
-*   The distance to the origin. The resulting `GDN` will have a degree equal to the lesser of the
-*   degrees of `g` and `h`.
+*   the distance to the origin
 */
 pure nothrow @nogc @safe
 CommonGDN!(G, H) hypot(G, H)(in G g, in H h)
@@ -187,20 +187,19 @@ unittest {
 * If $(MATH f(x) = [g(x)$(SUP 2) + h(x)$(SUP 2) + i(x)$(SUP 2)]$(SUP ½)), then
 * $(MATH f' = (gg' + hh' + ii')(g$(SUP 2) + h$(SUP 2) + i$(SUP 2))$(SUP -½)).
 *
-* If any of `g`, `h`, or `i` has type `real`, it is converted to a constant generalized dual number
-* with the same degree as the lesser degree of the other parameters.
+* If any of g, h, or i has type `real`, it is converted to a constant generalized dual number with
+* the same degree as the lesser degree of the other parameters.
 *
 * Params:
-*   G = the type of `g`, either a `GDN` or a `real`
-*   H = the type of `h`, either a `GDN` or a `real`
-*   I = the type of `i`, either a `GDN` or a `real`
+*   G = the type of g, either a `GDN` or a `real`
+*   H = the type of h, either a `GDN` or a `real`
+*   I = the type of i, either a `GDN` or a `real`
 *   g = the `GDN` object representing the x-coordinate
 *   h = the `GDN` object representing the y-coordinate
 *   i = the `GDN` object representing the z-coordinate
 *
 * Returns:
-*   The resulting generalized dual number will have a degree equal to the least of the degrees of
-*   `g`, `h`, and `i`.
+*   the distanct to the origin
 */
 pure nothrow @nogc @safe
 CommonGDN!(G, H, I) hypot(G, H, I)(in G g, in H h, in I i)
@@ -279,14 +278,13 @@ unittest {
 * as the other parameters.
 *
 * Params:
-*   G = the type of `g`
-*   H = the type of `h`
+*   G = the type of g
+*   H = the type of the elements h
 *   g = the argument of the polynomial
 *   h = the coefficients of the polynomial
 *
 * Returns:
-*   the polynomial evaluated at `g`. The resulting GDN will have a degree equal to the lesser of the
-*   degrees of `G` and `H`.
+*   the polynomial evaluated at g
 */
 pure nothrow @nogc @safe
 CommonGDN!(G, H) poly(G, H)(in G g, in H[] h)
@@ -366,16 +364,16 @@ unittest {
 
 
 /**
-* Gives the next power of two after `g`.
+* Gives the next power of two after g.
 *
-* This function is equivalent to $(MATH lim$(SUB 𝜀⟶0$(SUP +)) sgn(g)2$(SUP ⌈lg|g| + 𝜀⌉)).
+* This function is equivalent to $(MATH lim$(SUB 𝜀⟶0$(SUP +))sgn(g)2$(SUP ⌈lg|g| + 𝜀⌉)).
 *
 * Params:
-*   Deg = the degree of `g`
+*   Deg = the degree of g
 *   g = the GDN to find the next power of 2 from
 *
 * Returns:
-*   The GDN object whose value is the next power of 2 after `g`.
+*   the GDN object whose value is the next power of 2 after g
 */
 pure nothrow @nogc @safe GDN!Deg nextPow2(ulong Deg)(in GDN!Deg g)
 out (f; isNaN(f) || f == std.math.nextPow2(g.val), "result doesn't agree with std.math.nextPow2")
@@ -455,16 +453,16 @@ unittest {
 
 
 /**
-* Gives the previous power of two no larger than `g`.
+* Gives the previous power of two no larger than g.
 *
 * This function is equivalent to $(MATH sgn(g)2$(SUP ⌊lg|g|⌋)).
 *
 * Params:
-*   Deg = the degree of `g`
-*   g = the GDN to truncate to a poser of two
+*   Deg = the degree of g
+*   g = the GDN to truncate to a power of two
 *
 * Returns:
-*   `g` truncated to a power of 2
+*   g truncated to a power of 2
 */
 pure nothrow @nogc @safe GDN!Deg truncPow2(ulong Deg)(in GDN!Deg g)
 out (f; isNaN(f) || f == std.math.truncPow2(g.val), "result doesn't agree with std.math.truncPow2")

@@ -6,8 +6,6 @@
 */
 module ad.math;
 
-// TODO: format and document these modules
-
 public import ad.math.algebraic;
 public import ad.math.constants;
 public import ad.math.exponential;

@@ -1,7 +1,7 @@
 /**
-* This module extends the `std.math.operations` Phobos module to support `GDN` objects.
+* This extends the `std.math.operations` Phobos module to support `GDN` objects.
 *
-* `DEFAULT_REL_DIFF` is the default relative difference for operations. It is
+* `DEFAULT_REL_DIFF` is the default relative difference for for functions in this module. It is
 * $(MATH 10$(SUP -(⌊(d+1)/2⌋ + 1))), where $(MATH d) is `real.dig`.
 */
 module ad.math.operations;
@@ -28,14 +28,15 @@ private enum real DEFAULT_REL_DIFF = 10.0L ^^ -((real.dig + 1)/2 + 1);
 
 
 /**
-* Defines a total order on all GDN objects.
+* This function defines a total order on all GDN objects.
 *
-* If one of the objects has a lower degree than the other, it is promoted a GDN of the higher degree
-* with all added derivatives being `0`. If one of the arguments is a floating point number, it is
-* promoted to a constant GDN with the same degree as the other term. The result is
-* `cmp(x.val, y.val)` unless it is `0`. Otherwise, the result is `cmp(x.d, y.d)` unless it is also
-* `0`, then the result is `cmp(x.d!2, y.d!2)` and so on. If all derivatives are the same, the result
-* is `0`.
+* If one of the objects has a lower degree than the other, it is promoted to a `GDN` with the same
+* degree as the other with all added derivatives being `0`. If one of the arguments is a floating
+* point number, it is promoted to a constant GDN with the same degree as the other term.
+*
+* The result is `cmp(x.val, y.val)` unless it is `0`. Otherwise, the result is `cmp(x.d, y.d)`
+* unless it is also `0`, then the result is `cmp(x.d!2, y.d!2)` and so on. If all derivatives are
+* the same, the result is `0`.
 *
 * Params:
 *   X = GDN or real
@@ -44,8 +45,7 @@ private enum real DEFAULT_REL_DIFF = 10.0L ^^ -((real.dig + 1)/2 + 1);
 *   y = the object being compared to
 *
 * Returns:
-*   a negative value if `x` precedes `y`, `0` if `x` and `y` are identical, and a positive value
-*   otherwise.
+*   a negative value if x precedes y, `0` if x and y are identical, or a positive value otherwise
 */
 pure nothrow @nogc @safe
 int cmp(X, Y)(in X x, in Y y) if (anySatisfy!(isGDN, X, Y) && allSatisfy!(isConvertibleToGDN, X, Y))
@@ -90,7 +90,7 @@ unittest {
 
 
 /**
-* Determines the number of mantissa bits that `x` and `y` have in common.
+* This function determines the number of mantissa bits that x and y have in common.
 *
 * Params:
 *   X = GDN or real
@@ -99,7 +99,7 @@ unittest {
 *   y = a `GDN` being compared to
 *
 * Returns:
-*   the number of mantissa bits which are equal in `x` and `y`
+*   the number of mantissa bits which are equal in x and y
 */
 pure nothrow @nogc @safe
 int feqrel(X, Y)(in X x, in Y y)
@@ -117,9 +117,9 @@ unittest {
 
 
 /**
-* Determines whether two values are approximately equal.
+* This function determines whether two values are approximately equal.
 *
-* Determines whether the values of two `GDN` objects or a `GDN` object and a `real` are
+* It determines whether the values of two `GDN` objects or a `GDN` object and a `real` are
 * approximately equal, i.e., with a given maximum relative difference and a maximum absolute
 * difference.
 *
@@ -132,10 +132,10 @@ unittest {
 *   maxAbsDiff = maximum absolute difference, setting this to 0 disables this check
 *
 * Returns:
-*   `true` if the two values are approximately equal under either of the criteria. If either object
-*   is a range, and the other is a single value, then `true` is returned if the single value
-*   satisfies either of the criteria for all of the elements in the range. If both objects are
-*   ranges, then a `true` is returned only if they have the same length, and either of the criteria
+*   It returns `true` if the two values are approximately equal under voth of the criteria. If
+*   either object is a range, and the other is a single value, then `true` is returned if the single
+*   value satisfies both of the criteria for all of the elements in the range. If both objects are
+*   ranges, then a `true` is returned only if they have the same length, and both of the criteria
 *   are met for each pair of elements.
 */
 pure nothrow @nogc @safe
@@ -217,7 +217,7 @@ unittest {
 
 
 /**
-* Create a quiet NaN `GDN`, storing an integer as payload.
+* This function creates a quiet NaN `GDN`, storing an unsigned integer as payload.
 *
 * Params:
 *   Deg = the degree of the `GDN` to create
@@ -238,10 +238,10 @@ do {
 
 
 /**
-* Extract an integral payload from a NaN-valued `GDN` object.
+* This function extracts an integral payload from a NaN-valued `GDN` object.
 *
 * Params:
-*   Deg = the degree of `f`
+*   Deg = the degree of f
 *   f = the `GDN` object carrying the NaN payload
 *
 * Returns:
@@ -257,11 +257,10 @@ do {
 
 
 /**
-* Returns the positive difference between `g` and `h`, i.e. $(MATH max{g-h, 0}).
+* This function returns the positive difference between g and h, i.e., $(MATH max{g-h, 0}).
 *
-* If $(MATH f(x) = 0) when $(MATH g(x) < h(x)), and $(MATH f(x) = g(x) - h(x)) when
-* $(MATH g(x) > h(x)), then $(MATH f' = 0) when $(MATH g < h), and $(MATH f' = g' - h') when
-* $(MATH g > h).
+* Let $(MATH f(x) = 0) when $(MATH g(x) < h(x)), and $(MATH f(x) = g(x) - h(x)) otherwise.
+* $(MATH f' = 0) when $(MATH g < h), and $(MATH f' = g' - h') otherwise.
 *
 * The degree of the result with will be the lesser of `GDeg` and `HDeg`. If either input is a real
 * number, it will be converted to a constant `GDN` with the same degree as the other input.
@@ -316,7 +315,7 @@ unittest {
 
 
 /**
-* Computes $(MATH gh + i).
+* This function computes $(MATH gh + i).
 *
 * If $(MATH f(x) = g(x)h(x) + i(x)), then $(MATH f' = g'h + gh' + i').
 *
@@ -325,9 +324,9 @@ unittest {
 * common degree of the other inputs.
 *
 * Params:
-*   G = the type of `g`, either a `GDN` or a `real`
-*   H = the type of `h`, either a `GDN` or a `real`
-*   I = the type of `i`, either a `GDN` or a `real`
+*   G = the type of g, either a `GDN` or a `real`
+*   H = the type of h, either a `GDN` or a `real`
+*   I = the type of i, either a `GDN` or a `real`
 *   g = the multiplicand
 *   h = the multiplier
 *   i = the addend
@@ -364,12 +363,12 @@ do {
 
 
 /**
-* Computes $(MATH max{g, h}).
+* This function computes $(MATH max{g, h}).
 *
-* If $(MATH f(x) = max{g(x), h(x)}), then $(MATH f' = g')$ when $(MATH g > h)$, and $(MATH f' = h')
+* If $(MATH f(x) = max{g(x), h(x)}), then $(MATH f' = g') when $(MATH g > h), and $(MATH f' = h')
 * when $(MATH g < h).
 *
-* The degree of the result will be the least of the degrees of `G` and `H`. If either input is a
+* The degree of the result will be the lesser of the degrees of `G` and `H`. If either input is a
 * real number, it will be converted to a constant `GDN` with the same degree as the other input.
 *
 * Params:
@@ -413,17 +412,17 @@ unittest {
 
 
 /**
-* Computes $(MATH min{g, h}).
+* This function computes $(MATH min{g, h}).
 *
-* If $(MATH f(x) = min{g(x), h(x)}), then $(MATH f' = g')$ when $(MATH g < h)$, and $(MATH f' = h')
+* If $(MATH f(x) = min{g(x), h(x)}), then $(MATH f' = g') when $(MATH g < h), and $(MATH f' = h')
 * when $(MATH g > h).
 *
-* The degree of the result will be the least of the degrees of `G` and `H`. If either input is a
+* The degree of the result will be the lesser of the degrees of `G` and `H`. If either input is a
 * real number, it will be converted to a constant `GDN` with the same degree as the other input.
 *
 * Params:
-*   G = the type of `g`, either a `GDN` or a `real`
-*   H = the type of `h`, either a `GDN` or a `real`
+*   G = the type of g, either a `GDN` or a `real`
+*   H = the type of h, either a `GDN` or a `real`
 *   g = the first argument
 *   h = the second argument
 *
@@ -462,19 +461,24 @@ unittest {
 
 
 /**
-* Computes the next representable value after `g` in the direction of `h`.
+* This function computes the next representable value after g in the direction of h.
 *
 * If $(MATH f(x) = g(x) + sgn(h(x) - g(x))ε), where $(MATH ε) is an infinitesimal, then
-* $(MATH f' = g' + sgn'(h - g)(h' - g')ε).
+* $(MATH f' = g' + 2𝛿(h-g)(h' - g')ε).
+*
+* If h is a `real` or `GDN` of degree less than `Deg`, it will be converted to `GDN` with degree
+* `Deg`. All addtional derivatives will  be set to `0`.  If h is a `GDN` of degree greater than
+* `Deg`, it will also be converted to a `GDN` with degree `Deg`. All higher degree derivatives are
+* removed.
 *
 * Params:
 *   Deg = the degree a `GDN`
-*   H = the type of `h`, either a `GDN` or a `real`
+*   H = the type of h, either a `GDN` or a `real`
 *   g = the starting value
 *   h = a value in the target direction
 *
 * Returns:
-*   the value with the next representable value after `g` in the direction of `h`.
+*   the value with the next representable value after g in the direction of h
 */
 pure nothrow @nogc @safe
 GDN!Deg nextafter(H, ulong Deg)(in GDN!Deg g, in H h) if (isConvertibleToGDN!H)
@@ -530,16 +534,16 @@ unittest {
 
 
 /**
-* Computes the largest representable GDN smaller than `g` having the same degree as `g`.
+* This function computes the largest representable GDN smaller than g.
 *
 * If $(MATH f(x) = g(x) - ε), where $(MATH ε) is an infinitesimal, then $(MATH f' = g').
 *
 * Params:
-*   Deg = the degree a `g`
+*   Deg = the degree a g
 *   g = the starting value
 *
 * Returns:
-*   a `GDN` object with the same degree as `g`.
+*   a `GDN` object with the same degree as g
 */
 pure nothrow @nogc @safe GDN!Deg nextDown(ulong Deg)(in GDN!Deg g)
 do {
@@ -551,16 +555,16 @@ do {
 
 
 /**
-* Computes the smallest representable GDN larger than `g` having the same degree as `g`.
+* This function omputes the smallest representable GDN larger than g.
 *
 * If $(MATH f(x) = g(x) + ε), where $(MATH ε) is an infinitesimal, then $(MATH f' = g').
 *
 * Params:
-*   Deg = the degree a `g`
+*   Deg = the degree a g
 *   g = the starting value
 *
 * Returns:
-*   a `GDN` object with the same degree as `g`.
+*   a `GDN` object with the same degree as g
 */
 pure nothrow @nogc @safe GDN!Deg nextUp(ulong Deg)(in GDN!Deg g)
 do {

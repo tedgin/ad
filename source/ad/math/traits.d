@@ -1,5 +1,5 @@
 /**
-* This module extends `std.math.traits` module to support `GDN` objects.
+* This extends the `std.math.traits` Phobos module to support `GDN` objects.
 */
 module ad.math.traits;
 
@@ -36,13 +36,13 @@ do {
 * This function checks if two `GDN` objects have the same binary representation.
 *
 * Params:
-*   FDeg = The degree of the first `GDN` object.
-*   GDeg = The degree of the second `GDN` object.
-*   f = The first `GDN` object to compare.
-*   g = The second `GDN` object to compare.
+*   FDeg = The degree of the first `GDN` object
+*   GDeg = The degree of the second `GDN` object
+*   f = The first `GDN` object to compare
+*   g = The second `GDN` object to compare
 *
 * Returns:
-*   `true` if the two `GDN` objects are identical, `false` otherwise.
+*   `true` if the two `GDN` objects are identical, `false` otherwise
 */
 pure nothrow @nogc @safe bool isIdentical(ulong FDeg, ulong GDeg)(in GDN!FDeg f, in GDN!GDeg g)
 do {
@@ -106,7 +106,7 @@ do {
 *
 * Params:
 *   Deg = The degree of the `GDN` object
-*   f = The `GDN` object to check.
+*   f = The `GDN` object to check
 *
 * Returns:
 *   `true` if the value of the `GDN` object is normal, `false` otherwise
@@ -121,7 +121,7 @@ do {
 
 
 /**
-* This function checks if the given `GDN` object is a power of 2.
+* This function checks if the given `GDN` object is a power of two.
 *
 * Params:
 *   Deg = The degree of the `GDN` object
@@ -219,12 +219,12 @@ unittest {
 
 
 /**
-* This function computes the sign of a `GDN` Object.
+* This function computes the sign of a `GDN` object.
 *
 * If $(MATH f(x) = sgn(g(x))), then $(MATH f' = 2𝛿(g)g'), where $(MATH 𝛿) is the Dirac delta
 * function.
 *
-* To be in agreement with `std.math.traits.sgn`, the sign of  $(MATH sgn(±0) = ±0).
+* To be in agreement with `std.math.traits.sgn`, the sign of $(MATH sgn(±0) = ±0).
 *
 * Params:
 *   Deg = the degree of the `GDN` object

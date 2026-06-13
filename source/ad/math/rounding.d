@@ -1,5 +1,5 @@
 /**
-* This module extends `std.math.rounding` module to support `GDN` objects.
+* This extends the `std.math.rounding` Phobos module to support `GDN` objects.
 */
 module ad.math.rounding;
 
@@ -20,7 +20,7 @@ import ad.internal :
 /**
 * This function determines the value of g rounded upward to the nearest integer.
 *
-* If $(MATH f(x) = ⌈g(x)⌉), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
+* If $(MATH f(x) = ⌈g(x)⌉), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i)).
 *
 * Params:
 *   Deg = the degree of `g`
@@ -40,9 +40,9 @@ do {
 
 
 /**
-* This function determins the value of g rounded downward to the nearest integer.
+* This function determines the value of g rounded downward to the nearest integer.
 *
-* If $(MATH f(x) = ⌊g(x)⌋), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i))
+* If $(MATH f(x) = ⌊g(x)⌋), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i)).
 *
 * Params:
 *   Deg = the degree of g
@@ -66,10 +66,10 @@ do {
 *
 * Params:
 *   Deg = the degree of g
-*   g = the `GDN` object to be rounded.
+*   g = the `GDN` object to be rounded
 *
 * Returns:
-*   an integer representing the rounded value of g.
+*   an integer representing the rounded value of g
 */
 pure nothrow @nogc @safe long lrint(ulong Deg)(in GDN!Deg g)
 do {
@@ -85,9 +85,10 @@ do {
 *
 * Params:
 *   Deg = the degree of g
-*   g = the `GDN` object to be rounded.
+*   g = the `GDN` object to be rounded
+*
 * Returns:
-*   An integer representing the rounded value of g.
+*   an integer representing the rounded value of g
 */
 nothrow @nogc @safe long lround(ulong Deg)(in GDN!Deg g)
 do {
@@ -147,8 +148,8 @@ unittest {
 /**
 * This function rounds g to the nearest integer value, using the current rounding mode.
 *
-* If $(MATH f(x) = nearbyint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
-* $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
+* Let `m` be the rounding mode split point. When `g < m`, `nearbyint(g) is floor(g)`. Otherwise,
+* `nearbyint(g) is ceil(g)`.
 *
 * Params:
 *   Deg = the degree of g
@@ -172,14 +173,14 @@ do {
 /**
 * This function rounds g to the nearest integer value, using the current rounding mode.
 *
-* If the return value is not identical to g, the `FE_INEXACT` exception is raised.
+* Let `m` be the rounding mode split point. When `g < m`, `rint(g) is floor(g)`. Otherwise,
+* `rint(g) is ceil(g)`.
 *
-* If $(MATH f(x) = rint(g(x))), then $(MATH f' = (df/dg)g'), where $(MATH df/dg = 𝛿(g - m)),
-* $(MATH 𝛿) is the Dirac delta function, and $(MATH m) is a rounding mode split point.
+* If the return value is not identical to g, the `FE_INEXACT` exception is raised.
 *
 * Params:
 *   Deg = the degree of g
-*   g = the `GDN` object to be rounded.
+*   g = the `GDN` object to be rounded
 *
 * Returns:
 *   a `GDN` object representing the rounded value of g
@@ -207,7 +208,11 @@ unittest {
 
 
 /**
-* This function round val to a multiple of unit using the function rfunc.
+* This function rounds val to a multiple of unit using the function `rfunc`.
+*
+* If either val or unit has type `real`, it is converted to a constant generalized dual number with
+* the same degree as the other. If val and unit are `GDN` objects with different degrees, the one
+* with the greater degree is converted to have the same degree as the lesser.
 *
 * Params:
 *   V = the value type
@@ -232,11 +237,15 @@ do {
 
 
 /**
-* This function rounds g to a multiple of `base ^^ exp` using the function rfunc.
+* This function rounds g to a multiple of `base ^^ exp` using the function `rfunc`.
+*
+* If either `base` or g has type `real`, it is converted to a constant generalized dual number with
+* the same degree as the other. If `base` and g are `GDN` objects with different degrees, the one
+* with the greater degree is converted to have the same degree as the lesser.
 *
 * Params:
 *   G = the type of g
-*   I = the exponent type
+*   I = the exponent type, must be an integer type
 *   rfunc = the rounding function to use
 *   base = the base of the number to round to
 *   g = the `GDN` object to round
@@ -310,14 +319,12 @@ unittest {
 /**
 * This function rounds g to a `long` using the current rounding mode.
 *
-* All of the derivative terms are lost.
-*
 * Params:
 *   Deg = the degree of g
-*   g = the `GDN` object to be rounded.
+*   g = the `GDN` object to be rounded
 *
 * Returns:
-*   the rounded value of g.
+*   the rounded value of g
 */
 pure nothrow @nogc @safe long rndtol(ulong Deg)(in GDN!Deg g)
 do {
@@ -331,11 +338,12 @@ do {
 /**
 * This function returns a value g rounded to the nearest integer.
 *
-* If $(MATH f(x) = round(g(x))), then $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i-½)),
+* Let $(MATH R) represent `round`. If $(MATH f(x) = R(g(x))), then
+* $(MATH f' = g'∑$(SUB i∊ℤ)𝛿(g-i-½)).
 *
 * Params:
 *   Deg = the degree of g
-*   g = the `GDN` to round.
+*   g = the `GDN` to round
 *
 * Returns:
 *   the rounded `GDN`
@@ -353,11 +361,11 @@ do {
 /**
 * This function truncates g to an integer.
 *
-* Where $(MATH g(x) < 0), $(MATH f(x) = ⌈g(x)⌉), otherwise $(MATH f(x) = ⌊g(x)⌋).
+* When $(MATH g(x) < 0), $(MATH f(x) = ⌈g(x)⌉), otherwise $(MATH f(x) = ⌊g(x)⌋).
 *
 * Params:
 *   Deg = the degree of g
-*   g = the `GDN` to round.
+*   g = the `GDN` to round
 *
 * Returns:
 *   the truncated `GDN`
